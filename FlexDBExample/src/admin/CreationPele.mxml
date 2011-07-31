@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="322" height="196" creationComplete="creationCompleteHandler(event)">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+			}
+			
+			protected function creer(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("INSERT INTO pele (`id_pele`, `libelle_pele`,`debut`,`fin` ) VALUES (null, '"+Tools.sanitize(libelle.text)+"','"+Tools.dateToString(this.dateDebut.selectedDate)+"','"+Tools.dateToString(this.dateFin.selectedDate)+"') ", Query.INSERT );
+			}
+			
+			protected function end(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			protected function cancel(event:MouseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox>
+		<mx:Form x="0" y="0" width="100%" height="100%">
+			<mx:FormItem label="Libelle">
+				<mx:TextInput id="libelle"/>
+			</mx:FormItem>
+			<mx:FormItem label="Date de debut">
+				<mx:DateField id="dateDebut" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+							  firstDayOfWeek="0"
+							  dayNames="['D','L','M','M','J','V','S']" 
+							  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+				
+			</mx:FormItem>
+			<mx:FormItem label="Date de Fin">
+				<mx:DateField id="dateFin" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+							  firstDayOfWeek="0"
+							  dayNames="['D','L','M','M','J','V','S']" 
+							  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+				
+			</mx:FormItem>			
+		</mx:Form>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="Creer" click="creer(event)" />
+			<mx:Button label="annuler" click="cancel(event)"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:TitleWindow>

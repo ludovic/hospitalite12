@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var hospitalierID:int;
+			private var affectationID:Number;
+			private var equipeOld:Number;
+			[Bindable]
+			public var equipeProvider:ArrayCollection;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				
+			}
+			
+			public function setFormulaire(item:Object,affectationID:Number,equipeId:Number=NaN):void
+			{
+				myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";
+				hospitalierID = item.id_hospitalier;
+				equipeOld=equipeId;
+				this.affectationID = affectationID;
+				query2.addEventListener(Query.QUERY_END, provideEquipe);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * FROM equipe where id_affectation="+affectationID);
+			}
+			
+			private function provideEquipe(evt:Object):void
+			{
+				equipeProvider = query2.getRecords();
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(isNaN(equipeOld))
+				{ 
+					query.execute("INSERT INTO faire_parti (`id_hospitalier`, `id_pele`, `id_equipe` ,`role`) VALUES ("+hospitalierID+","+index.peleActuel.id_pele+", "+equipeList.selectedItem.id_equipe+",'') ", Query.INSERT );
+				}
+				else
+				{
+					query.execute("UPDATE faire_parti " +
+						"SET id_equipe ='"+equipeList.selectedItem.id_equipe+"'"+
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_equipe = '"+equipeOld+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.UPDATE);
+				} 
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(Equipe.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="myLabel" text="Affecter" width="100%"/>
+	<mx:ComboBox id="equipeList" dataProvider="{equipeProvider}" labelField="libelle"></mx:ComboBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

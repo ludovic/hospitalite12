@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="50%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.RemiseProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var provider:ArrayCollection;
+			public var type:String;
+			
+			public function generateModuleProvider(chambreId:int=0):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(type == "hospitalier")
+					query.execute("select * from inscrire i," +
+						" personne p, etre_hospitalier eh, prix pr" +
+						" where eh.id_pele=" + index.peleActuel.id_pele+
+						" and i.id_prix = pr.id_prix" +
+						" and i.id_personne = p.id_personne" +
+						" and p.id_personne=eh.id_personne");
+				else
+					query.execute("select * from inscrire i," +
+						" personne p, etre_malade em, prix pr" +
+						" where em.id_pele=" + index.peleActuel.id_pele+
+						" and i.id_prix = pr.id_prix" +
+						" and i.id_personne = p.id_personne" +
+						" and p.id_personne=em.id_personne");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function affecterA(event:MouseEvent):void
+			{
+				 if(listInscrit.selectedItem)
+				{
+					var formulairePaiement:FormulairePaiement = new FormulairePaiement();
+					formulairePaiement.type = this.type;
+					PopUpManager.addPopUp(formulairePaiement,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulairePaiement);
+					formulairePaiement.setFormulaire(listInscrit.selectedItem);
+					formulairePaiement.addEventListener(Paiement.RELOAD_MODULE,refresh);
+				} 
+			}
+			
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Paiement.RELOAD_MODULE));
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="title" text="{titleText}"/>
+	<mx:Button label="Créer paiement pour" click="affecterA(event)"/>
+	<mx:HBox height="100%">
+		<mx:DataGrid id="listInscrit" dataProvider="{provider}" height="100%">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
+				<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
+				<mx:DataGridColumn headerText="Total" dataField="Total"/>
+				<mx:DataGridColumn headerText="Total payé" dataField="TotalPaye"/>
+				<mx:DataGridColumn headerText="Solde" dataField="solde"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:HBox>
+</mx:VBox>

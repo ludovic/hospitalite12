@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="canvas1_creationCompleteHandler(event)" verticalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			import proxy.ModuleProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable]
+			private var moduleSalleList:ArrayCollection;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			private var moduleList:Array = [];
+			
+			/* protected function canvas1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var chambreArray:ArrayCollection = ChambreProxy.ChambreDispo;
+				var moduleSans:ModuleSansChambre = new ModuleSansChambre();
+				
+				moduleList.push({module:moduleSans,chambre:{numero:0}});
+				containerSans.addChild(moduleSans);
+				
+				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
+				var tabList:Array = [];
+				for(var i:int=0;i<chambreArray.length;++i)
+				{
+					var module:ModuleChambre = new ModuleChambre();
+					module.titleText = chambreArray[i].libelle as String;
+					module.capacite = chambreArray[i].lits as int;
+					moduleList.push({module:module,chambre:chambreArray[i]});
+					container.addChild(module);
+					tabList.push(module.titleText);
+					module.addEventListener(RELOAD_MODULE,provideModules);
+				}
+				 provideModules();  
+			} */
+			
+			/* private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].chambre.numero);
+				}
+			} */
+			
+			protected function canvas1_creationCompleteHandler(event:FlexEvent=null):void
+			{
+				if(moduleSalleList == null)
+				{
+					moduleSalleList = ModuleProxy.ModuleDispo;
+					moduleSalleList.filterFunction = function(item:Object):Boolean{ return item.etage == etageCB.selectedItem.value; }
+					moduleSalleList.refresh();
+				}
+				
+				moduleList = [];
+				container.removeAllChildren();
+				containerSans.removeAllChildren();
+				var chambreArray:ArrayCollection = ChambreProxy.ChambreDispo;
+				var moduleSans:ModuleSansChambre = new ModuleSansChambre();
+				
+				
+				moduleList.push({module:moduleSans,chambre:{numero:0}});
+				containerSans.addChild(moduleSans);
+				
+				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
+				var tabList:Array = [];
+				
+				var moduleSelectedId:int = moduleCB.selectedItem.id_module;
+				var etageSelectedId:int =  etageCB.selectedItem.value;
+				var moduleFound:Boolean = false;
+				for(var i:int=0;i<chambreArray.length;++i)
+				{
+					if(searchInput.text=="")
+					{
+						if(chambreArray[i].etage == etageSelectedId)
+						{
+							if(chambreArray[i].id_module == moduleSelectedId)
+							{ 
+								moduleFound = true;
+								
+								var module:ModuleChambre = new ModuleChambre();
+								module.titleText = chambreArray[i].libelle as String;
+								module.capacite = chambreArray[i].lits as int;
+								moduleList.push({module:module,id:chambreArray[i].numero});
+								container.addChild(module);
+								tabList.push(module.titleText);
+								module.addEventListener(RELOAD_MODULE,provideModules);
+							}
+							else if(moduleFound)
+								break;
+							
+						} 
+					}
+					else
+					{
+						var chambreName:String = chambreArray[i].libelle as String;
+						if(chambreName.toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+						{
+							module = new ModuleChambre();
+							module.titleText = chambreArray[i].libelle as String;
+							module.capacite = chambreArray[i].lits as int;
+							moduleList.push({module:module,id:chambreArray[i].numero});
+							container.addChild(module);
+							tabList.push(module.titleText);
+							module.addEventListener(RELOAD_MODULE,provideModules);
+						}
+					}
+				}
+				provideModules();  
+				container.invalidateDisplayList();
+			}
+			
+			 private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].id);
+				}
+			} 
+			protected function etageCB_changeHandler(event:ListEvent):void
+			{
+				moduleSalleList = ModuleProxy.ModuleDispo;
+				moduleSalleList.filterFunction = function(item:Object):Boolean{ return item.etage == etageCB.selectedItem.value; }
+				moduleSalleList.refresh();
+				moduleCB.selectedIndex = 0;
+				canvas1_creationCompleteHandler(null);
+			}
+			
+			protected function moduleCB_changeHandler(event:ListEvent):void
+			{
+				canvas1_creationCompleteHandler(null);
+			}
+			
+			////Export////
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, getModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT p.nom, p.prenom, c.libelle, c.id_module" +
+					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh, `s_occuper` o, `chambre` c" +
+					" WHERE eh.id_pele = " + index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = o.id_hospitalier" +
+					" AND h.id_hospitalier = eh.id_hospitalier" +
+					" AND p.id_personne = eh.id_personne " +
+					"AND c.numero = o.numero " +
+					"ORDER BY o.numero");
+			}
+			
+			private function getModule(evt:Object):void
+			{
+				query2= new Query();
+				query2.connect("conn1", db);
+				query2.addEventListener(Query.QUERY_END, provideExportDatagrid);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("(SELECT p.nom, p.prenom, eh.id_hospitalier, ('responsable') 'role',rm.id_module " +
+					" FROM `personne` p, `etre_hospitalier` eh, `responsable_module` rm" +
+					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = rm.id_hospitalier" +
+					" AND p.id_personne = eh.id_personne )" +
+					" UNION " +
+					"(SELECT p.nom, p.prenom, eh.id_hospitalier, ('ide') 'role',im1.id_module " +
+					" FROM `personne` p, `etre_hospitalier` eh, `ide_module` im1" +
+					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = im1.id_hospitalier" +
+					" AND p.id_personne = eh.id_personne )" +
+					" UNION " +
+					"(SELECT p.nom, p.prenom, eh.id_hospitalier, ('brancardier') 'role',bm2.id_module " +
+					" FROM `personne` p, `etre_hospitalier` eh, `brancardier_module` bm2" +
+					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = bm2.id_hospitalier" +
+					" AND p.id_personne = eh.id_personne )");
+			}
+			
+			private function provideExportDatagrid(evt:Object):void
+			{
+				Alert.show("Voulez-vous exporter les salles ?","",Alert.OK|Alert.CANCEL,this, alertClickHandler);
+			}
+			
+			private function alertClickHandler(event:CloseEvent):void
+			{
+				var arraySalle:ArrayCollection = query.getRecords();
+				var arrayModule:ArrayCollection = query2.getRecords();
+				var csvProvider:ArrayCollection = new ArrayCollection();
+				var lastModuleID:int = 0;
+				for(var i:int=0;i<arraySalle.length;i++)
+				{
+					var moduleID:int = arraySalle[i].id_module;
+					if(moduleID != lastModuleID)
+					{
+						csvProvider.addItem({module:"Module"});
+						for(var j:int=0; j<arrayModule.length;j++)
+						{
+							if(arrayModule[j].id_module==moduleID)
+								csvProvider.addItem(arrayModule[j]);
+						}
+						lastModuleID = moduleID;
+						csvProvider.addItem({module:"Salles"});
+					}
+					csvProvider.addItem(arraySalle[i]);
+				}
+				
+				switch (event.detail){
+					case Alert.OK:
+						var csvText:String = exportCSVFromArrayCollection(csvProvider,false);
+						var fileSave:FileReference= new FileReference();
+						fileSave.save(csvText,"export_salle.csv");
+						break;
+					case Alert.CANCEL:
+						break;
+				}
+				
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			public function exportCSVFromArrayCollection(ac:ArrayCollection,header:Boolean=true):String
+			{
+				var text:String = "";
+				var rows:int = ac.length;
+				if(header)
+				{
+					for(var n:String in ac[0])
+					{
+						text = text + n +";";
+					}
+					text = text + "\n";
+				}
+				for(var m:int=0;m<rows;++m)
+				{
+					for each(var o:String in ac[m])
+					{
+						text = text + o +";";
+					}
+					text = text.slice(0,text.length-1);
+					text = text + "\n";
+				}
+				return text;
+			}	
+			
+			private var searchTimer:Timer;
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						canvas1_creationCompleteHandler();
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%">
+		<mx:Button label="Actualiser" click="provideModules(event)"/>
+		<mx:Spacer width="100%"/>
+		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)"/>
+	</mx:HBox>
+	<mx:Canvas>
+		<mx:Image source="@Embed('/assets/search.png')" />
+		<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"  borderSkin="@Embed('/assets/blank.png')" textAlign="left" />
+	</mx:Canvas>
+	<mx:HBox width="100%" visible="{(searchInput.text=='')}">
+		<mx:Label text="Etage :"/><mx:ComboBox id="etageCB" dataProvider="{[{nom:'1er',value:1},{nom:'2ème',value:2},{nom:'3ème',value:3},{nom:'4ème',value:4}]}" labelField="nom" change="etageCB_changeHandler(event)" selectedIndex="1"/>
+		<mx:Label text="Module :"/><mx:ComboBox id="moduleCB" dataProvider="{moduleSalleList}" labelField="libelle" change="moduleCB_changeHandler(event)"/>
+	</mx:HBox>
+	<mx:HBox x="16.5" y="64" width="100%" height="600" verticalScrollPolicy="off">
+		<mx:VBox id="container" height="600"  width="100%" verticalScrollPolicy="on" maxHeight="600">
+		</mx:VBox>
+		<mx:VBox id="containerSans" height="100%"  >
+		</mx:VBox>
+		
+	</mx:HBox>
+	
+</mx:VBox>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var provider:ArrayCollection;
+			
+			
+			
+			public function generateModuleProvider(chambreId:int=0):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("select nom, prenom, aff.service,id_hospitalier " +
+					"from `affectation` aff, " +
+					"(SELECT p.nom, p.prenom, h.id_affectation,h.id_hospitalier" +
+					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh,  `affectation` a, `obtenir` ob " +
+					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier NOT IN (" +
+					"select id_hospitalier from `s_occuper` UNION SELECT id_hospitalier FROM `responsable_module` UNION SELECT id_hospitalier FROM `ide_module` UNION SELECT id_hospitalier FROM `brancardier_module` " +
+					")" +
+					" AND h.id_hospitalier = eh.id_hospitalier " +
+					" AND p.id_personne = eh.id_personne" +
+					" AND ob.id_hospitalier = h.id_hospitalier" +
+					" AND ob.id_affectation = a.id_affectation" +
+					" AND a.service = 'Salles'"+
+					" GROUP BY p.id_personne) af " +
+					"where aff.id_affectation=af.id_affectation");
+				
+				
+				 
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function affecterA(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{
+					var formulaireSalle:FormulaireSalle = new FormulaireSalle();
+					PopUpManager.addPopUp(formulaireSalle,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireSalle);
+					formulaireSalle.setFormulaire(listHospi.selectedItem);
+					formulaireSalle.addEventListener(Salle.RELOAD_MODULE,refresh);
+				}
+			}
+			
+			protected function affecterModule(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{
+					var formulaireModule:FormulaireModule = new FormulaireModule();
+					PopUpManager.addPopUp(formulaireModule,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireModule);
+					formulaireModule.setFormulaire(listHospi.selectedItem);
+					formulaireModule.addEventListener(Salle.RELOAD_MODULE,refresh);
+				}
+			}
+			
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Salle.RELOAD_MODULE));
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="title" text="{titleText}"/>
+	<mx:HBox height="100%" width="100%">
+		<mx:VBox height="100%">
+			<mx:Button label="Affecter à une salle" click="affecterA(event)" enabled="{!index.visuMode}"/>
+			<mx:Button label="Affecter à un module" click="affecterModule(event)" enabled="{!index.visuMode}"/>
+		</mx:VBox>
+		<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%" width="100%">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+				<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:HBox>
+</mx:VBox>

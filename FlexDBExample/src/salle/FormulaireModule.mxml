@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="184" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			import proxy.ModuleProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var hospitalierID:int;
+			private var salleOld:Number;
+			
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				this.moduleList.dataProvider = ModuleProxy.ModuleDispo;
+			}
+			
+			public function setFormulaire(item:Object,sallenOld:Number=NaN):void
+			{
+				myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";
+				hospitalierID = item.id_hospitalier;
+				this.salleOld = sallenOld;
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				if(fonctionList.selectedLabel == "responsable")
+				{
+					query.execute("INSERT INTO responsable_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", Query.INSERT );
+
+				}
+				else if(fonctionList.selectedLabel == "ide")
+				{
+					query.execute("INSERT INTO ide_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", Query.INSERT );
+				}
+				else
+				{
+					query.execute("INSERT INTO brancardier_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", Query.INSERT );
+				}
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(Salle.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="myLabel" text="Affecter" width="100%"/>
+	<mx:ComboBox id="moduleList" labelField="libelle"></mx:ComboBox>
+	<mx:Label text="Fonction :"/>
+	<mx:ComboBox id="fonctionList" dataProvider="{['responsable','ide','brancardier']}"></mx:ComboBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="onCreateComplete()">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable] public var transports   :ArrayCollection;
+			[Bindable] public var arrets   :ArrayCollection;
+			
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+			
+				query.execute("SELECT * FROM transport");
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				transports = query.getRecords();
+				
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+
+			protected function datagrid1_changeHandler(event:ListEvent):void
+			{
+				query2.addEventListener(Query.QUERY_END, provideListeArrets);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport );
+			}
+			
+			private function provideListeArrets(evt:Object):void
+			{
+				arrets = query2.getRecords();
+				
+			}	
+
+		]]>
+	</mx:Script>
+	<mx:Label text="Liste des cars :"/>
+	<mx:HBox width="100%">
+		<mx:DataGrid id="transportListe" dataProvider="{transports}" change="datagrid1_changeHandler(event)" >
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="nom_transport"/>
+				<mx:DataGridColumn headerText="Capacité" dataField="Capacite"/>
+				<mx:DataGridColumn headerText="Compagnie" dataField="compagnie"/>
+				<mx:DataGridColumn headerText="Coût" dataField="cout"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:VBox height="100%">
+			<mx:Button label="Nouveau car"/>
+		</mx:VBox>
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Label text="Liste des arrêts pour le car :"/>
+		<mx:Label text="Label"/>
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:DataGrid dataProvider="{arrets}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+				<mx:DataGridColumn headerText="Heure aller" dataField="heure_aller"/>
+				<mx:DataGridColumn headerText="Heure retour" dataField="heure_retour"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:VBox height="100%">
+			<mx:Button label="Ajouter"/>
+			<mx:Button label="Enlever"/>
+		</mx:VBox>
+	</mx:HBox>
+	
+</mx:VBox>

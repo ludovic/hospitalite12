@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="942" height="586" creationComplete="onCreateComplete()">
+
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import hospitalier.ListeNom;
+			
+			import mx.charts.renderers.DiamondItemRenderer;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.SecteurProxy;
+			
+			[Bindable]
+			[Embed(source='assets/warning.png')]
+			private var WARNING:Class;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query7    :IQuery;
+			private var query8    :IQuery;
+			private var query9    :IQuery;
+			private var query10    :IQuery;
+			private var query11    :IQuery;
+			
+			private var personneID:Number
+			[Bindable]
+			public var secteurProvider:ArrayCollection;
+			
+			public static var RELOAD:String = "reload";
+			
+			private function onCreateComplete():void
+			{
+				secteurProvider		= SecteurProxy.Secteur;
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				query8 = new Query();
+				query8.connect("conn1", db);
+				query9 = new Query();
+				query9.connect("conn1", db);
+				query10 = new Query();
+				query10.connect("conn1", db);
+				query11 = new Query();
+				query11.connect("conn1", db);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function nameSearch(event:MouseEvent):void
+			{
+				query7= new Query();
+				query7.connect("conn1", db);
+				query7.addEventListener(Query.QUERY_END, provideNameGrid);
+				query7.addEventListener(Query.QUERY_ERROR,queryError);
+				query7.execute("Select * from personne where Nom LIKE '"+nom.text+"%'" +
+					"AND id_personne NOT IN (SELECT p.id_personne FROM etre_hospitalier h, personne p WHERE h.id_personne = p.id_personne " +
+					" AND h.id_pele="+index.peleActuel.id_pele +" )"+
+					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_pelerin pe, personne p WHERE pe.id_personne = p.id_personne " +
+					" AND pe.id_pele="+index.peleActuel.id_pele +" )"+
+					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_malade m, personne p WHERE m.id_personne = p.id_personne " +
+					" AND m.id_pele="+index.peleActuel.id_pele +" )");
+			}
+			private function provideNameGrid(evt:Object):void
+			{
+				var listeNom:ListeNom = new ListeNom();
+				listeNom.listeNomProvider = query7.getRecords();
+				PopUpManager.addPopUp(listeNom,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(listeNom);
+				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
+			}
+			
+			private var idPersonne:Number;
+			private function setPersonneFields(event:DocEvent):void
+			{
+				var myData:Object = event.body;
+				idPersonne			= myData.id_personne;
+				adresse.text		= myData.Adresse1;
+				codePostal.text		= myData.CodePostal;
+				commune.text		= myData.Commune;
+				email.text			= myData.Courriel;
+				dateNaissance.selectedDate = Tools.stringToDate(myData.DateNaissance);
+				var id_personne:int = myData.id_personne;
+				for(var i:int=0;i<secteur.dataProvider.length;++i)
+				{
+					secteur.selectedIndex = i;
+					if(secteur.selectedItem.id_secteur == myData.id_secteur)
+						break;
+				}
+				
+				nom.text 			= myData.Nom;
+				prenom.text			= myData.Prenom;
+				portable.text		= myData.Portable;
+				sexe.selectedItem	= myData.sexe;
+				telephone.text		= myData.Tel;
+				titre.selectedItem 	= myData.Titre;
+				removeBt.visible =true;
+				adresse.enabled		= false;
+				codePostal.enabled	= false;
+				commune.enabled		= false;
+				email.enabled		= false;
+				dateNaissance.enabled	= false;
+				secteur.enabled		= false;
+				nom.enabled			= false;
+				prenom.enabled		= false;
+				portable.enabled	= false;
+				sexe.enabled		= false;
+				telephone.enabled	= false;
+				titre.enabled		= false;
+				
+			}
+			protected function removeSelectionData(event:MouseEvent):void
+			{
+				idPersonne			= NaN;
+				adresse.text		= "";
+				codePostal.text		= "";
+				commune.text		= "";
+				email.text			= "";
+				dateNaissance.text  = "";
+				secteur.selectedIndex = 0;
+				nom.text 			= "";
+				prenom.text			= "";
+				portable.text		= "";
+				sexe.selectedIndex = 0;
+				telephone.text		= "";
+				titre.selectedIndex = 0;
+				removeBt.visible 	= false;
+				adresse.enabled		= true;
+				codePostal.enabled	= true;
+				commune.enabled		= true;
+				email.enabled		= true;
+				dateNaissance.enabled	= true;
+				secteur.enabled		= true;
+				nom.enabled			= true;
+				prenom.enabled		= true;
+				portable.enabled	= true;
+				sexe.enabled		= true;
+				telephone.enabled	= true;
+				titre.enabled		= true;
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			protected function addPersonne(event:MouseEvent):void
+			{
+				
+				
+				if(isNaN(this.idPersonne))
+				{
+					query2.addEventListener(Query.QUERY_END, testPersonneInBase);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("Select *  from personne where Nom='"+Tools.sanitize(nom.text) +"' and Prenom='"+Tools.sanitize(prenom.text)+"' and DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'");
+				}
+				else
+					this.insertIntoMalade(null);
+			}
+			
+			private function testPersonneInBase(evt:Object):void
+			{
+				var result:ArrayCollection = query2.getRecords();
+				if(result.length>0)
+					Alert.show("Une personne avec les mêmes nom, prénom et date de naissance existe déjà dans la base de données. Avez-vous pensez à utiliser le bouton de recherche ?" +
+						" Si oui, vérifier que cette personne n'est pas déjà inscrite.","",Alert.OK,this,null,WARNING);
+				else
+					insertIntoPersonne();
+			}
+			
+			private function insertIntoPersonne():void
+			{
+				query.addEventListener(Query.QUERY_END, insertIntoMalade);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("INSERT INTO personne (" +
+					" `Titre`, `Nom`, `Prenom`, `Adresse1`," +
+					" `Adresse2`, `Adresse3`, `CodePostal`, `Commune`, `DateNaissance`, `sexe`, `Tel`, `Portable`, `Courriel`, `etre_hospitalier`, `id_secteur`) " +
+					"	VALUES ('"+(titre.selectedItem as String)+"','"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(prenom.text)+"','"+Tools.sanitize(adresse.text)+"',NULL,NULL,'"+codePostal.text+"','"+Tools.sanitize(commune.text)+"','"+
+					Tools.dateToString(dateNaissance.selectedDate)+"','"+this.sexe.selectedLabel+"','"+telephone.text+"','"+portable.text+"','"+email.text+"',NULL,'"+
+					this.secteur.selectedItem.id_secteur+"')", Query.INSERT);
+			}
+			
+			private function insertIntoMalade(evt:Object):void
+			{
+				
+				query8.addEventListener(Query.QUERY_END, insertIntoEtreMalade);
+				query8.addEventListener(Query.QUERY_ERROR,queryError);
+				query8.execute("INSERT INTO malade (`taille`, `poids`, `pers_prev_hosp`, `pers_prev_fam`, `pers_prev_tut`, `pers_prev_pers_conf`, `pers_prev_nom`, `pers_prev_tel`, " +
+					"`pos_voy_assis`, `pos_voy_couche`, `pos_voy_assis_ft`, `monte_marches_car`, `deplace_seul`, `deplace_aide`, `deplace_canne`, `deplace_deambulateur`," +
+					" `deplace_fauteuil`, `deplace_brancard`, `deplace_escalier`, `protheses`, `deficit_vision`, `deficit_audition`, `deficit_parole`, `deficit_desorientation`," +
+					" `deficit_fugue`, `reg_normal`, `reg_diab`, `reg_ss_sel`, `reg_mix`, `reg_pb_deglutition`, `reg_eau_gef`, `soin_inf_inj`, `soin_inf_inj_type`, " +
+					"`soin_inf_inj_horraire`, `soin_inf_pansement`, `soin_inf_pansement_type`, `autre_soin_spec`, `autre_soin_prise_med`, `autre_soin_oxygene`, " +
+					"`autre_soin_oxygene_debit`, `toilette_aide_total`, `toilette_aide_partiel`, `toilette_aide_lit`, `coucher_aide`, `coucher_barriere_lit`, `coucher_potence`, " +
+					"`incont_bes_change`, `incont_jour`, `incont_nuit`, `incont_sond_uri`, `incont_etui_pen`, `incont_poche_stom`, `incont_poche_stom_type`,`incomplet`,`codification`,`paiementInsc`,`montantInsc`,`divers`)" +
+					" VALUES ('"+taille.value+"', '"+poids.value+"', '"+Number(hospitalierCB.selected)+"', '"+Number(familleCB.selected)+"', '"+Number(tuteurCB.selected)+"', '"+Number(personneCB.selected)+"', '"+Tools.sanitize(nom_prenom.text)+"', '"+Tools.sanitize(tel.text)+"'," +
+					" '"+Number(voyageAssisCB.selected)+"', '"+Number(voyageCoucheCB.selected)+"', '"+Number(voyageFauteuilRCB.selected)+"', '"+Number(peutMonterMarcheCB.selected)+"', '"+Number(deplaceSeulCB.selected)+"', '"+Number(aideCB.selected)+"', '"+Number(cannesCB.selected)+"', '"+Number(deambulateurCB.selected)+"', " +
+					" '"+Number(fauteuilRCB.selected)+"', '"+Number(brancardCB.selected)+"', '"+Number(escalierCB.selected)+"', '"+Tools.sanitize(protheses.text)+"', '"+Number(visionCB.selected)+"', '"+Number(auditionCB.selected)+"', '"+Number(paroleCB.selected)+"', '"+Number(desorientationCB.selected)+"', " +
+					" '"+Number(fugueCB.selected)+"', '"+Number(regimeNormalCB.selected)+"', '"+Number(diabetiqueCB.selected)+"', '"+Number(sansSelCB.selected)+"'," +
+					" '"+Number(mixeCB.selected)+"', '"+Number(troubleDeglutionCB.selected)+"', '"+Number(eauGelifieeCB.selected)+"', '"+Number(injectionCB.selected)+"', '"+Tools.sanitize(injectionType.text)+"'," +
+					" '"+Tools.sanitize(injectionHorraire.text)+"', '"+Number(pansementCB.selected)+"', '"+Tools.sanitize(pansementType.text)+"', '"+Tools.sanitize(autreSoin.text)+"', '"+Number(priseMedicamentControleeCB.selected)+"', '"+Number(oxygeneCB.selected)+"', " +
+					" '"+Tools.sanitize(debitOxygene.text)+"', '"+Number(toilettesAideTotaleCB.selected)+"', '"+Number(toilettesAidePartielleCB.selected)+"', '"+Number(toiletteLitCB.selected)+"', '"+Number(coucherAideCB.selected)+"', '"+Number(coucherBarriereCB.selected)+"', '"+Number(coucherPotenceCB.selected)+"', " +
+					" '"+Number(incontinenceChangeCB.selected)+"', '"+Number(incontinenceJourCB.selected)+"', '"+Number(incontinenceNuitCB.selected)+"', '"+Number(sondeUrinaireCB.selected)+"', '"+Number(etuiPenienCB.selected)+"', '"+Number(pochesPourStomieCB.selected)+"', '"+Tools.sanitize(typeStomie.text)+"','"+Tools.ouiNon(incomplet.selected)+"', '"+Tools.sanitize(codification.text)+"', '"+Tools.ouiNon(this.paiementInsc.selected)+"','"+this.montantInsc.text+"','"+Tools.sanitize(divers.text)+"')", Query.INSERT);
+					
+					
+			}
+			
+			private function insertIntoEtreMalade(evt:Object):void
+			{
+				if(isNaN(idPersonne))
+					personneID = query.getLastInsertID();	
+				else
+					personneID = idPersonne;
+				var maladeID:Number = query8.getLastInsertID();
+				query9.addEventListener(Query.QUERY_END, insertIntoPrix);
+				query9.addEventListener(Query.QUERY_ERROR,queryError);
+				query9.execute("INSERT INTO etre_malade (`id_personne`,`id_malade`,`id_pele`) VALUES ('"+personneID+"','"+maladeID+"','"+index.peleActuel.id_pele+"')", Query.INSERT);
+				
+			}
+			
+			private function insertIntoPrix(evt:Object):void
+			{
+				query10.addEventListener(Query.QUERY_END, insertIntoInscrire);
+				query10.addEventListener(Query.QUERY_ERROR,queryError);
+				query10.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, '0', '0', '0') ", Query.INSERT );
+			}
+			
+			private function insertIntoInscrire(evt:Object):void
+			{
+				var prixID:Number = query10.getLastInsertID();
+				query11.addEventListener(Query.QUERY_END, queryEnd);
+				query11.addEventListener(Query.QUERY_ERROR,queryError);
+				query11.execute("INSERT INTO inscrire (`id_pele`,`id_transport`,`id_personne`,`id_gare`,`id_hebergement`,`id_prix`) " +
+					"VALUES ('"+index.peleActuel.id_pele+"',0,'"+personneID+"',0,0,'"+prixID+"')", Query.INSERT);
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				this.dispatchEvent(new Event(RELOAD));
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Form x="0" y="0" width="100%" height="500" verticalScrollPolicy="on">
+			<mx:FormItem label="Titre">
+				<mx:HBox>
+					<mx:ComboBox id="titre" dataProvider="['Mr','Mme','Mlle','Sr','Pr','Dr']"/>
+					<mx:FormItem label="Nom">
+						<mx:TextInput id="nom" restrict="A-Z '\-"/>
+					</mx:FormItem>
+					<mx:Button label="R" click="nameSearch(event)"/>
+					<mx:Button id="removeBt" label="X" click="removeSelectionData(event)" visible="false"/>
+					<mx:FormItem label="Prenom">
+						<mx:TextInput id="prenom" restrict="A-Z '\-"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+				
+			
+			<mx:FormItem label="Date de naissance">
+				<mx:HBox>
+					<mx:DateField id="dateNaissance" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+								  firstDayOfWeek="0"
+								  dayNames="['D','L','M','M','J','V','S']" 
+								  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+				
+					<mx:FormItem label="Sexe">
+						<mx:ComboBox id="sexe" dataProvider="{['M','F']}"/>
+					</mx:FormItem>
+					<mx:FormItem label="Poids">
+						<mx:NumericStepper id="poids" maximum="300"/>
+					</mx:FormItem>
+					<mx:FormItem label="Taille" >
+						<mx:NumericStepper id="taille" maximum="300"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Adresse">
+				<mx:TextInput id="adresse" width="300"/>
+			</mx:FormItem>
+			<mx:FormItem label="Code Postal" >
+				<mx:HBox width="100%">
+					<mx:TextInput id="codePostal" restrict="0-9" maxChars="5"/>
+					<mx:FormItem label="Commune">
+						<mx:TextInput id="commune" restrict="A-Z '\-"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Telephone">
+				<mx:HBox>
+					<mx:TextInput id="telephone" restrict="0-9" maxChars="10"/>
+					<mx:FormItem label="Portable">
+						<mx:TextInput id="portable" restrict="0-9" maxChars="10"/>
+					</mx:FormItem>
+					<mx:FormItem label="Email">
+						<mx:TextInput id="email"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Secteur">
+				<mx:ComboBox id="secteur" dataProvider="{secteurProvider}" labelField="section"/>
+			</mx:FormItem>
+			<mx:FormItem label="Personne à prevenir">
+				<mx:VBox>
+					<mx:HBox>
+						<mx:CheckBox label="Hospitalier" id="hospitalierCB"/>
+						<mx:CheckBox label="Famille" id="familleCB"/>
+						<mx:CheckBox label="Tuteur" id="tuteurCB"/>
+						<mx:CheckBox label="Personne de confiance" id="personneCB"/>
+					</mx:HBox>
+					<mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Nom et Prénom"/>
+							<mx:TextInput id="nom_prenom" />
+						</mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Tél/Port"/>
+							<mx:TextInput id="tel"/>
+						</mx:HBox>
+					</mx:HBox>
+				</mx:VBox>
+			</mx:FormItem>
+			<mx:FormItem label="Position pour le voyage">
+				<mx:HBox>
+					<mx:CheckBox label="Assis" id="voyageAssisCB"/>
+					<mx:CheckBox label="Couché" id="voyageCoucheCB"/>
+					<mx:CheckBox label="Assis dans son fauteuil roulant" id="voyageFauteuilRCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Peut monter les marches">
+				<mx:CheckBox id="peutMonterMarcheCB"/>
+			</mx:FormItem>
+			<mx:FormItem label="Locomotion">
+				<mx:HBox>
+					<mx:CheckBox label="Déplacement seul" id="deplaceSeulCB"/>
+					<mx:CheckBox label="Avec aide" id="aideCB"/>
+					<mx:CheckBox label="Avec cannes" id="cannesCB"/>
+					<mx:CheckBox label="Avec déambulateur" id="deambulateurCB"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="En fauteuil roulant" id="fauteuilRCB"/>
+					<mx:CheckBox label="Sur brancard" id="brancardCB"/>
+					<mx:CheckBox label="Utilise les escaliers" id="escalierCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Prothèses">
+				<mx:TextInput id="protheses"/>
+			</mx:FormItem>
+			<mx:FormItem label="Déficit neurosensoriel">
+				<mx:HBox>
+					<mx:CheckBox label="Vision" id="visionCB"/>
+					<mx:CheckBox label="Audition" id="auditionCB"/>
+					<mx:CheckBox label="Parole" id="paroleCB"/>
+					<mx:CheckBox label="Désorientation" id="desorientationCB"/>
+					<mx:CheckBox label="Risque de fugue" id="fugueCB"/>	
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Régime alimentaire">
+				<mx:HBox>
+					<mx:CheckBox label="Normal" id="regimeNormalCB"/>
+					<mx:CheckBox label="Diabétique" id="diabetiqueCB"/>
+					<mx:CheckBox label="Sans sel" id="sansSelCB"/>
+					<mx:CheckBox label="Mixé" id="mixeCB"/>
+					<mx:CheckBox label="Troubles de la déglutition" id="troubleDeglutionCB"/>	
+					<mx:CheckBox label="Eau gélifiée" id="eauGelifieeCB"/>
+					<mx:CheckBox label="Aide au repas" id="aideRepasCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Soin infirmiers">
+				<mx:HBox>
+					<mx:CheckBox label="Injection" id="injectionCB"/>
+					<mx:Label text="Type"/>
+					<mx:TextInput id="injectionType" />
+					<mx:Label text="Horraire"/>
+					<mx:TextInput id="injectionHorraire"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="Pansement" id="pansementCB"/>
+					<mx:Label text="Type"/>
+					<mx:TextInput id="pansementType" />
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Autre soins spécifiques">
+				<mx:TextInput id="autreSoin"/>
+				<mx:HBox>
+					<mx:CheckBox label="Prise de médicament contrôlée par l'infirmière" id="priseMedicamentControleeCB"/>
+					<mx:CheckBox label="Oxygène" id="oxygeneCB"/>
+					<mx:Label text="Debit par 24h"/>
+					<mx:TextInput id="debitOxygene"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Toilettes">
+				<mx:HBox>
+					<mx:CheckBox label="Aide totale" id="toilettesAideTotaleCB"/>
+					<mx:CheckBox label="Aide partielle" id="toilettesAidePartielleCB"/>
+					<mx:CheckBox label="Toilette au lit" id="toiletteLitCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Coucher">
+				<mx:HBox>
+					<mx:CheckBox label="Aide" id="coucherAideCB"/>
+					<mx:CheckBox label="Barrière au lit" id="coucherBarriereCB"/>
+					<mx:CheckBox label="Potence" id="coucherPotenceCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Incontinence">
+				<mx:HBox>
+					<mx:CheckBox label="Besoins de change" id="incontinenceChangeCB"/>
+					<mx:CheckBox label="Jour" id="incontinenceJourCB"/>
+					<mx:CheckBox label="Nuit" id="incontinenceNuitCB"/>
+				</mx:HBox>
+				<mx:HBox>
+				<mx:CheckBox label="Sonde urinaire" id="sondeUrinaireCB"/>
+				<mx:CheckBox label="Etui pénien" id="etuiPenienCB"/>
+				<mx:CheckBox label="Poches pour stomie" id="pochesPourStomieCB"/>
+					<mx:Label text="Type"/>
+					<mx:TextInput id="typeStomie"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Paiement à l'inscription">
+				<mx:HBox>
+					<mx:CheckBox id="paiementInsc"/>
+					<mx:FormItem label="Montant">
+						<mx:TextInput id="montantInsc" restrict="0-9\."/>
+					</mx:FormItem>
+				</mx:HBox>
+				
+			</mx:FormItem>
+			<mx:FormItem label="Divers">
+				<mx:TextArea id="divers" width="425" height="60"/>
+			</mx:FormItem>
+			<mx:FormItem label="Fiche incomplète">
+				<mx:CheckBox id="incomplet"/>
+			</mx:FormItem>
+			<mx:FormItem label="Codification">
+				<mx:TextInput id="codification" maxChars="5"/>
+			</mx:FormItem>
+		</mx:Form>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Ajouter"  click="addPersonne(event)"/>
+		<mx:Button label="annuler" click="{PopUpManager.removePopUp(this)}" />
+	</mx:HBox>
+</mx:VBox>
+</mx:TitleWindow>

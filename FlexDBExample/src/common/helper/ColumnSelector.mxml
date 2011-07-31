@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="canvas1_creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.CheckBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.events.FlexEvent;
+			public var dataGrid:DataGrid;
+			[Bindable]
+			private var myProvider:Array=new Array();
+			protected function canvas1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var columnArray:Array = dataGrid.columns;
+				for(var i:int=0;i< columnArray.length;++i)
+				{
+					var column:DataGridColumn = columnArray[i];
+					var myObject:Object = new Object();
+					myObject.selected = column.visible;
+					myObject.label = column.headerText;
+					myProvider.push(myObject);
+					
+				}
+			}
+			
+			public function changeColumn(event:Event):void
+			{
+				var myCheckBox:CheckBox = event.target as CheckBox;
+				var columnArray:Array = dataGrid.columns;
+				for(var i:int=0;i< columnArray.length;++i)
+				{
+					var column:DataGridColumn = columnArray[i];
+					if(column.headerText == myCheckBox.label)
+					{
+						myCheckBox.data.selected = !myCheckBox.data.selected;
+						column.visible = !column.visible;
+						break;
+					}
+				}
+			}
+
+		]]>
+	</mx:Script>
+	<mx:ComboBox id="comboBox" dataProvider="{this.myProvider}"  prompt="- Colonnes -" change="{comboBox.selectedIndex=-1;}">
+		<mx:itemRenderer>
+			<mx:Component>
+				<mx:CheckBox click="outerDocument.changeColumn(event)" label="{data.label}" selected="{data.selected}"/>
+			</mx:Component>						
+		</mx:itemRenderer>
+	</mx:ComboBox>
+</mx:Canvas>

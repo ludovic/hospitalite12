@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+				cornerRadius="6" alpha="1" height="80" width="220" 
+				horizontalAlign="center" verticalAlign="middle" title="Progression">
+	<mx:Script>
+		<![CDATA[
+			public function setprogress(value:Number,total:Number):void
+			{
+				bar.setProgress(value,total);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:ProgressBar id="bar"  height="10"  width="160" minimum="0"
+					mode="manual"/>
+	
+</mx:TitleWindow>

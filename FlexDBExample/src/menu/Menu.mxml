@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			[Bindable] public var selected:int = 0;
+		]]>
+	</mx:Script>
+	<mx:Accordion x="0" y="0" width="100%" height="100%">
+		<mx:Canvas label="Hospitalier" width="100%" height="100%">
+			<mx:Button x="10" y="10" label="Hospitalier" click="{selected = 1;}"/>
+			<mx:Button x="10" y="40" label="Inscriptions"/>
+			
+		</mx:Canvas>
+		<mx:Canvas label="Configuration" width="100%" height="100%">
+		</mx:Canvas>
+	</mx:Accordion>
+	
+</mx:Canvas>

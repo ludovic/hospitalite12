@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"  creationComplete="onCreateComplete()" xmlns:helper="common.helper.*">
+	<mx:Script>
+		<![CDATA[
+			import common.helper.DataGridDataExporter;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			/** */
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			[Bindable] public var users   :ArrayCollection;
+			
+			/**
+			 * This will be call when Application creation
+			 * has complete.
+			 */
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_secteur,p.id_profession_sante,ps.Profession,p.id_personne " +
+					"FROM etre_hospitalier h, personne p,secteur s,profession_sante ps  WHERE h.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND ps.id_profession_sante=p.id_profession_sante AND p.valid<>'DET' " +
+					"GROUP BY p.id_personne ");
+				
+				
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				users = query.getRecords();
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			///////////////////////// SEARCH ////////////////////////////////////////////////////
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+					users.filterFunction = searchModel;
+					users.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+			
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+					
+				for(var prop:String in item)
+				{
+					if(item[prop]!=null)
+					{
+						if(String(item[prop]).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+						{
+							isMatch = true
+						}
+					}
+				}
+				return isMatch;    
+			}
+			
+			
+
+
+			protected function dataGrid_itemClickHandler(event:ListEvent):void
+			{
+				var formulaireHospitalier:FormulaireHospitalier = new FormulaireHospitalier();
+				PopUpManager.addPopUp(formulaireHospitalier,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(formulaireHospitalier);
+				formulaireHospitalier.setFormulaire(event.itemRenderer.data);
+				formulaireHospitalier.addEventListener(FormulaireHospitalier.RELOAD,reload);
+			}
+			
+			public function reload(event:Object=null):void
+			{
+				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_secteur,p.id_profession_sante,ps.Profession,p.id_personne " +
+					"FROM etre_hospitalier h, personne p,secteur s,profession_sante ps  WHERE h.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND ps.id_profession_sante=p.id_profession_sante AND p.valid<>'DET' " +
+					"GROUP BY p.id_personne ");
+			}
+
+			
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				var csvText:String = DataGridDataExporter.exportCSV(dataGrid);
+				var fileSave:FileReference= new FileReference();
+				fileSave.save(csvText,"export_hospitalier.csv");
+			}
+
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="90%">
+		<mx:HBox width="100%">
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
+			<mx:Button icon="@Embed(source='assets/reload.gif')" click="reload(event)" height="22"/>
+			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
+			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
+		</mx:HBox>
+		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{users}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
+			<mx:columns>
+				<mx:DataGridColumn dataField="Titre" headerText="Titre"/>
+				<mx:DataGridColumn dataField="Nom" headerText="Nom"/>
+				<mx:DataGridColumn dataField="Prenom" headerText="Prenom"/>
+				<mx:DataGridColumn dataField="Adresse1" headerText="Adresse"/>
+				<mx:DataGridColumn dataField="CodePostal" headerText="CP"/>
+				<mx:DataGridColumn dataField="Commune" headerText="Ville"/>
+				<mx:DataGridColumn dataField="DateNaissance" headerText="Date N"/>
+				<mx:DataGridColumn dataField="sexe" headerText="Sexe"/>
+				<mx:DataGridColumn dataField="Tel" headerText="Tel"/>
+				<mx:DataGridColumn dataField="Portable" headerText="Portable"/>
+				<mx:DataGridColumn dataField="Courriel" headerText="Courriel"/>
+				<mx:DataGridColumn dataField="section" headerText="Secteur"/>
+				<mx:DataGridColumn dataField="Profession" headerText="Profession"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label text="{'Nombre de lignes : ' + users.length }"/>
+	</mx:VBox>
+</mx:VBox>

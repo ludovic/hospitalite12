@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="500" creationComplete="creationCompleteHandler(event)">
+	
+	<mx:Script>
+		<![CDATA[
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.ProfessionSanteProxy;
+			import proxy.SecteurProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var id_personne:int;
+			public static var RELOAD:String = "reload";
+			
+			public function setFormulaire(item:Object):void
+			{
+				id_personne				= item.id_personne;
+				this.titre.selectedItem	= item.Titre;
+				this.nom.text 			= item.Nom;
+				this.prenom.text 		= item.Prenom;
+				this.sexe.selectedItem	= item.sexe;
+				this.cp.text			= item.CodePostal;
+				this.commune.text		= item.Commune;
+				this.adresse.text		= item.Adresse1;
+				this.telephone.text		= item.Tel;
+				this.portable.text		= item.Portable
+				this.email.text			= item.Courriel;
+				this.dateNaissance.selectedDate = Tools.stringToDate(item.DateNaissance);
+				
+				for(var i:int=0;i<secteur.dataProvider.length;++i)
+				{
+					secteur.selectedIndex = i;
+					if(secteur.selectedItem.section == item.section)
+						break;
+				}
+				
+				for(i=0;i<profession.dataProvider.length;++i)
+				{
+					profession.selectedIndex = i;
+					if(profession.selectedItem.id_profession_sante == item.id_profession_sante)
+						break;
+				}
+			}
+										
+			protected function close(event:MouseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				this.secteur.dataProvider = SecteurProxy.Secteur;
+				this.profession.dataProvider = ProfessionSanteProxy.Profession;
+			}
+			
+			protected function modifier(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END, updatePersonne);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("UPDATE personne " +
+					"SET Titre ='"+(titre.selectedItem as String)+"', Nom ='"+Tools.sanitize(nom.text)+"', Prenom = '"+Tools.sanitize(prenom.text)+"', " +
+						"Adresse1 ='"+Tools.sanitize(adresse.text)+"', CodePostal='"+cp.text+"', Commune='"+Tools.sanitize(commune.text)+"', DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'," +
+						" sexe ='"+sexe.selectedLabel+"', Tel='"+telephone.text+"', Portable='"+portable.text+"', Courriel='"+email.text+"',  id_secteur='"+secteur.selectedItem.id_secteur+"', " +
+						"id_profession_sante='"+profession.selectedItem.id_profession_sante+"' " +
+						"WHERE id_personne= '"+this.id_personne+"'",Query.UPDATE);
+				
+			}
+			
+			private function updatePersonne(evt:Event):void
+			{
+				this.dispatchEvent(new Event(RELOAD));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+
+		]]>
+	</mx:Script>
+	<mx:VBox>
+		<mx:Form x="0" y="0" width="370" height="100%">
+			<mx:FormItem label="Titre">
+				<mx:ComboBox id="titre" dataProvider="['Mr','Mme','Mlle','Sr','Pr','Dr']"/>
+			</mx:FormItem>
+			<mx:FormItem label="Nom">
+				<mx:TextInput id="nom" restrict="A-Z '\-"/>
+			</mx:FormItem>
+			<mx:FormItem label="Prenom">
+				<mx:TextInput id="prenom" restrict="A-Z '\-"/>
+			</mx:FormItem>
+			<mx:FormItem label="Sexe">
+				<mx:ComboBox id="sexe" dataProvider="{['M','F']}"/>
+			</mx:FormItem>
+			<mx:FormItem label="Adresse">
+				<mx:TextInput id="adresse"/>
+			</mx:FormItem>
+			<mx:FormItem label="Code Postal">
+				<mx:TextInput id="cp" restrict="0-9" maxChars="5"/>
+			</mx:FormItem>
+			<mx:FormItem label="Commune">
+				<mx:TextInput id="commune" restrict="A-Z '\-"/>
+			</mx:FormItem>
+			<mx:FormItem label="Telephone">
+				<mx:TextInput id="telephone" restrict="0-9" maxChars="10"/>
+			</mx:FormItem>
+			<mx:FormItem label="Portable">
+				<mx:TextInput id="portable" restrict="0-9" maxChars="10"/>
+			</mx:FormItem>
+			<mx:FormItem label="Email">
+				<mx:TextInput id="email"/>
+			</mx:FormItem>
+			<mx:FormItem label="Date de naissance">
+				<mx:DateField id="dateNaissance" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+							  firstDayOfWeek="0"
+							  dayNames="['D','L','M','M','J','V','S']" 
+							  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+			</mx:FormItem>
+			<mx:FormItem label="Secteur">
+				<mx:ComboBox id="secteur" labelField="section"/>
+			</mx:FormItem>
+			<mx:FormItem label="Profession de santé">
+				<mx:ComboBox id="profession" labelField="Profession"/>
+			</mx:FormItem>
+		</mx:Form>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="Modifier" click="modifier(event)" />
+			<mx:Button label="Annuler" click="close(event)"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:TitleWindow>

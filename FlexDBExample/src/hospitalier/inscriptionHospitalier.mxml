@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="onCreateComplete()" xmlns:helper="common.helper.*">
+	<mx:Script>
+		<![CDATA[		
+			import common.helper.DataGridDataExporter;
+			import common.helper.Tools;
+			
+			import flash.net.FileReference;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			public static var INSCRTIPION_CREATED:String = "inscriptionCreated";
+			
+			[Bindable] public var users   :ArrayCollection;
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				if((index.categorieUtilisateur == "inscription")&&(index.secteurUtilisateur >0))
+					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
+						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, id_profession_sante, s.id_secteur, incomplet, Libelle, " +
+						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
+						"transport, type , valid, Ville" +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s WHERE h.id_personne = p.id_personne " +
+						" AND h.id_hospitalier = ho.id_hospitalier  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ " AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
+				else
+					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
+						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, id_profession_sante, s.id_secteur, incomplet, Libelle, " +
+						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
+						"transport, type , valid, Ville" +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s WHERE h.id_personne = p.id_personne " +
+					" AND h.id_hospitalier = ho.id_hospitalier  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				users = query.getRecords();
+				for(var i:int=0;i<users.length;++i)
+				{
+					var myObject:Object = users[i]
+						if(Tools.isMineur(Tools.stringToDate(myObject.DateNaissance) , Tools.stringToDate(index.peleActuel.Debut)))
+							myObject.mineur = "oui";
+						else
+							myObject.mineur = "non";
+				}
+				
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var formulaireInscription:FormulaireInscription = new FormulaireInscription();
+				PopUpManager.addPopUp(formulaireInscription,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(formulaireInscription);
+				formulaireInscription.addEventListener(FormulaireInscription.RELOAD,reload);
+				
+			}
+
+
+			protected function reload(event:Object=null):void
+			{
+				if((index.categorieUtilisateur == "inscription")&&(index.secteurUtilisateur >0))
+					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
+						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, id_profession_sante, s.id_secteur, incomplet, Libelle, " +
+						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
+						"transport, type , valid, Ville	" +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s WHERE h.id_personne = p.id_personne " +
+						" AND h.id_hospitalier = ho.id_hospitalier  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ "  AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
+				else
+					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
+						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, id_profession_sante, s.id_secteur, incomplet, Libelle, " +
+						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
+						"transport, type , valid, Ville " +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s WHERE h.id_personne = p.id_personne " +
+						" AND h.id_hospitalier = ho.id_hospitalier AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement  AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+				
+				this.dispatchEvent(new Event(INSCRTIPION_CREATED));
+			}
+
+
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				var csvText:String = DataGridDataExporter.exportCSV(dataGrid);
+				var fileSave:FileReference= new FileReference();
+				fileSave.save(csvText,"export_inscription_hospitalier.csv");
+			}
+			
+			///////////////////////// SEARCH ////////////////////////////////////////////////////
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						users.filterFunction = searchModel;
+						users.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				for(var prop:String in item)
+				{
+					if(item[prop]!=null)
+					{
+						if(String(item[prop]).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+						{
+							isMatch = true
+						}
+					}
+				}
+				return isMatch;    
+			}
+
+
+			protected function dataGrid_itemClickHandler(event:ListEvent):void
+			{
+				var modificationInscription:ModificationInscription = new ModificationInscription();
+				PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(modificationInscription);
+				modificationInscription.setFormulaire(event.itemRenderer.data);
+				modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+			}
+
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="90%">
+		<mx:HBox>
+			<mx:Label text="{'Pele en cours :' +index.peleActuel.Libelle_pele}"/>
+			<mx:Label text="{'Section :' +index.secteurNomUtilisateur}"/>
+		</mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Button label="Nouvelle" click="button1_clickHandler(event)" enabled="{!index.visuMode}"/>
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
+			<mx:Button icon="@Embed(source='assets/reload.gif')" click="reload(event)" height="22"/>
+			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
+			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
+		</mx:HBox>
+		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{users}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
+			<mx:columns>
+				<mx:DataGridColumn dataField="nouveau" headerText="Nouveau"/>
+				<mx:DataGridColumn dataField="Nom" headerText="Nom"/>
+				<mx:DataGridColumn dataField="Prenom" headerText="Prenom"/>
+				<mx:DataGridColumn dataField="sexe" headerText="Sexe" visible="false"/>
+				<mx:DataGridColumn dataField="DateNaissance" headerText="Date de Naissance" visible="false"/>
+				<mx:DataGridColumn dataField="Adresse1" headerText="Adresse" visible="false"/>
+				<mx:DataGridColumn dataField="CodePostal" headerText="Code Postal" visible="false"/>
+				<mx:DataGridColumn dataField="Commune" headerText="Commune" visible="false"/>
+				<mx:DataGridColumn dataField="Courriel" headerText="Courriel" visible="false"/>
+				<mx:DataGridColumn dataField="Tel" headerText="Tel" visible="false"/>
+				<mx:DataGridColumn dataField="Portable" headerText="Portable" visible="false"/>
+				<mx:DataGridColumn dataField="capacite_restrainte" headerText="Capacités"/>
+				<mx:DataGridColumn dataField="desiderata" headerText="Desiderata"/>
+				<mx:DataGridColumn dataField="nuit1" headerText="Nuit 1" visible="false"/>
+				<mx:DataGridColumn dataField="nuit2" headerText="Nuit 2" visible="false"/>
+				<mx:DataGridColumn dataField="nuit3" headerText="Nuit 3" visible="false"/>
+				<mx:DataGridColumn dataField="complet" headerText="Complet"/>
+				<mx:DataGridColumn dataField="dateArrivee" headerText="Arrivee"/>
+				<mx:DataGridColumn dataField="datedepart" headerText="Depart"/>
+				<mx:DataGridColumn dataField="divers" headerText="Divers"/>
+				<mx:DataGridColumn dataField="couple" headerText="Vient en Couple"/>
+				<mx:DataGridColumn dataField="conjoint" headerText="Nom Conjoint" visible="false"/>
+				<mx:DataGridColumn dataField="transport" headerText="Transport"/>
+				<mx:DataGridColumn dataField="Service" headerText="Affectation Dem." visible="false"/>
+				<mx:DataGridColumn dataField="Libelle" headerText="Hebergement Dem" visible="false"/>
+				<mx:DataGridColumn dataField="nomHeb" headerText="Heb. se loge" visible="false"/>
+				<mx:DataGridColumn dataField="chambreInd" headerText="Chambre Individuelle"/>	
+				<mx:DataGridColumn dataField="mineur" headerText="Mineur"/>
+				<mx:DataGridColumn dataField="section" headerText="Secteur" visible="{(index.categorieUtilisateur =='admin')}"/>
+				<mx:DataGridColumn dataField="paiementInsc" headerText="Paiement Inscription" visible="false"/>
+				<mx:DataGridColumn dataField="montantInsc" headerText="Montant Inscription" visible="false"/>
+				<mx:DataGridColumn dataField="incomplet" headerText="Fiche incomplète"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label text="{'Nombre de lignes : ' + users.length }"/>
+	</mx:VBox>
+</mx:VBox>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="432" height="600">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var provider:ArrayCollection;
+			
+			
+			
+			public function generateModuleProvider(chambreId:int=0):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("select * from malade m," +
+				" personne p, etre_malade em " +
+				" where m.numero=0 " +
+				" and em.id_pele=" + index.peleActuel.id_pele+
+				" and m.id_malade=em.id_malade" +
+				" and p.id_personne=em.id_personne");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function affecterA(event:MouseEvent):void
+			{
+				if(listMalade.selectedItem)
+				{
+					var formulaireChambre:FormulaireChambre = new FormulaireChambre();
+					PopUpManager.addPopUp(formulaireChambre,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireChambre);
+					formulaireChambre.setFormulaire(listMalade.selectedItem);
+					formulaireChambre.addEventListener(Chambre.RELOAD_MODULE,refresh);
+				}
+			}
+			
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Chambre.RELOAD_MODULE));
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="title" text="{titleText}"/>
+	<mx:HBox height="100%">
+		<mx:VBox height="100%">
+			<mx:Button label="Affecter à" click="affecterA(event)" enabled="{!index.visuMode}"/>
+		</mx:VBox>
+		<mx:DataGrid id="listMalade" dataProvider="{provider}" height="273">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
+				<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
+				<mx:DataGridColumn headerText="Codification" dataField="codification"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:HBox>
+</mx:VBox>

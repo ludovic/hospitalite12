@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" xmlns:consultation="consultation.*" creationComplete="canvas1_creationCompleteHandler(event)" >
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.DataGridDataExporter;
+			import common.helper.ProgressPopUp;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.IFlexDisplayObject;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			private var query4    :IQuery;
+			private var query5    :IQuery;
+			
+			private var personneData:Object;
+			public var eventType:String;
+			
+			protected function canvas1_creationCompleteHandler(event:Object):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideNameGrid);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho WHERE h.id_personne = p.id_personne " +
+					" AND h.id_hospitalier = ho.id_hospitalier AND h.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function provideNameGrid(evt:Object):void
+			{
+				listeNom.listeNomProvider = query.getRecords();
+				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
+				listeNom.addEventListener(ListeNom.REFRESH,canvas1_creationCompleteHandler);
+			}
+
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			private function setPersonneFields(event:DocEvent):void
+			{
+				personneData = new Object();
+				eventType = event.type;
+				personneData.info = event.body;
+				query2 = new Query();
+				query2.connect("conn1", db);
+				query2.addEventListener(Query.QUERY_END, getTransportHebergement);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_hebergement_retenu = h.id_hebergement"+ 
+					" AND i.id_transport = t.id_transport"+ 
+					" AND i.id_gare = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare"+
+					" AND pp.id_transport = i.id_transport"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+			}
+			
+			private function getTransportHebergement(event:Object):void
+			{
+				if(query2.getRecords().length>0)
+					personneData.transHeb = query2.getRecords()[0];
+				else
+					personneData.transHeb = null;
+				
+				query3 = new Query();
+				query3.connect("conn1", db);
+				query3.addEventListener(Query.QUERY_END, getTransportRetour);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				query3.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_transport_retour = t.id_transport"+ 
+					" AND i.id_gare_retour = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare_retour"+
+					" AND pp.id_transport = i.id_transport_retour"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+				
+			}
+			
+			private function getTransportRetour(event:Object):void
+			{
+				if(query3.getRecords().length>0)
+					personneData.transRetour = query3.getRecords()[0];
+				else
+					personneData.transRetour = null;
+				
+				query4 = new Query();
+				query4.connect("conn1", db);
+				query4.addEventListener(Query.QUERY_END, getAffectations);
+				query4.addEventListener(Query.QUERY_ERROR,queryError);
+				query4.execute("SELECT a.Service  FROM obtenir o, affectation a" +
+					" WHERE o.id_hospitalier ="+personneData.info.id_hospitalier +
+					" AND o.id_affectation = a.id_affectation");
+			}
+			
+			private function getAffectations(event:Object):void
+			{
+				personneData.affectations = query4.getRecords();
+				
+				query5 = new Query();
+				query5.connect("conn1", db);
+				query5.addEventListener(Query.QUERY_END, getEquipes);
+				query5.addEventListener(Query.QUERY_ERROR,queryError);
+				query5.execute("SELECT e.libelle  FROM equipe e, faire_parti fp" +
+					" WHERE fp.id_hospitalier ="+personneData.info.id_hospitalier +
+					" AND e.id_equipe = fp.id_equipe");
+				
+			}
+			
+			private function getEquipes(event:Object):void
+			{
+				personneData.equipes = query5.getRecords();
+				
+				if(eventType==ListeNom.PERSONNE_SELECTED)
+					detailsPersonne.data = personneData;
+				else if (eventType=="export")
+				{
+					indice++;
+					addPersonne(personneData)
+					ProgressPopUp(popUpWindow).setprogress(indice,listeNom.listeNomProvider.length);
+					next();
+				}
+			}
+			
+			private function addPersonne(data:Object):void
+			{
+				var myObject:Object = new Object
+				var info:Object = data.info;
+				var transHeb:Object = data.transHeb;
+				var transRetour:Object = data.transRetour;
+				var affectations:ArrayCollection = data.affectations;
+				var equipes:ArrayCollection = data.equipes;
+				myObject.titre = info.Titre;
+				myObject.nom = info.Nom;
+				myObject.prenom = info.Prenom;
+				myObject.adresse = info.Adresse1;
+				myObject.codepostal = info.CodePostal;
+				myObject.ville = info.Commune;
+				
+				myObject.transportA = (transHeb)?transHeb.nom_transport:"";
+				myObject.nomHeb = (transHeb)?transHeb.Libelle:"";
+				myObject.nomGareA =  (transHeb)?transHeb.nom:"";
+				myObject.heureAller = (transHeb)?transHeb.heure_aller:"";
+				
+				
+				myObject.transportR = (transRetour)?transRetour.nom_transport:"";
+				myObject.nomGareR =  (transRetour)?transRetour.nom:"";
+				myObject.heureRetour = (transRetour)? transRetour.heure_retour:"";
+				
+				myObject.affectations =""
+				for(var i:int=0;i<affectations.length;++i)
+				{
+					myObject.affectations += affectations[i].Service + " ";
+				}
+				
+				myObject.equipes =""
+				for( i=0;i<equipes.length;++i)
+				{
+					myObject.equipes += equipes[i].libelle + " ";
+				}
+				exportData.addItem(myObject);
+			}
+			private var exportData:ArrayCollection;
+			private var popUpWindow:IFlexDisplayObject
+			protected function exportAll(event:MouseEvent):void
+			{
+				exportData = new ArrayCollection();
+				indice = 0;
+				next();
+				popUpWindow = PopUpManager.createPopUp(this,ProgressPopUp,false);
+				ProgressPopUp(popUpWindow).setprogress(indice,listeNom.listeNomProvider.length);
+				PopUpManager.centerPopUp(popUpWindow);
+				
+			}
+			
+			private var indice:int;
+			private function next():void
+			{
+				if(indice<listeNom.listeNomProvider.length)
+				{
+					var myEvent:DocEvent = new DocEvent("export",listeNom.listeNomProvider[indice]);
+					setPersonneFields(myEvent);
+				}
+				else
+				{
+					PopUpManager.removePopUp(popUpWindow);
+					Alert.show("Confirmation de l'export.","",Alert.OK,this, alertClickHandler);
+					
+				}
+					
+			}
+			
+			private function alertClickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						var csvText:String = DataGridDataExporter.exportCSVFromArrayCollection(exportData);
+						var fileSave:FileReference= new FileReference();
+						fileSave.save(csvText,"export_all.csv");
+						break;
+				}
+				
+			}
+			
+		]]>
+	</mx:Script>
+	<consultation:ListeNom id="listeNom" width="200"/>
+	<mx:VBox width="100%" height="100%">
+		<mx:Button label="Exporter tout" right="0" click="exportAll(event)"/>
+		<consultation:Details id="detailsPersonne" width="100%" height="100%">
+		</consultation:Details>
+	</mx:VBox>
+	
+	
+</mx:HBox>

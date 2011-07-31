@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"  verticalScrollPolicy="off" creationComplete="canvas1_creationCompleteHandler(event)" updateComplete="provideModules(event)">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			/** */
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			public static var RELOAD_MODULE_HARD:String = "reloadModuleHard";
+			private var moduleList:Array = [];
+			[Bindable]
+			private var affectation:ArrayCollection;
+			
+			protected function canvas1_creationCompleteHandler(event:Event):void
+			{
+				affectation = AffectationProxy.Affectation;
+				affectationCB.selectedIndex = 0;
+				affectationCB_changeHandler(null);
+			}
+			
+			private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].equipe);
+				}
+			}
+
+
+			protected function affectationCB_changeHandler(event:Object):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT * FROM equipe where id_affectation="+affectationCB.selectedItem.id_affectation);
+
+			}
+			
+			
+			private function queryEnd(evt:Object):void
+			{
+				var equipeArray:ArrayCollection = query.getRecords();
+				var moduleSans:ModuleSansEquipe = new ModuleSansEquipe();
+				
+				moduleList.push({module:moduleSans,equipe:{id_affectation:affectationCB.selectedItem.id_affectation}});
+				containerSans.removeAllChildren();
+				containerSans.addChild(moduleSans);
+				
+				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
+				var tabList:Array = [];
+				container.removeAllChildren();
+				for(var i:int=0;i<equipeArray.length;++i)
+				{
+					var module:ModuleEquipe = new ModuleEquipe();
+					module.titleText = equipeArray[i].libelle as String;
+					moduleList.push({module:module,equipe:equipeArray[i]});
+					container.addChild(module);
+					tabList.push(module.titleText);
+					module.addEventListener(RELOAD_MODULE,provideModules);
+					module.addEventListener(RELOAD_MODULE_HARD,affectationCB_changeHandler);
+				}
+				provideModules(); 
+			}
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function addEquipe(event:MouseEvent):void
+			{
+				if(affectationCB.selectedItem)
+				{ 
+					var creationEquipe:CreationEquipe = new CreationEquipe();
+					PopUpManager.addPopUp(creationEquipe,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(creationEquipe);
+					creationEquipe.data = affectationCB.selectedItem.id_affectation;
+					creationEquipe.addEventListener(Equipe.RELOAD_MODULE,affectationCB_changeHandler); 
+				}
+			} 
+			
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				db = Database.getInstance();
+				query2= new Query();
+				query2.connect("conn1", db);
+				query2.addEventListener(Query.QUERY_END, getPersonnes);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * " +
+					" FROM `affectation` af, `equipe` e" +
+					" WHERE af.id_affectation = e.id_affectation" +
+					" ORDER BY af.id_affectation");
+			}
+			
+			private function getPersonnes(evt:Object):void
+			{
+				query3= new Query();
+				query3.connect("conn1", db);
+				query3.addEventListener(Query.QUERY_END, provideExportDatagrid);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				query3.execute("Select p.nom,p.prenom,fp.id_equipe" +
+					" FROM `faire_parti` fp,`personne` p, `etre_hospitalier` eh " +
+					" WHERE fp.id_pele = " + index.peleActuel.id_pele+
+					" AND fp.id_hospitalier = eh.id_hospitalier" +
+					" AND eh.id_personne = p.id_personne" +
+					" order by fp.id_equipe");
+			}
+			
+			private function provideExportDatagrid(evt:Object):void
+			{
+				Alert.show("Voulez-vous exporter la liste des équipes ?","",Alert.OK|Alert.CANCEL,this, alertClickHandler);
+			}
+			
+			private function alertClickHandler(event:CloseEvent):void
+			{
+				var arrayAffectation:ArrayCollection = query2.getRecords();
+				var arrayEquipe:ArrayCollection = query3.getRecords();
+				var csvProvider:ArrayCollection = new ArrayCollection();
+				var lastAffectationID:int = 0;
+				var lastEquipeID:int = 0;
+				for(var i:int=0;i<arrayAffectation.length;i++)
+				{
+					var affectationID:int = arrayAffectation[i].id_affectation;
+					if(affectationID != lastAffectationID)
+					{
+						csvProvider.addItem({A_affectation:"Affectation:",B_libelle:arrayAffectation[i].Service});
+						lastAffectationID = affectationID;
+					}
+					var equipeID:int = arrayAffectation[i].id_equipe;
+					if(equipeID != lastEquipeID)
+					{
+						csvProvider.addItem({A_equipe:"Equipe:",B_libelle:arrayAffectation[i].libelle});
+						lastEquipeID = equipeID;
+					}
+						
+					for(var j:int=0; j<arrayEquipe.length;j++)
+					{
+						if(arrayEquipe[j].id_equipe==arrayAffectation[i].id_equipe)
+							csvProvider.addItem({A_nom:arrayEquipe[j].nom, B_prenom:arrayEquipe[j].prenom});
+					}
+				}
+				
+				switch (event.detail){
+					case Alert.OK:
+						var csvText:String = exportCSVFromArrayCollection(csvProvider,false);
+						var fileSave:FileReference= new FileReference();
+						fileSave.save(csvText,"export_equipe.csv");
+						break;
+					case Alert.CANCEL:
+						break;
+				}
+			}
+			
+			public function exportCSVFromArrayCollection(ac:ArrayCollection,header:Boolean=true):String
+			{
+				var text:String = "";
+				var rows:int = ac.length;
+				if(header)
+				{
+					for(var n:String in ac[0])
+					{
+						text = text + n +";";
+					}
+					text = text + "\n";
+				}
+				for(var m:int=0;m<rows;++m)
+				{
+					for each(var o:String in ac[m])
+					{
+						text = text + o +";";
+					}
+					text = text.slice(0,text.length-1);
+					text = text + "\n";
+				}
+				return text;
+			}	
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%">
+		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
+		<mx:Spacer width="100%"/>
+		<mx:Button label="Exporter Liste des Equipes" click="exportDatagrid(event)"/>
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Label text="Affectation :"/><mx:ComboBox id="affectationCB" selectedIndex="0" dataProvider="{this.affectation}" labelField="Service" change="affectationCB_changeHandler(event)"/>
+		<mx:Button label="Créer une equipe" click="addEquipe(event)" enabled="{!index.visuMode}"/>
+	</mx:HBox>
+	<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
+		<mx:VBox id="container" height="{this.height*0.9}" width="50%">
+		</mx:VBox>
+		<mx:VBox id="containerSans" height="100%" width="50%">
+		</mx:VBox>
+	</mx:HBox>
+</mx:VBox>

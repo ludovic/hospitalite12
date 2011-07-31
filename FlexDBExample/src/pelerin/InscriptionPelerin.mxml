@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:helper="common.helper.*"  creationComplete="onCreateComplete()">
+	<mx:Script>
+		<![CDATA[
+			import common.helper.DataGridDataExporter;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			[Bindable] public var pelerinList   :ArrayCollection;
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, " +
+					" DateNaissance, desiderata, divers, etre_hospitalier, id_gare, pl.id_hebergement, he.Libelle, id_pele, pl.id_pelerin, p.id_personne, id_profession_sante, id_secteur, incomplet, modeHebergement, " +
+					"montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " +
+					" FROM etre_pelerin ep, personne p, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND pl.id_pelerin = ep.id_pelerin AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				pelerinList = query.getRecords();
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var formulaireInscription:FormulaireInscription = new FormulaireInscription();
+				PopUpManager.addPopUp(formulaireInscription,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(formulaireInscription);
+				formulaireInscription.addEventListener(FormulaireInscription.RELOAD,reload);
+			}
+			
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				var csvText:String = DataGridDataExporter.exportCSV(dataGrid);
+				var fileSave:FileReference= new FileReference();
+				fileSave.save(csvText,"export_inscription_pelerin.csv");
+			}
+			
+			///////////////////////// SEARCH ////////////////////////////////////////////////////
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						pelerinList.filterFunction = searchModel;
+						pelerinList.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				for(var prop:String in item)
+				{
+					if(item[prop]!=null)
+					{
+						if(String(item[prop]).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+						{
+							isMatch = true
+						}
+					}
+				}
+				return isMatch;    
+			}
+			
+			protected function dataGrid_itemClickHandler(event:ListEvent):void
+			{
+				var modificationInscription:ModificationInscription = new ModificationInscription();
+				PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(modificationInscription);
+				modificationInscription.setFormulaire(event.itemRenderer.data);
+				modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+			}
+			
+			protected function reload(event:Object=null):void
+			{
+				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, " +
+					" DateNaissance, desiderata, divers, etre_hospitalier, id_gare, pel.id_hebergement, he.Libelle, id_pele, pel.id_pelerin, p.id_personne, id_profession_sante, id_secteur, incomplet, modeHebergement, " +
+					" montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " + 
+					" FROM etre_pelerin ep, personne p, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="90%">
+		<mx:Label text="{'Pele en cours :' +index.peleActuel.Libelle_pele}"/>
+		<mx:HBox width="100%">
+			<mx:Button label="Nouvelle" click="button1_clickHandler(event)" enabled="{!index.visuMode}"/>
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
+			<mx:Button icon="@Embed(source='assets/reload.gif')" click="reload(event)" height="22"/>
+			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
+			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
+		</mx:HBox>
+		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{this.pelerinList}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
+			<mx:columns>
+				<mx:DataGridColumn dataField="nouveau" headerText="Nouveau"/>
+				<mx:DataGridColumn dataField="Nom" headerText="Nom"/>
+				<mx:DataGridColumn dataField="Prenom" headerText="Prenom"/>
+				<mx:DataGridColumn dataField="Libelle" headerText="Herbergement Dem."/>
+				<mx:DataGridColumn dataField="desiderata" headerText="Desiderata"/>
+				<mx:DataGridColumn dataField="divers" headerText="Divers"/>
+				<mx:DataGridColumn dataField="couple" headerText="Couple"/>
+				<mx:DataGridColumn dataField="paiementInsc" headerText="Paiement Insc"/>
+				<mx:DataGridColumn dataField="montantInsc" headerText="Montant Insc"/>
+				<mx:DataGridColumn dataField="modeHebergement" headerText="Mode Hebergement"/>
+				<mx:DataGridColumn dataField="styleChambre" headerText="Style Chambre"/>
+				<mx:DataGridColumn dataField="incomplet" headerText="Fiche incomplète"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label text="{'Nombre de lignes : ' + this.pelerinList.length }"/>
+	</mx:VBox>
+</mx:VBox>

@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="816" height="526" creationComplete="onCreateComplete()" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.GareProxy;
+			import proxy.HotelProxy;
+			import proxy.ProfessionSanteProxy;
+			import proxy.SecteurProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2   :IQuery;
+			private var query3    :IQuery;
+			private var query4 :IQuery;
+			private var query5    :IQuery;
+			
+			private var hospitalierID:Number
+			private var personneID:Number
+			[Bindable]
+			public var secteurProvider:ArrayCollection;
+			[Bindable]
+			public var professionProvider:ArrayCollection;
+			[Bindable]
+			public var affectationProvider:ArrayCollection;
+			[Bindable]
+			public var transportProvider:ArrayCollection;
+			[Bindable]
+			public var hotelProvider:ArrayCollection;
+			[Bindable]
+			public var gareProvider:ArrayCollection;
+			
+			public static var RELOAD:String = "reload";
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query2 = new Query();
+				query2.connect("conn1", db);
+				query3 = new Query();
+				query3.connect("conn1", db);
+				query4 = new Query();
+				query4.connect("conn1", db);
+				
+				affectationProvider = AffectationProxy.Affectation;
+				secteurProvider		= SecteurProxy.Secteur;
+				professionProvider	= ProfessionSanteProxy.Profession;
+				hotelProvider 		= HotelProxy.HotelHospitalier;
+				gareProvider		= GareProxy.Gare;
+				query5= new Query();
+				query5.connect("conn1", db);
+				query5.addEventListener(Query.QUERY_END, provideTransport);
+				query5.addEventListener(Query.QUERY_ERROR,queryError);
+				query5.execute("Select * from transport" )
+				
+				
+			}
+			
+			public function setFormulaire(item:Object):void
+			{
+				var myObject:Object = item;
+				hospitalierID = item.id_hospitalier;
+				personneID = item.id_personne;
+				nouveau.selected = (item.nouveau == "oui")?true:false;
+				peleComplet.selected = (item.complet == "oui")?true:false;
+				dateArrivee.selectedDate = Tools.stringToDate(item.dateArrivee);
+				heureArrivee.value = Tools.stringToDate(item.dateArrivee).hours;
+				dateDepart.selectedDate = Tools.stringToDate(item.datedepart);
+				heureDepart.value= Tools.stringToDate(item.datedepart).hours;
+				couple.selected = (item.couple == "oui")?true:false;
+				conjoint.text = item.conjoint;
+				modeTransport.selectedValue = item.transport;
+				for(var i:int=0;i<gareProvider.length;++i)
+				{
+					gare.selectedIndex = i;
+					if(gare.selectedItem.id_gare == item.id_gare)
+						break;
+				}
+				for(i=0;i<hotelProvider.length;++i)
+				{
+					hotel.selectedIndex = i;
+					if(hotel.selectedItem.id_hebergement == item.id_hebergement)
+						break;
+				}
+				nomHeb.text = item.nomHeb;
+				chambreInd.selected = (item.chambreInd  == "oui")?true:false;
+				forfaitJeune.selected = (item.forfaitJeune == "oui")?true:false;
+				desiderata.text = item.desiderata;
+				for(i=0;i<affectationProvider.length;++i)
+				{
+					affectationDem.selectedIndex = i;
+					if(affectationDem.selectedItem.id_affectation == item.id_affectation)
+						break;
+				}
+				for(i=0;i<affectationProvider.length;++i)
+				{
+					affectationComp.selectedIndex = i;
+					if(affectationComp.selectedItem.id_affectation == item.id_affectation_comp)
+						break;
+				}
+				capaciteRest.text = item.capacite_restrainte;
+				nuit1.selected = (item.nuit1 == "oui")?true:false;
+				nuit2.selected = (item.nuit2 == "oui")?true:false;
+				nuit3.selected = (item.nuit3== "oui")?true:false;
+				divers.text = item.divers;
+				paiementInsc.selected = (item.paiementInsc == "oui")?true:false;
+				montantInsc.text = item.montantInsc;
+				incomplet.selected = (item.incomplet== "oui")?true:false;
+			}
+			
+			private function provideTransport(evt:Object):void
+			{
+				transportProvider = query5.getRecords();
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				this.dispatchEvent(new Event(RELOAD));
+				PopUpManager.removePopUp(this);
+			}	
+			
+			private function queryCancel(evt:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}	
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function modifHospitalier(event:MouseEvent):void
+			{			
+				var dateDepartComplete:Date=dateDepart.selectedDate;
+				if(dateDepartComplete)
+					dateDepartComplete.setHours(this.heureDepart.value);
+				
+				var dateArriveeComplete:Date=dateArrivee.selectedDate;
+				if(dateArriveeComplete)
+					dateArriveeComplete.setHours(this.heureArrivee.value);
+				
+				query.addEventListener(Query.QUERY_END, getInscription);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				
+				query.execute("UPDATE hospitalier " +
+					"SET nouveau ='"+ Tools.ouiNon(nouveau.selected) +"', capacite_restrainte ='"+Tools.sanitize(capaciteRest.text)+"', divers = '"+Tools.sanitize(divers.text)+"', " +
+					"desiderata ='"+Tools.sanitize(desiderata.text)+"', nuit1='"+Tools.ouiNon(nuit1.selected)+"', nuit2='"+Tools.ouiNon(nuit2.selected)+"', nuit3='"+Tools.ouiNon(nuit3.selected)+"'," +
+					" complet ='"+Tools.ouiNon(peleComplet.selected)+"', dateArrivee='"+Tools.dateToString(dateArriveeComplete)+"', dateDepart='"+Tools.dateToString(dateDepartComplete)+"', id_affectation='"+this.affectationDem.selectedItem.id_affectation+"',  couple='"+Tools.ouiNon(this.couple.selected)+"', " +
+					"transport='"+this.modeTransport.selectedValue+"', chambreInd='"+Tools.ouiNon(this.chambreInd.selected)+"', forfaitJeune='"+Tools.ouiNon(this.forfaitJeune.selected)+"', nomHeb='"+this.nomHeb.text+"', id_gare='"+this.gare.selectedItem.id_gare+
+					"', id_hebergement='"+this.hotel.selectedItem.id_hebergement+"', paiementInsc='"+Tools.ouiNon(this.paiementInsc.selected)+"', montantInsc='"+this.montantInsc.text+"',incomplet='"+Tools.ouiNon(incomplet.selected)+"',conjoint='"+Tools.sanitize(conjoint.text)+"', id_affectation_comp='"+this.affectationComp.selectedItem.id_affectation+"'" +
+					"WHERE id_hospitalier= '"+this.hospitalierID+"'",Query.UPDATE);
+			}
+			
+			private function getInscription(evt:Object):void
+			{
+				query2.addEventListener(Query.QUERY_END, modPrix);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("Select * from inscrire i, prix p where i.id_pele="+index.peleActuel.id_pele +" and i.id_personne="+personneID+" and p.id_prix=i.id_prix" );
+			}
+			
+			private function modPrix(evt:Object):void
+			{
+				var prix:Object = query2.getRecords()[0];
+				var newSolde:Number = prix.solde - (prix.Total - calculPrix());
+				query3.addEventListener(Query.QUERY_END, modIns);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				query3.execute("UPDATE prix " +
+					"SET Total="+calculPrix()+", solde="+newSolde +" WHERE id_prix="+prix.id_prix,Query.UPDATE);
+			}
+			
+			private function modIns(evt:Object):void
+			{
+				var ins:Object = query2.getRecords()[0];
+				
+				query4.addEventListener(Query.QUERY_END, queryEnd);
+				query4.addEventListener(Query.QUERY_ERROR,queryError);
+				query4.execute("UPDATE inscrire " +
+					"SET  id_hebergement="+this.hotel.selectedItem.id_hebergement+" WHERE id_pele="+index.peleActuel.id_pele +" and id_personne="+personneID+" and id_hebergement="+ins.id_hebergement,Query.UPDATE);
+			}
+			
+			private function calculPrix():Number
+			{
+				var prixHeb:Number = this.hotel.selectedItem.Prix as Number;
+				var prix:Number = prixHeb;
+				
+				if(this.chambreInd.selected)
+				{
+					if(this.hotel.selectedItem.Libelle == "Helgon")
+						prix += 78;
+					else
+						prix += 60;
+				}
+				
+				if(this.carRb.selected)
+					prix += 65;
+				else
+					prix += 25;//frais généraux
+				
+				
+				
+				if(this.forfaitJeune.selected)
+					prix = 95
+				
+				return prix;
+				
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Form width="100%" height="436">
+			
+			<mx:FormItem label="Nouveau">
+				<mx:CheckBox id="nouveau"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Pélérinage Complet">
+				<mx:HBox>
+					<mx:CheckBox id="peleComplet" selected="true"/>
+					<mx:HBox enabled="{!peleComplet.selected}">
+						<mx:FormItem label="Du" >
+							<mx:DateField id="dateArrivee" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+										  firstDayOfWeek="0"
+										  dayNames="['D','L','M','M','J','V','S']" 
+										  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+						</mx:FormItem>
+						<mx:NumericStepper id="heureArrivee" maximum="23"/>
+						<mx:FormItem label="Au"  width="126">
+							<mx:DateField id="dateDepart" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+										  firstDayOfWeek="0"
+										  dayNames="['D','L','M','M','J','V','S']" 
+										  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+						</mx:FormItem>
+						<mx:NumericStepper id="heureDepart" maximum="23"/>
+					</mx:HBox>
+				</mx:HBox>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Vient en couple">
+				<mx:HBox>
+					<mx:CheckBox id="couple"/>
+					<mx:FormItem label="Nom du conjoint :">
+						<mx:TextInput id="conjoint"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Vient en:">
+				<mx:RadioButtonGroup id="modeTransport" selectedValue="car"/>
+				<mx:HBox>
+					<mx:RadioButton id="carRb" label="car" group="{modeTransport}"/>
+					<mx:RadioButton id="voiture" label="voiture" group="{modeTransport}"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Monte à">
+				<mx:ComboBox id="gare" dataProvider="{gareProvider}" labelField="nom"/>
+			</mx:FormItem>
+			<mx:FormItem label="Hébergement souhaité">
+				<mx:ComboBox id="hotel" dataProvider="{hotelProvider}" labelField="Libelle"/>
+			</mx:FormItem>
+			<mx:FormItem label="Nom de l'hebergement si se loge">
+				<mx:TextInput id="nomHeb" width="428"/>
+			</mx:FormItem>
+			<mx:FormItem label="Chambre individuelle">
+				<mx:CheckBox id="chambreInd"/>
+			</mx:FormItem>
+			<mx:FormItem label="Forfait jeune">
+				<mx:CheckBox id="forfaitJeune"/>
+			</mx:FormItem>
+			<mx:FormItem label="Désiderata">
+				<mx:TextInput id="desiderata" width="425"/>
+			</mx:FormItem>
+			<mx:FormItem label="Affectation demandée">
+				<mx:ComboBox id="affectationDem" dataProvider="{affectationProvider}" labelField="Service"/>
+			</mx:FormItem>
+			<mx:FormItem label="Affectation complémentaire (Facultative)">
+				<mx:ComboBox id="affectationComp" dataProvider="{affectationProvider}" labelField="Service"/>
+			</mx:FormItem>
+			<mx:FormItem label="Capacité restreinte">
+				<mx:TextInput id="capaciteRest" width="427"/>
+			</mx:FormItem>
+			<mx:FormItem label="Nuit">
+				<mx:HBox>
+					<mx:CheckBox id="nuit1" label="Nuit 1" labelPlacement="left"/>
+					<mx:Spacer width="20"/>
+					<mx:CheckBox id="nuit2" label="Nuit 2" labelPlacement="left"/>
+					<mx:Spacer width="20"/>
+					<mx:CheckBox id="nuit3" label="Nuit 3" labelPlacement="left"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Divers">
+				<mx:TextArea id="divers" width="425" height="60"/>
+			</mx:FormItem>
+			<mx:FormItem label="Paiement à l'inscription">
+				<mx:HBox>
+					<mx:CheckBox id="paiementInsc"/>
+					<mx:FormItem label="Montant">
+						<mx:TextInput id="montantInsc" restrict="0-9\."/>
+					</mx:FormItem>
+				</mx:HBox>
+				
+			</mx:FormItem>
+			<mx:FormItem label="Fiche incomplète">
+				<mx:CheckBox id="incomplet"/>
+			</mx:FormItem>	
+		</mx:Form>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="Modifier" click="modifHospitalier(event)" enabled="{!index.visuMode}"/>
+			<mx:Button label="annuler" click="queryCancel(event)"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:TitleWindow>

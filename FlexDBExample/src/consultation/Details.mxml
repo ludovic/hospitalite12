@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			override public function set data(value:Object):void
+			{
+				titre.text = "";
+				nom.text = "";
+				prenom.text = "";
+				adresse.text = "";
+				codep.text = "";
+				ville.text = "";
+				
+				transport.text = "";
+				nomHeb.text ="";
+				nomGare.text =  "";
+				heureAller.text = "";
+				
+				transportR.text = "";
+				nomGareR.text =  "";
+				heureRetour.text = "";
+				
+				
+				var info:Object = value.info;
+				var transHeb:Object = value.transHeb;
+				var transRetour:Object = value.transRetour;
+				var affectations:ArrayCollection = value.affectations;
+				var equipes:ArrayCollection = value.equipes;
+				titre.text = info.Titre;
+				nom.text = info.Nom;
+				prenom.text = info.Prenom;
+				adresse.text = info.Adresse1;
+				codep.text = info.CodePostal;
+				ville.text = info.Commune;
+				if(transHeb)
+				{
+					transport.text = transHeb.nom_transport;
+					nomHeb.text = transHeb.Libelle;
+					nomGare.text =  transHeb.nom;
+					heureAller.text = transHeb.heure_aller;
+				}
+				
+				if(transRetour)
+				{
+					transportR.text = transRetour.nom_transport;
+					nomGareR.text =  transRetour.nom;
+					heureRetour.text = transRetour.heure_retour;
+				}
+				affectationVB.removeAllChildren();
+				var affectationLabel:Label = new Label();
+				affectationLabel.setStyle("fontWeight","bold");
+				affectationLabel.text = "Affectation(s) : ";
+				affectationVB.addChild(affectationLabel);
+				
+				for(var i:int=0;i<affectations.length;++i)
+				{
+					affectationLabel = new Label();
+					affectationLabel.text = affectations[i].Service;
+					affectationVB.addChild(affectationLabel);
+				}
+				
+				equipeVB.removeAllChildren();
+				var equipeLabel:Label = new Label();
+				equipeLabel.setStyle("fontWeight","bold");
+				equipeLabel.text = "Equipe(s) : ";
+				equipeVB.addChild(equipeLabel);
+				
+				for( i=0;i<equipes.length;++i)
+				{
+					equipeLabel = new Label();
+					equipeLabel.text = equipes[i].libelle;
+					equipeVB.addChild(equipeLabel);
+				}
+				
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:VBox id="info" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Titre : " fontWeight="bold"/><mx:Label id="titre"/>
+				<mx:Label text="Nom : " fontWeight="bold"/><mx:Label id="nom"/>
+				<mx:Label text="Prénom : " fontWeight="bold"/><mx:Label id="prenom"/>
+			</mx:HBox>
+			<mx:Label text="Adresse : " fontWeight="bold"/><mx:Label id="adresse"/>
+			<mx:HBox>
+				<mx:Label text="Code Postal : " fontWeight="bold"/><mx:Label id="codep"/>
+				<mx:Label text="Ville : " fontWeight="bold"/><mx:Label id="ville"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="affectationVB" label="Affectation" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:Label text="Affectation(s) : " fontWeight="bold"/>
+		</mx:VBox>
+		<mx:VBox id="equipeVB" label="Equipe" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:Label text="Equipe(s) : " fontWeight="bold"/>
+		</mx:VBox>
+		<mx:VBox id="Transport" label="Transport" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:HBox>
+				<mx:Label text="Transport aller : " fontWeight="bold"/><mx:Label id="transport"/>
+				<mx:Label text="Gare aller : " fontWeight="bold"/><mx:Label id="nomGare"/>
+				<mx:Label text="Heure départ : " fontWeight="bold"/><mx:Label id="heureAller"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="Transport retour : " fontWeight="bold"/><mx:Label id="transportR"/>
+				<mx:Label text="Gare retour: " fontWeight="bold"/><mx:Label id="nomGareR"/>
+				<mx:Label text="Heure retour: " fontWeight="bold"/><mx:Label id="heureRetour"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="Logement" label="Logement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:Label text="Logement : " fontWeight="bold"/><mx:Label id="nomHeb"/>
+		</mx:VBox>
+	</mx:VBox>
+</mx:Canvas>
