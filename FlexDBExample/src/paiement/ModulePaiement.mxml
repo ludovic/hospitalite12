@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" label="{this.titleText}">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="210" label="{this.titleText}">
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
@@ -144,7 +144,7 @@
 
 		]]>
 	</mx:Script>
-	<mx:VBox width="100%">
+	<mx:VBox width="100%" height="200">
 		<mx:HBox width="{listMalade.width}">
 			<mx:Label text="{this.titleText}"/>
 			<mx:Spacer width="100%"/>
@@ -162,7 +162,7 @@
 			</mx:DataGrid>
 		</mx:HBox>
 		<mx:Label id="total" text=""/>
-		<mx:HBox height="100%">
+		<mx:HBox height="20">
 			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
 			<mx:Button label="Enlever" click="enlever(event)" width="120"/>
 			<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120"/>

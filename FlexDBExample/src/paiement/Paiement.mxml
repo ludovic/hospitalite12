@@ -99,7 +99,7 @@
 				<mx:Button label="Créer une remise" click="addRemise(event)"/>
 			</mx:HBox>
 			<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
-				<mx:VBox id="container" height="100%" width="50%">
+				<mx:VBox id="container" height="{this.height*0.9}" width="50%">
 				</mx:VBox>
 				<mx:VBox id="containerSans" height="100%" width="50%">
 				</mx:VBox>
@@ -111,7 +111,7 @@
 				<mx:Button label="Créer une remise" click="addRemise(event)"/>
 			</mx:HBox>
 			<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
-				<mx:VBox id="containerMalade" height="100%" width="50%">
+				<mx:VBox id="containerMalade" height="{this.height*0.9}" width="50%">
 				</mx:VBox>
 				<mx:VBox id="containerSansMalade" height="100%" width="50%">
 				</mx:VBox>
