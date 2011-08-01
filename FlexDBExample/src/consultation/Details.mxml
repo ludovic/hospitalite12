@@ -21,12 +21,23 @@
 				nomGareR.text =  "";
 				heureRetour.text = "";
 				
+				total.text = "";
+				totalP.text = "";
+				solde.text = "";
+				
+				salleNom.text = "";
+				module.text = "";
+				responsable.text = "";
+				fonction.text = "";
 				
 				var info:Object = value.info;
 				var transHeb:Object = value.transHeb;
 				var transRetour:Object = value.transRetour;
 				var affectations:ArrayCollection = value.affectations;
 				var equipes:ArrayCollection = value.equipes;
+				var soldes:Object = value.soldes;
+				var salleN:Object = value.salle;
+				var fonctionN:Object = value.fonction;
 				titre.text = info.Titre;
 				nom.text = info.Nom;
 				prenom.text = info.Prenom;
@@ -73,6 +84,24 @@
 					equipeVB.addChild(equipeLabel);
 				}
 				
+				if(soldes)
+				{
+					total.text = soldes.Total;
+					totalP.text = soldes.TotalPaye;
+					solde.text =  soldes.solde;
+				}
+				if(salleN)
+				{
+					salleNom.text = salleN.libelle as String;
+					module.text = salleN.module;
+					responsable.text = salleN.Prenom + " "+ salleN.Nom;
+				}
+				if(fonctionN)
+				{
+					fonction.text = fonctionN.fonction as String;
+					module.text = fonctionN.module;
+					responsable.text = fonctionN.Prenom + " "+ fonctionN.Nom;
+				}
 			}
 		]]>
 	</mx:Script>
@@ -92,6 +121,16 @@
 		<mx:VBox id="affectationVB" label="Affectation" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
 			<mx:Label text="Affectation(s) : " fontWeight="bold"/>
 		</mx:VBox>
+		<mx:VBox id="affectationP" label="Précisions pour Salle" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:Label text="Précisions pour Salle : " fontWeight="bold"/>
+			
+			<mx:HBox><mx:Label text="Salle : " fontWeight="bold"/><mx:Label id="salleNom"/></mx:HBox>
+			<mx:HBox><mx:Label text="Fonction : " fontWeight="bold"/><mx:Label id="fonction"/></mx:HBox>
+			<mx:HBox><mx:Label text="Module : " fontWeight="bold"/><mx:Label id="module"/></mx:HBox>
+			<mx:HBox><mx:Label text="Responsable du module : " fontWeight="bold"/><mx:Label id="responsable"/></mx:HBox>
+			
+			
+		</mx:VBox>
 		<mx:VBox id="equipeVB" label="Equipe" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
 			<mx:Label text="Equipe(s) : " fontWeight="bold"/>
 		</mx:VBox>
@@ -109,6 +148,13 @@
 		</mx:VBox>
 		<mx:VBox id="Logement" label="Logement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
 			<mx:Label text="Logement : " fontWeight="bold"/><mx:Label id="nomHeb"/>
+		</mx:VBox>
+		<mx:VBox id="paiment" label="Paiement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Total : " fontWeight="bold"/><mx:Label id="total"/>
+				<mx:Label text="Payé : " fontWeight="bold"/><mx:Label id="totalP"/>
+				<mx:Label text="Solde : " fontWeight="bold"/><mx:Label id="solde"/>
+			</mx:HBox>
 		</mx:VBox>
 	</mx:VBox>
 </mx:Canvas>
