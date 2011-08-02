@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="432" height="600">
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="432" height="100%">
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.FeuilleInscriptionMalade;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -59,6 +60,17 @@
 				}
 			}
 			
+			protected function voir(event:MouseEvent):void
+			{
+				if(listMalade.selectedItem)
+				{
+					var feuilleInscriptionMalade:FeuilleInscriptionMalade = new FeuilleInscriptionMalade();
+					PopUpManager.addPopUp(feuilleInscriptionMalade,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(feuilleInscriptionMalade);
+					feuilleInscriptionMalade.setFormulaire(listMalade.selectedItem.id_malade);
+				}
+			}
+			
 			private function refresh(evt:Event):void
 			{
 				this.dispatchEvent( new DocEvent(Chambre.RELOAD_MODULE));
@@ -70,8 +82,9 @@
 	<mx:HBox height="100%">
 		<mx:VBox height="100%">
 			<mx:Button label="Affecter à" click="affecterA(event)" enabled="{!index.visuMode}"/>
+			<mx:Button label="Voir fiche" click="voir(event)"/>
 		</mx:VBox>
-		<mx:DataGrid id="listMalade" dataProvider="{provider}" height="273">
+		<mx:DataGrid id="listMalade" dataProvider="{provider}" height="100%" width="100%">
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
 				<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
