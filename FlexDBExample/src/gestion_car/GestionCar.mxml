@@ -5,6 +5,7 @@
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
 			
 			import phi.db.Database;
 			import phi.db.Query;
@@ -17,6 +18,9 @@
 			
 			[Bindable] public var transports   :ArrayCollection;
 			[Bindable] public var arrets   :ArrayCollection;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			public static var RELOAD_MODULE_GARE:String = "reloadModuleGare";
 			
 			
 			private function onCreateComplete():void
@@ -57,11 +61,41 @@
 				
 			}	
 
+			protected function addCar(event:MouseEvent):void
+			{
+				var creationCar:CreationCar = new CreationCar();
+				PopUpManager.addPopUp(creationCar,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(creationCar);
+				creationCar.addEventListener(GestionCar.RELOAD_MODULE,reload); 
+			}
+			
+			protected function reload(event:Object=null):void
+			{
+				query.execute("SELECT * FROM transport");
+			}
+			protected function reloadGare(event:Object=null):void
+			{
+				query2.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport );
+			}
+			
+			protected function addGare(event:MouseEvent):void
+			{
+				if(transportListe.selectedItem)
+				{ 
+					var ajoutGare:AjoutGare = new AjoutGare();
+					PopUpManager.addPopUp(ajoutGare,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(ajoutGare);
+					ajoutGare.data = transportListe.selectedItem.id_transport;
+					ajoutGare.addEventListener(GestionCar.RELOAD_MODULE_GARE,reloadGare); 
+				}
+			}
+			
 		]]>
 	</mx:Script>
 	<mx:Label text="Liste des cars :"/>
 	<mx:HBox width="100%">
-		<mx:DataGrid id="transportListe" dataProvider="{transports}" change="datagrid1_changeHandler(event)" >
+		<mx:DataGrid id="transportListe" width="520" change="datagrid1_changeHandler(event)"
+					 dataProvider="{transports}">
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="nom_transport"/>
 				<mx:DataGridColumn headerText="Capacité" dataField="Capacite"/>
@@ -70,7 +104,7 @@
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:VBox height="100%">
-			<mx:Button label="Nouveau car"/>
+			<mx:Button label="Nouveau car" click="addCar(event)"/>
 		</mx:VBox>
 	</mx:HBox>
 	<mx:HBox width="100%">
@@ -78,7 +112,7 @@
 		<mx:Label text="Label"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
-		<mx:DataGrid dataProvider="{arrets}">
+		<mx:DataGrid width="522" dataProvider="{arrets}">
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
 				<mx:DataGridColumn headerText="Heure aller" dataField="heure_aller"/>
@@ -86,8 +120,9 @@
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:VBox height="100%">
-			<mx:Button label="Ajouter"/>
-			<mx:Button label="Enlever"/>
+			<mx:Button width="71" label="Ajouter" click="addGare(event)"/>
+			<mx:Button width="71" label="Enlever"/>
+			<mx:Button label="Modifier"/>
 		</mx:VBox>
 	</mx:HBox>
 	

@@ -2,7 +2,7 @@
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="955" minHeight="400"
 				xmlns:hospitalier="hospitalier.*" xmlns:menu="menu.*" xmlns:admin="admin.*" xmlns:pelerin="pelerin.*" xmlns:malade="malade.*" 
 				xmlns:car="car.*" xmlns:carR="car_retour.*" xmlns:gestionCar="gestion_car.*" xmlns:affectation="affectation.*" xmlns:salle="salle.*" backgroundColor="#E3EEFB" xmlns:paiement="paiement.*"
-				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*"
+				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*" xmlns:consultationMalade="consultationMalade.*"
 				>
 
 	<mx:Script>
@@ -166,6 +166,7 @@
 						tabNav.addChild(this.placementTab);
 						tabNav.addChild(this.car);
 						tabNav.addChild(this.carRetour);
+						tabNav.addChild(this.consultationMalade);
 					break;
 					case 3://pelerin
 						tabNav.removeAllChildren();
@@ -190,6 +191,7 @@
 						tabNav.addChild(this.maladeInsc);
 						tabNav.addChild(this.maladeTab);
 						tabNav.addChild(this.placementTab);
+						tabNav.addChild(this.consultationMalade);
 						tabNav.addChild(this.pelerinInsc);
 						tabNav.addChild(this.pelerinTab);
 						
@@ -344,6 +346,9 @@
 						</mx:Canvas>
 						<mx:Canvas id="consultationTab" label="Consultation" width="100%" height="100%">
 							<consultation:consultation width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="consultationMalade" label="Consultation M." width="100%" height="100%">
+							<consultationMalade:consultation width="100%" height="100%"/>
 						</mx:Canvas>
 						<mx:Canvas id="admin" label="Administration" width="100%" height="100%">
 							<admin:AdminMain width="100%" height="100%" />
