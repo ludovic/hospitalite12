@@ -137,6 +137,7 @@
 				<mx:DataGridColumn headerText="Codification" dataField="codification"/>
 			</mx:columns>
 		</mx:DataGrid>
+		<mx:Label text="{'Nombre de lignes : ' + provider.length }"/>
 		</mx:VBox>
 	</mx:HBox>
 </mx:VBox>

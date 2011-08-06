@@ -15,6 +15,8 @@
 			import phi.interfaces.IDatabase;
 			import phi.interfaces.IQuery;
 			
+			import proxy.SecteurProxy;
+			
 			private var db       :IDatabase;
 			private var query    :IQuery;
 			
@@ -28,11 +30,32 @@
 				query = new Query();
 				query.connect("conn1", db);
 				
+				this.secteur.dataProvider = SecteurProxy.Secteur;
+				
 			}
 			
 			public function setFormulaire(item:Object):void
 			{
 				var myObject:Object = item;
+				
+				this.titre.selectedItem	= item.Titre;
+				this.nom.text 			= item.Nom;
+				this.prenom.text 		= item.Prenom;
+				this.sexe.selectedItem	= item.sexe;
+				this.cp.text			= item.CodePostal;
+				this.commune.text		= item.Commune;
+				this.adresse.text		= item.Adresse1;
+				this.telephone.text		= item.Tel;
+				this.portable.text		= item.Portable
+				this.email.text			= item.Courriel;
+				this.dateNaissance.selectedDate = Tools.stringToDate(item.DateNaissance);
+				for(var i:int=0;i<secteur.dataProvider.length;++i)
+				{
+					secteur.selectedIndex = i;
+					if(secteur.selectedItem.section == item.section)
+						break;
+				}
+				
 				maladeID = item.id_malade;
 				taille.value = item.taille; 
 				poids.value = item.poids;
@@ -177,6 +200,53 @@
 	</mx:Script>
 	<mx:VBox width="100%">
 		<mx:Form width="100%" height="500" verticalScrollPolicy="on">
+			<mx:Box borderColor="#000000" borderStyle="solid" borderThickness="1">
+				<mx:HBox>
+					<mx:FormItem label="Titre">
+						<mx:ComboBox id="titre" dataProvider="['Mr','Mme','Mlle','Sr','Pr','Dr']" enabled="false"/>
+					</mx:FormItem>
+					<mx:FormItem label="Nom">
+						<mx:Label id="nom" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Prenom">
+						<mx:Label id="prenom" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Sexe">
+						<mx:ComboBox id="sexe" dataProvider="{['M','F']}" enabled="false"/>
+					</mx:FormItem>
+					<mx:FormItem label="Date de naissance">
+						<mx:DateField id="dateNaissance" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" enabled="false"
+									  firstDayOfWeek="0"
+									  dayNames="['D','L','M','M','J','V','S']" 
+									  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+					</mx:FormItem>
+				</mx:HBox>		
+				<mx:HBox>
+					<mx:FormItem label="Adresse">
+						<mx:Label id="adresse" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Code Postal">
+						<mx:Label id="cp" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Commune">
+						<mx:Label id="commune" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Secteur">
+						<mx:ComboBox id="secteur" labelField="section" enabled="false"/>
+					</mx:FormItem>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:FormItem label="Telephone">
+						<mx:Label id="telephone" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Portable">
+						<mx:Label id="portable" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Email">
+						<mx:Label id="email" fontWeight="bold"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:Box>
 					<mx:FormItem label="Poids">
 						<mx:HBox>
 						<mx:NumericStepper id="poids" maximum="300"/>
@@ -265,9 +335,7 @@
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Autre soins spécifiques">
-				<mx:TextInput id="autreSoin"/><mx:FormItem label="Codification">
-												  <mx:TextInput id="codification" maxChars="5"/>
-											  </mx:FormItem>
+				<mx:HBox><mx:TextInput id="autreSoin"/><mx:Label text="Codification"/><mx:TextInput id="codification" maxChars="5"/></mx:HBox>
 				<mx:HBox>
 					<mx:CheckBox label="Prise de médicament contrôlée par l'infirmière" id="priseMedicamentControleeCB"/>
 					<mx:CheckBox label="Oxygène" id="oxygeneCB"/>
