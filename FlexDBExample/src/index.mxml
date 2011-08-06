@@ -194,7 +194,7 @@
 						tabNav.addChild(this.consultationMalade);
 						tabNav.addChild(this.pelerinInsc);
 						tabNav.addChild(this.pelerinTab);
-						
+						tabNav.addChild(this.gestionCar);
 						//tabNav.addChild(this.admin);
 						break;
 					case 5: //inscription hospitalier
