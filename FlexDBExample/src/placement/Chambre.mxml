@@ -101,8 +101,6 @@
 								tabList.push(module.titleText);
 								module.addEventListener(RELOAD_MODULE,provideModules);
 							}
-							else if(moduleFound)
-								break;
 							
 						} 
 					}
@@ -152,41 +150,15 @@
 				db = Database.getInstance();
 				query= new Query();
 				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, getModule);
+				query.addEventListener(Query.QUERY_END, provideExportDatagrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT p.nom, p.prenom, c.libelle, c.id_module" +
-					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh, `s_occuper` o, `chambre` c" +
-					" WHERE eh.id_pele = " + index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = o.id_hospitalier" +
-					" AND h.id_hospitalier = eh.id_hospitalier" +
-					" AND p.id_personne = eh.id_personne " +
-					"AND c.numero = o.numero " +
-					"ORDER BY o.numero");
-			}
-			
-			private function getModule(evt:Object):void
-			{
-				query2= new Query();
-				query2.connect("conn1", db);
-				query2.addEventListener(Query.QUERY_END, provideExportDatagrid);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("(SELECT p.nom, p.prenom, eh.id_hospitalier, ('responsable') 'role',rm.id_module " +
-					" FROM `personne` p, `etre_hospitalier` eh, `responsable_module` rm" +
-					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = rm.id_hospitalier" +
-					" AND p.id_personne = eh.id_personne )" +
-					" UNION " +
-					"(SELECT p.nom, p.prenom, eh.id_hospitalier, ('ide') 'role',im1.id_module " +
-					" FROM `personne` p, `etre_hospitalier` eh, `ide_module` im1" +
-					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = im1.id_hospitalier" +
-					" AND p.id_personne = eh.id_personne )" +
-					" UNION " +
-					"(SELECT p.nom, p.prenom, eh.id_hospitalier, ('brancardier') 'role',bm2.id_module " +
-					" FROM `personne` p, `etre_hospitalier` eh, `brancardier_module` bm2" +
-					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = bm2.id_hospitalier" +
-					" AND p.id_personne = eh.id_personne )");
+				query.execute("SELECT p.nom, p.prenom, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur" +
+					" FROM `personne` p, `malade` m, `etre_malade` em, `chambre` c" +
+					" WHERE em.id_pele = " + index.peleActuel.id_pele+
+					" AND m.id_malade = em.id_malade" +
+					" AND p.id_personne = em.id_personne " +
+					"AND c.numero = m.numero " +
+					"ORDER BY p.nom");
 			}
 			
 			private function provideExportDatagrid(evt:Object):void
@@ -197,29 +169,10 @@
 			private function alertClickHandler(event:CloseEvent):void
 			{
 				var arraySalle:ArrayCollection = query.getRecords();
-				var arrayModule:ArrayCollection = query2.getRecords();
-				var csvProvider:ArrayCollection = new ArrayCollection();
-				var lastModuleID:int = 0;
-				for(var i:int=0;i<arraySalle.length;i++)
-				{
-					var moduleID:int = arraySalle[i].id_module;
-					if(moduleID != lastModuleID)
-					{
-						csvProvider.addItem({module:"Module"});
-						for(var j:int=0; j<arrayModule.length;j++)
-						{
-							if(arrayModule[j].id_module==moduleID)
-								csvProvider.addItem(arrayModule[j]);
-						}
-						lastModuleID = moduleID;
-						csvProvider.addItem({module:"Salles"});
-					}
-					csvProvider.addItem(arraySalle[i]);
-				}
 				
 				switch (event.detail){
 					case Alert.OK:
-						var csvText:String = exportCSVFromArrayCollection(csvProvider,false);
+						var csvText:String = exportCSVFromArrayCollection(arraySalle);
 						var fileSave:FileReference= new FileReference();
 						fileSave.save(csvText,"export_salle.csv");
 						break;

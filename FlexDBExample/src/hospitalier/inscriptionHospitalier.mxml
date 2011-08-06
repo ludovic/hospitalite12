@@ -87,7 +87,7 @@
 						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
-						"transport, type , valid, Ville ,profession_sante ps	" +
+						"transport, type , valid, Ville " +
 						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne " +
 						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ "  AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
 				else
@@ -95,7 +95,7 @@
 						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
-						"transport, type , valid, Ville ,profession_sante ps " +
+						"transport, type , valid, Ville " +
 						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne " +
 						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement  AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
 				

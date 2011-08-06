@@ -76,6 +76,45 @@
 				this.dispatchEvent( new DocEvent(Chambre.RELOAD_MODULE));
 			}
 			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						provider.filterFunction = searchModel;
+						provider.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				if(item['Nom']!=null)
+				{
+					if(String(item['Nom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				if(item['Prenom']!=null)
+				{
+					if(String(item['Prenom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				
+				return isMatch;    
+			}
 		]]>
 	</mx:Script>
 	<mx:Label id="title" text="{titleText}"/>
@@ -84,6 +123,13 @@
 			<mx:Button label="Affecter à" click="affecterA(event)" enabled="{!index.visuMode}"/>
 			<mx:Button label="Voir fiche" click="voir(event)"/>
 		</mx:VBox>
+		<mx:VBox height="100%">
+		<mx:Canvas>
+			<mx:Image source="@Embed('/assets/search.png')" />
+			<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+						  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+						  />
+		</mx:Canvas>
 		<mx:DataGrid id="listMalade" dataProvider="{provider}" height="100%" width="100%">
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
@@ -91,5 +137,6 @@
 				<mx:DataGridColumn headerText="Codification" dataField="codification"/>
 			</mx:columns>
 		</mx:DataGrid>
+		</mx:VBox>
 	</mx:HBox>
 </mx:VBox>

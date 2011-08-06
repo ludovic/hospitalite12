@@ -53,7 +53,7 @@ package proxy
 			query2.connect("conn1", db);
 			query2.addEventListener(Query.QUERY_END, provideChambreDispo);
 			query2.addEventListener(Query.QUERY_ERROR,queryError);
-			query2.execute("Select c.numero,c.libelle,c.etage, lits,hebergement ,ascenseur,c.id_module, m.libelle as module_libelle from chambre c, etre_disponible ed, module m where c.numero = ed.numero and c.id_module=m.id_module and ed.id_pele =" + index.peleActuel.id_pele )
+			query2.execute("Select c.numero,c.libelle,c.etage, lits,hebergement ,ascenseur,c.id_module, m.libelle as module_libelle from chambre c, etre_disponible ed, module m where c.numero = ed.numero and c.id_module=m.id_module and ed.id_pele =" + index.peleActuel.id_pele+" order by c.libelle" )
 		}
 		
 		private static function provideChambreDispo(evt:Object):void

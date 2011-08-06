@@ -265,7 +265,9 @@
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Autre soins spécifiques">
-				<mx:TextInput id="autreSoin"/>
+				<mx:TextInput id="autreSoin"/><mx:FormItem label="Codification">
+												  <mx:TextInput id="codification" maxChars="5"/>
+											  </mx:FormItem>
 				<mx:HBox>
 					<mx:CheckBox label="Prise de médicament contrôlée par l'infirmière" id="priseMedicamentControleeCB"/>
 					<mx:CheckBox label="Oxygène" id="oxygeneCB"/>
@@ -316,9 +318,7 @@
 			<mx:FormItem label="Fiche incomplète">
 				<mx:CheckBox id="incomplet"/>
 			</mx:FormItem>
-			<mx:FormItem label="Codification">
-				<mx:TextInput id="codification" maxChars="5"/>
-			</mx:FormItem>
+			
 		</mx:Form>
 		<mx:HBox width="100%" horizontalAlign="center">
 			<mx:Button label="Modifier" click="modifHospitalier(event)" enabled="{!index.visuMode}"/>
