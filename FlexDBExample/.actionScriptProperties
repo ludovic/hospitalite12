@@ -13,7 +13,6 @@
     <sourceAttachmentPath/>
   </compiler>
   <applications>
-    <application path="menu/Menu.mxml"/>
     <application path="index.mxml"/>
     <application path="hospitalier/hospitalier.mxml"/>
   </applications>
