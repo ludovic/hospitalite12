@@ -48,7 +48,7 @@
 				Alert.show((evt.target as Query).getError());
 			}
 
-			protected function datagrid1_changeHandler(event:ListEvent):void
+			protected function datagrid1_changeHandler(event:ListEvent=null):void
 			{
 				query2.addEventListener(Query.QUERY_END, provideListeArrets);
 				query2.addEventListener(Query.QUERY_ERROR,queryError);
@@ -71,6 +71,8 @@
 			
 			protected function reload(event:Object=null):void
 			{
+				if(transportListe.selectedItem.id_transport)
+					datagrid1_changeHandler();
 				query.execute("SELECT * FROM transport");
 			}
 			protected function reloadGare(event:Object=null):void
@@ -90,6 +92,17 @@
 				}
 			}
 			
+			protected function updateGare(event:MouseEvent):void
+			{
+				if(gareListe.selectedItem)
+				{
+					var modifierGare:ModifierGare = new ModifierGare();
+					PopUpManager.addPopUp(modifierGare,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(modifierGare);
+					modifierGare.data = gareListe.selectedItem;
+					modifierGare.addEventListener(GestionCar.RELOAD_MODULE_GARE,reloadGare); 
+				}
+			}
 		]]>
 	</mx:Script>
 	<mx:Label text="Liste des cars :"/>
@@ -112,7 +125,7 @@
 		<mx:Label text="Label"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
-		<mx:DataGrid width="522" dataProvider="{arrets}">
+		<mx:DataGrid id="gareListe" width="522" dataProvider="{arrets}">
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
 				<mx:DataGridColumn headerText="Heure aller" dataField="heure_aller"/>
@@ -122,7 +135,7 @@
 		<mx:VBox height="100%">
 			<mx:Button width="71" label="Ajouter" click="addGare(event)"/>
 			<mx:Button width="71" label="Enlever"/>
-			<mx:Button label="Modifier"/>
+			<mx:Button label="Modifier" click="updateGare(event)"/>
 		</mx:VBox>
 	</mx:HBox>
 	

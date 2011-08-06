@@ -20,6 +20,7 @@
 			private var query    :IQuery;
 			
 			private var transportID:int;
+			private var gareID:int;
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
@@ -31,7 +32,22 @@
 			
 			override public function set data(value:Object):void
 			{
-				transportID = value as int;
+				gareID = value.id_gare;
+				transportID = value.id_transport;
+				
+				for(var i:int=0;i<gareSel.dataProvider.length;++i)
+				{
+					gareSel.selectedIndex = i;
+					if(gareSel.selectedItem.id_gare == value.id_gare)
+						break;
+				}
+				
+				dateAller.selectedDate = Tools.stringToDate(value.heure_aller);
+				heureAller.value = Tools.stringToDate(value.heure_aller).hours;
+				minuteAller.value = Tools.stringToDate(value.heure_aller).minutes;
+				dateRetour.selectedDate = Tools.stringToDate(value.heure_retour);
+				heureRetour.value= Tools.stringToDate(value.heure_retour).hours;
+				minuteRetour.value= Tools.stringToDate(value.heure_retour).minutes;
 			}
 			
 			protected function valider(event:MouseEvent):void
@@ -52,8 +68,9 @@
 					heureRetourComplete.setHours(this.heureRetour.value);
 					heureAllerComplete.setMinutes(this.minuteRetour.value);
 				}
-				 
-				query.execute("INSERT INTO passer_par ( `id_transport` ,`id_gare`,`id_pele`,`heure_aller`,`heure_retour`) VALUES ("+transportID+","+gareSel.selectedItem.id_gare+","+index.peleActuel.id_pele+", '"+Tools.dateToString(heureAllerComplete)+"', '"+Tools.dateToString(heureRetourComplete)+"') ", Query.INSERT );
+				
+				query.execute("UPDATE  `passer_par` SET  `heure_aller` =  '"+Tools.dateToString(heureAllerComplete)+"', `heure_retour` =  '"+Tools.dateToString(heureRetourComplete)+"' WHERE  `id_transport` ="+transportID+ " AND  `id_gare` ="+gareID+" AND  `id_pele` =" +index.peleActuel.id_pele ,Query.UPDATE);
+				
 				
 			}
 			
@@ -76,7 +93,7 @@
 	</mx:Script>	
 	<mx:HBox width="100%" horizontalAlign="center">
 		<mx:Label text="Gare : "/>
-		<mx:ComboBox id="gareSel" width="298" labelField="nom"/>
+		<mx:ComboBox id="gareSel" width="298" labelField="nom" enabled="false"/>
 	</mx:HBox>	
 	<mx:HBox width="100%" horizontalAlign="center">
 		<mx:Label text="Heure Aller : "/>
@@ -97,7 +114,7 @@
 		<mx:NumericStepper id="minuteRetour" maximum="59"/>
 	</mx:HBox>	
 	<mx:HBox width="100%" horizontalAlign="center">
-		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Modifier" click="valider(event)"/>
 		<mx:Button label="Annuler" click="close(event)"/>
 	</mx:HBox>
 </mx:TitleWindow>
