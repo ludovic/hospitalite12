@@ -100,9 +100,6 @@
 							tabList.push(module.titleText);
 							module.addEventListener(RELOAD_MODULE,provideModules);
 						}
-						else if(moduleFound)
-							break;
-							
 					} 
 				}
 				container.addChild(sousContainer);
