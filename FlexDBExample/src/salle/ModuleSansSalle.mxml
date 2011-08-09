@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.Tools;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -53,6 +54,11 @@
 			private function provideModule(evt:Object):void
 			{
 				provider = query.getRecords();
+				for(var i:int=0;i<provider.length;++i)
+				{
+					var myObject:Object = provider[i]
+					myObject.age = Tools.age(Tools.stringToDate(myObject.DateNaissance) , Tools.stringToDate(index.peleActuel.Debut));
+				}
 			}
 			private function queryError(evt:Event):void
 			{
