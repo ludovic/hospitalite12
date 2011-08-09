@@ -105,12 +105,57 @@
 				this.dispatchEvent( new DocEvent(Car.RELOAD_MODULE));
 			}
 			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						provider.filterFunction = searchModel;
+						provider.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				if(item['nom']!=null)
+				{
+					if(String(item['nom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				if(item['prenom']!=null)
+				{
+					if(String(item['prenom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				
+				return isMatch;    
+			}
 		]]>
 	</mx:Script>
 	<mx:Label id="title" text="{titleText}"/>
 	<mx:VBox height="100%" width="100%">
 		<mx:HBox width="100%">
 			<mx:Button label="Voyage avec" click="affecterA(event)" enabled="{!index.visuMode}"/>
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
 			<mx:Spacer width="100%"/>
 			<mx:ComboBox id="roleSelecteur" dataProvider="{new ArrayCollection(['Hospitalier','Malade','Pélerin'])}" visible="{(index.categorieUtilisateur == 'admin')}" change="generateModuleProvider(event)"/>
 		</mx:HBox>

@@ -74,11 +74,57 @@
 			{
 				this.dispatchEvent( new DocEvent(Affectation.RELOAD_MODULE));
 			}
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						provider.filterFunction = searchModel;
+						provider.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				if(item['nom']!=null)
+				{
+					if(String(item['nom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				if(item['prenom']!=null)
+				{
+					if(String(item['prenom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				
+				return isMatch;    
+			}
 
 		]]>
 	</mx:Script>
 	<mx:HBox height="100%" width="100%">
 		<mx:VBox height="100%">
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
 			<mx:Button label="Affecter à" click="affecterA(event)" enabled="{!index.visuMode}"/>
 		</mx:VBox>
 		<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%" width="100%">
