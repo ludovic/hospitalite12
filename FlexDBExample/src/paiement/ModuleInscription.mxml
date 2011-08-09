@@ -129,8 +129,8 @@
 	<mx:HBox height="100%">
 		<mx:DataGrid id="listInscrit" dataProvider="{provider}" height="100%">
 			<mx:columns>
-				<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
-				<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
+				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
 				<mx:DataGridColumn headerText="Total" dataField="Total"/>
 				<mx:DataGridColumn headerText="Total payé" dataField="TotalPaye"/>
 				<mx:DataGridColumn headerText="Solde" dataField="solde"/>
