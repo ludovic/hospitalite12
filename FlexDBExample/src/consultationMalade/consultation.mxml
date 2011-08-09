@@ -46,8 +46,8 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideNameGrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT * FROM etre_malade em, personne p, malade m, chambre ch WHERE em.id_personne = p.id_personne " +
-					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND em.id_pele="+index.peleActuel.id_pele);
+				query.execute("SELECT p.id_personne, Titre, Nom, Prenom, Adresse1, CodePostal, Commune, s.section, ch.libelle, ch.etage, ch.ascenseur, ch.lits  FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
+					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND s.id_secteur = p.id_secteur AND em.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function provideNameGrid(evt:Object):void
@@ -229,15 +229,18 @@
 					myObject.adresse = info.Adresse1;
 					myObject.codepostal = info.CodePostal;
 					myObject.ville = info.Commune;
+					myObject.section = info.section;
 					myObject.chambre = info.libelle;
+					myObject.etage = info.etage;
+					myObject.ascenseur = info.ascenseur;
+					myObject.lits = info.lits;
 					
-					myObject.transportA = myObject.nomHeb = myObject.nomGareA = myObject.heureAller = "";
+					myObject.transportA = myObject.nomGareA = myObject.heureAller = "";
 					for(var j:int=0;j<transportHebergementList.length;++j)
 					{
 						if(transportHebergementList[j].id_personne == info.id_personne)
 						{
 							myObject.transportA = transportHebergementList[j].nom_transport;
-							myObject.nomHeb = transportHebergementList[j].Libelle;
 							myObject.nomGareA =  transportHebergementList[j].nom;
 							myObject.heureAller = transportHebergementList[j].heure_aller;
 						}
