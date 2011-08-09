@@ -30,9 +30,9 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideModule);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("select nom, prenom, aff.service,id_hospitalier " +
+				query.execute("select nom, prenom, DateNaissance, aff.service, id_hospitalier " +
 					"from `affectation` aff, " +
-					"(SELECT p.nom, p.prenom, h.id_affectation,h.id_hospitalier" +
+					"(SELECT p.nom, p.prenom,p.DateNaissance, h.id_affectation,h.id_hospitalier" +
 					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh,  `affectation` a, `obtenir` ob " +
 					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 					" AND eh.id_hospitalier NOT IN (" +
@@ -100,6 +100,7 @@
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
 				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+				<mx:DataGridColumn headerText="Age" dataField="age" width="50"/>
 				<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
 			</mx:columns>
 		</mx:DataGrid>
