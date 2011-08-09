@@ -59,14 +59,12 @@
 				
 				var moduleSelectedId:int = moduleCB.selectedItem.id_module;
 				var etageSelectedId:int =  etageCB.selectedItem.value;
-				var moduleFound:Boolean = false;
 				for(var i:int=0;i<chambreArray.length;++i)
 				{
 					 if(chambreArray[i].etage == etageSelectedId)
 					{
 						if(chambreArray[i].id_module == moduleSelectedId)
 						{ 
-							moduleFound = true;
 							if(chambreArray[i].id_module !=lastIdModule)
 							{
 								container.addChild(sousContainer);
@@ -100,6 +98,7 @@
 							tabList.push(module.titleText);
 							module.addEventListener(RELOAD_MODULE,provideModules);
 						}
+							
 					} 
 				}
 				container.addChild(sousContainer);
