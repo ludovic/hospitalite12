@@ -34,6 +34,7 @@
 				
 				if((index.categorieUtilisateur == "hospitalier")||(index.categorieUtilisateur == "inscription")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Hospitalier")))
 				{
+					ncCol.visible = true;
 					query.execute("select ins.nom,ins.prenom,ins.DateNaissance,ins.nouveau,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.DateNaissance,p.id_personne,h.id_gare,h.nouveau,s.section" +
 						" FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, hospitalier h, secteur s" +
 						" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
@@ -47,6 +48,7 @@
 				}
 				else if((index.categorieUtilisateur == "malade")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Malade")))
 				{
+					ncCol.visible = false;
 					query.execute("select ins.nom,ins.prenom,ins.DateNaissance,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.DateNaissance,p.id_personne,m.id_gare,s.section" +
 						" FROM `personne` p, `etre_malade` em, `inscrire` i, malade m, secteur s" +
 						" WHERE em.id_pele ="+ index.peleActuel.id_pele+
@@ -59,6 +61,7 @@
 				}
 				else if((index.categorieUtilisateur == "pelerin")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Pélerin")))
 				{
+					ncCol.visible = false;
 					query.execute("select ins.nom,ins.prenom,ins.DateNaissance,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.DateNaissance,p.id_personne,pel.id_gare,s.section" +
 						" FROM `personne` p, `etre_pelerin` ep, `inscrire` i, pelerin pel, secteur s" +
 						" WHERE ep.id_pele ="+ index.peleActuel.id_pele+
@@ -117,7 +120,7 @@
 				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
 				<mx:DataGridColumn headerText="Gare Demandée" dataField="gare"/>
 				<mx:DataGridColumn headerText="Age" dataField="age"/>
-				<mx:DataGridColumn headerText="Nouveau" dataField="nouveau" visible="{(roleSelecteur.selectedLabel=='Hospitalier')}"/>
+				<mx:DataGridColumn headerText="Nouveau" dataField="nouveau" id="ncCol"/>
 				<mx:DataGridColumn headerText="Secteur" dataField="section"/>
 			</mx:columns>
 		</mx:DataGrid>
