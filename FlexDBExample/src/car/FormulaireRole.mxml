@@ -50,7 +50,7 @@
 				
 				if(item.hasOwnProperty("personne_role"))
 				{
-					switch (item.personne_role ){
+					switch (item.personne_role){
 						case'responsable':
 							query.execute("DELETE FROM avoir_responsable  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'aller' ", Query.DELETE );
 							break;
@@ -66,8 +66,9 @@
 						case'animation':
 							query.execute("DELETE FROM animation  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'aller' ", Query.DELETE );
 							break;
-					}
-					
+						default:
+							insertRole();
+					}					
 				}
 				else
 					insertRole();
