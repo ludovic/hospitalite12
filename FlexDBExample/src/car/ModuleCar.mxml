@@ -92,7 +92,7 @@
 					" AND p.id_personne = id.id_personne " +
 					" AND id.direction = 'aller')" +
 					" UNION " +
-					"(SELECT p.id_personne, ('brancardier') 'personne_role'" +
+					"(SELECT p.id_personne, ('animation') 'personne_role'" +
 					" FROM `personne` p, `animation` an" +
 					" WHERE an.id_pele ="+ index.peleActuel.id_pele+
 					" AND an.id_transport = "+carId +
