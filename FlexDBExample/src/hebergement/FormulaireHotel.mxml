@@ -28,16 +28,17 @@
 				db = Database.getInstance();
 				query = new Query();
 				query.connect("conn1", db);
-				if(index.categorieUtilisateur == "hospitalier")
+				if((index.categorieUtilisateur == "hospitalier")||((index.categorieUtilisateur == "admin")&&(ModuleSansHotel.role=="Hospitalier")))
 				{
 					this.hotelList.dataProvider = HotelProxy.HotelHospitalier;
 				}
-				else if(index.categorieUtilisateur == "pelerin")
+				else if((index.categorieUtilisateur == "pelerin")||((index.categorieUtilisateur == "admin")&&(ModuleSansHotel.role=="Pélerin")))
 				{
 					this.hotelList.dataProvider = HotelProxy.HotelPelerin;
 				}
 			}
 			
+			private var role:Object;
 			public function setFormulaire(item:Object,sallenOld:Number=NaN):void
 			{
 				myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";

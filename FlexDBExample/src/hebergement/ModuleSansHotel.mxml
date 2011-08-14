@@ -18,6 +18,8 @@
 			private var db       :IDatabase;
 			private var query    :IQuery;
 			
+			public static var role:Object = "Hospitalier";
+			
 			[Bindable]
 			public var titleText:String;
 			[Bindable]
@@ -32,6 +34,14 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideModule);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(index.categorieUtilisateur == "admin")
+				{
+					if(roleSelecteur.selectedLabel=="Hospitalier")
+						ModuleSansHotel.role="Hospitalier";
+					else
+						ModuleSansHotel.role="Pélerin";
+				}
+					
 				if((index.categorieUtilisateur == "hospitalier")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Hospitalier")))
 				{
 					query.execute("select nom, prenom,DateNaissance,af.id_personne, he.Libelle " +
