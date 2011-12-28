@@ -1,6 +1,7 @@
 <?php
 require('fpdf/fpdf.php');
 ini_set("memory_limit",'16M');
+define("SALLE", 11);
 
 class PDF extends FPDF	{	
 	var $nbpage;
@@ -56,12 +57,15 @@ $db = mysql_query(" SELECT 	p.Titre,
 							t.nom_transport,
 							t.compagnie,
 							g.nom as gare,
+							px.TotalPaye,
+							px.solde,
 							date_format(pp.heure_aller, '%H:%i le %d/%m/%y') as heure_aller
 					FROM 	personne p, 
 							etre_hospitalier e, 
 							hospitalier h,
 							secteur s,
 							personne ps,
+							prix px,
 							inscrire i
 					LEFT JOIN hebergement hb on i. id_hebergement_retenu = hb.id_hebergement
 					LEFT JOIN transport t on i.id_transport = t.id_transport
@@ -79,6 +83,7 @@ $db = mysql_query(" SELECT 	p.Titre,
 						and s.id_personne_etre_resposable = ps.id_personne
 						and i.id_pele = e.id_pele
 						and i.id_personne = e.id_personne 
+						and i.id_prix = px.id_prix
 					ORDER BY p.nom, p.prenom");
 $pdf->nbpage = mysql_num_rows($db);
 while($rs = mysql_fetch_object($db)) {
@@ -113,6 +118,11 @@ while($rs = mysql_fetch_object($db)) {
 	$pdf->Cell_utf8(0,5,'Cher(e) ami(e),',0,1);
 	$pdf->Cell_utf8(0,5,'Vous êtes bien inscrit au Pèlerinage 2011.',0,1);
 	
+	if($rs->id_transport)
+		$pdf->Cell_utf8(0,5,'Départ : Le '.$rs->nom_transport.' de '.$rs->compagnie.' vous prendra à '.$rs->heure_aller.' à '.$rs->gare,0,1);
+	else
+		$pdf->Cell_utf8(0,5,'Vous avez signifié vouloir venir par vos propres moyens',0,1);
+	
 	$db1 = mysql_query("SELECT 	a.Service,
 								a.id_affectation
 						FROM 	obtenir o,
@@ -138,12 +148,66 @@ while($rs = mysql_fetch_object($db)) {
 			if($rs2->id_equipe)		$txt_serv .= " dans l'équipe ".$rs2->libelle;
 			mysql_free_result($db2);
 			
-			$db2 = mysql_query("SELECT 	id_module
-								FROM 	responsable_module rm,
-										module m
-								WHERE	id_hospitalier = ".$rs->id_hospitalier);
+			if($rs1->id_affectation == SALLE) {
 			
-			$pdf->Cell_utf8(0,5,$txt_serv,0,2);
+				$db2 = mysql_query("SELECT 	libelle 
+									FROM 	responsable_module rm,
+											module m
+									WHERE	id_hospitalier = ".$rs->id_hospitalier."
+										and rm.id_module = m.id_module");
+				if(mysql_num_rows($db2))	{
+					$rs2 = mysql_fetch_object($db2);
+					$txt_serv = "Responsable du module ".$rs2->libelle;
+				}
+				mysql_free_result($db2);
+				
+				$db2 = mysql_query("SELECT 	libelle 
+									FROM 	ide_module im,
+											module m
+									WHERE	id_hospitalier = ".$rs->id_hospitalier."
+										and im.id_module = m.id_module");
+				if(mysql_num_rows($db2))	{
+					$rs2 = mysql_fetch_object($db2);
+					$txt_serv = "Infirmière (DE) du module ".$rs2->libelle;
+				}
+				mysql_free_result($db2);
+				
+				$db2 = mysql_query("SELECT 	libelle 
+									FROM 	brancardier_module bm,
+											module m
+									WHERE	id_hospitalier = ".$rs->id_hospitalier."
+										and bm.id_module = m.id_module");
+				if(mysql_num_rows($db2))	{
+					$rs2 = mysql_fetch_object($db2);
+					$txt_serv = "Brancardier en charge du module ".$rs2->libelle;
+				}
+				mysql_free_result($db2);
+				
+				$db2 = mysql_query("SELECT 	c.*,
+											p.titre,
+											p.nom,
+											p.prenom
+									FROM 	s_occuper so,
+											chambre c,
+											module m,
+											responsable_module rm,
+											etre_hospitalier eh,
+											personne p
+									WHERE	so.id_hospitalier = ".$rs->id_hospitalier."
+										and so.numero = c.numero
+										and c.id_module = m.id_module
+										and m.id_module = rm.id_module
+										and rm.id_hospitalier = eh.id_hospitalier
+										and eh.id_personne = p.id_personne");
+				if(mysql_num_rows($db2))	{
+					while($rs2 = mysql_fetch_object($db2)) {
+						$pdf->Cell_utf8(0,5,"Hospitalière en chambre ".$rs2->libelle." (".$rs2->etage.$rs2->ascenseur.") - Responsable de module : ".$rs2->prenom." ".$rs2->nom,0,2);
+						$txt_serv = "";
+					}
+				}
+				mysql_free_result($db2);
+			}
+			if($txt_serv)	$pdf->Cell_utf8(0,5,$txt_serv,0,2);
 		}
 		$pdf->ln(0);
 	}
@@ -152,15 +216,18 @@ while($rs = mysql_fetch_object($db)) {
 		
 	mysql_free_result($db1);
 	
-	if($rs->id_transport)
-		$pdf->Cell_utf8(0,5,'Départ : Le '.$rs->nom_transport.' de '.$rs->compagnie.' vous prendra à '.$rs->heure_aller.' à '.$rs->gare,0,1);
-	else
-		$pdf->Cell_utf8(0,5,'Vous avez signifié vouloir venir par vos propres moyens',0,1);
 	if(intval($rs->heb) > 1)
 		$pdf->Cell_utf8(0,5,'L\'Hospitalité Aveyronnaise vous a réservé une chambre à : '.$rs->heb_libelle,0,1);
 	else 
 		$pdf->Cell_utf8(0,5,'Vous avez signifié vouloir vous occuper personnellement de votre réservation à '.$rs->nomheb,0,1);
-	$pdf->Cell_utf8(0,5,'Vous avez versé un acompte de 215€ il vous reste à régler 0€ avant le 25/08/2011',0,1);
+		
+	if($rs->solde > 0)
+		$pdf->Cell_utf8(0,5,'Vous avez versé un acompte de '.$rs->TotalPaye.' euros il vous reste à régler '.$rs->solde.' euros avant le 25/08/2011',0,1);
+	elseif($rs->solde == 0)
+		$pdf->Cell_utf8(0,5,'Vous avez versé un acompte de '.$rs->TotalPaye.' euros votre pélerinage est donc soldé',0,1);
+	else 
+		$pdf->Cell_utf8(0,5,'Vous avez versé un acompte de '.$rs->TotalPaye.' euros il vous sera restitué '.$rs->solde.' euros',0,1);		
+	
 	$pdf->Cell_utf8(0,5,'à CHANTAL CONSTANS - LES CANS HAUTS - CEIGNAC - 12450 CALMONT',0,1);
 	
 	$pdf->SetY(106);
