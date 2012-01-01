@@ -48,7 +48,7 @@ $pdf->SetCreator("Hospitalité Aveyronnaise", false);
 $pdf->SetTitle("Feuille de transport", false);
 $pdf->SetAutoPageBreak(true, 10);
 
-mysql_connect("db3046.1and1.fr", "dbo356768667", "+JsLiC2503+");
+$link = mysql_connect("db3046.1and1.fr", "dbo356768667", "+JsLiC2503+");
 mysql_select_db("db356768667");
 mysql_query("SET NAMES 'utf8'");
 
@@ -211,5 +211,6 @@ while($rs = mysql_fetch_object($db)) {
 	}	
 }
 mysql_free_result($db);
+mysql_close($link);
 $pdf->Output("Car_ha.pdf","I");
 ?>
