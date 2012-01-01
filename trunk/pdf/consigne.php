@@ -16,6 +16,8 @@ class PDF extends FPDF	{
 	
 	function Cell_utf8($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link='') {
 		$txt = str_replace("Ãª","ê",$txt);
+		$txt = str_replace("Ã¨","è",$txt);
+		$txt = str_replace("Ã©","é",$txt);
 		parent::cell($w, $h, utf8_decode($txt), $border, $ln, $align, $fill, $link);
 	}
 	
@@ -32,7 +34,7 @@ $pdf->SetCreator("Hospitalité Aveyronnaise", false);
 $pdf->SetTitle("Feuille de consignes", false);
 $pdf->SetAutoPageBreak(true, 10);
 
-mysql_connect("db3046.1and1.fr", "dbo356768667", "+JsLiC2503+");
+$link = mysql_connect("db3046.1and1.fr", "dbo356768667", "+JsLiC2503+");
 mysql_select_db("db356768667");
 mysql_query("SET NAMES 'utf8'");
 
@@ -260,5 +262,6 @@ while($rs = mysql_fetch_object($db)) {
 	$pdf->MultiCell_utf8(0,5,'- L\'ETIQUETAGE : (affaires des personnes malades et des hospitaliers) :  Tout doit être étiqueté (canne, sac à main, valise, manteau, chariot, poche de souvenirs…). Complétez les étiquettes avec toutes les mentions (Nom, prénom, adresse, n° bus, nom de l\'étage, et numéro de chambre) faites de même pour le retour. Vous pourrez',0,'J');
 }
 mysql_free_result($db);
+mysql_close($link);
 $pdf->Output("ha.pdf",$pdf->nbpage <=1 ? "I" : "I");
 ?>

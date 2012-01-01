@@ -116,7 +116,7 @@ while($rs = mysql_fetch_object($db)) {
 	while($rs1 = mysql_fetch_object($db1)) {
 		$pdf->Cell(6, 6, "", 1, 0);
 		$pdf->Cell_utf8(65, 6, $rs1->titre." ".$rs1->nom." ".$rs1->prenom, 1, 0);
-		$pdf->Cell_utf8(15, 6, $rs1->age." ans", 1, 0);
+		$pdf->Cell_utf8(15, 6, $rs1->age." ans", 1, 0, "C");
 		$pdf->Cell_utf8(55, 6, ($rs1->id_hebergement > 1) ? $rs1->libelle : $rs1->nomHeb, 1, 0);
 		$pdf->Cell_utf8(43, 6, $rs1->section, 1, 0);
 		$pdf->ln(6);
