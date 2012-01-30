@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.helper.DataGridDataExporter;
+			import common.helper.SortUtil;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -41,6 +42,8 @@
 			private function queryEnd(evt:Object):void
 			{
 				users = query.getRecords();
+				users.sort = SortUtil.nomPrenomSort();
+				users.refresh();
 			}	
 			
 			private function queryError(evt:Object):void

@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.helper.DataGridDataExporter;
+			import common.helper.SortUtil;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -36,6 +37,8 @@
 			private function queryEnd(evt:Object):void
 			{
 				pelerinList = query.getRecords();
+				pelerinList.sort = SortUtil.nomPrenomSort();
+				pelerinList.refresh();
 			}	
 			
 			private function queryError(evt:Object):void

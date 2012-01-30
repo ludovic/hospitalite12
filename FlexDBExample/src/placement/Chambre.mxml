@@ -227,11 +227,24 @@
 				searchTimer.start();
 			}
 			
+			protected function pdfModules(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/module.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			protected function pdfModule(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/module.php?pele=" +index.peleActuel.id_pele+"&id="+moduleCB.selectedItem.id_module ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	
 	<mx:HBox width="100%">
 		<mx:Spacer width="100%"/>
+		<mx:Button label="Générer les Modules" click="pdfModules(event)" />
 		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
@@ -244,6 +257,8 @@
 	<mx:HBox width="100%" visible="{(searchInput.text=='')}">
 		<mx:Label text="Etage :"/><mx:ComboBox id="etageCB" dataProvider="{[{nom:'1er',value:1},{nom:'2ème',value:2},{nom:'3ème',value:3},{nom:'4ème',value:4}]}" labelField="nom" change="etageCB_changeHandler(event)" selectedIndex="1"/>
 		<mx:Label text="Module :"/><mx:ComboBox id="moduleCB" dataProvider="{moduleSalleList}" labelField="libelle" change="moduleCB_changeHandler(event)"/>
+		<mx:Spacer width="25%" />
+		<mx:Button label="Générer ce Module" click="pdfModule(event)" />
 	</mx:HBox>
 	<mx:HBox x="16.5" y="64" width="100%" height="600" verticalScrollPolicy="off">
 		<mx:VBox id="container" height="600"  width="100%" verticalScrollPolicy="on" maxHeight="600">

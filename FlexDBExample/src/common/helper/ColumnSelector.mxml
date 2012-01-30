@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="canvas1_creationCompleteHandler(event)">
+<mx:PopUpButton xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="canvas1_creationCompleteHandler(event)" label="-Colonnes-">
 	<mx:Script>
 		<![CDATA[
 			import mx.controls.CheckBox;
@@ -41,11 +41,15 @@
 
 		]]>
 	</mx:Script>
-	<mx:ComboBox id="comboBox" dataProvider="{this.myProvider}"  prompt="- Colonnes -" change="{comboBox.selectedIndex=-1;}">
-		<mx:itemRenderer>
-			<mx:Component>
-				<mx:CheckBox click="outerDocument.changeColumn(event)" label="{data.label}" selected="{data.selected}"/>
-			</mx:Component>						
-		</mx:itemRenderer>
-	</mx:ComboBox>
-</mx:Canvas>
+	<mx:popUp>
+		<mx:VBox>
+		<mx:List id="comboBox" dataProvider="{this.myProvider}"  change="{comboBox.selectedIndex=-1;}" minWidth="200">
+			<mx:itemRenderer>
+				<mx:Component>
+					<mx:CheckBox click="outerDocument.changeColumn(event)" label="{data.label}" selected="{data.selected}"/>
+				</mx:Component>						
+			</mx:itemRenderer>
+		</mx:List>
+		</mx:VBox>
+	</mx:popUp>	
+</mx:PopUpButton>

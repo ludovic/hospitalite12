@@ -96,6 +96,7 @@
 				autreSoin.text = item.autre_soin_spec;
 				priseMedicamentControleeCB.selected = item.autre_soin_prise_med;
 				oxygeneCB.selected = item.autre_soin_oxygene;
+				extracteurCB.selected = item.extracteur;
 				debitOxygene.text =	item.autre_soin_oxygene_debit;
 				toilettesAideTotaleCB.selected =item.toilette_aide_total;
 				toilettesAidePartielleCB.selected =	item.toilette_aide_partiel;
@@ -103,6 +104,8 @@
 				coucherAideCB.selected = item.coucher_aide;
 				coucherBarriereCB.selected = item.coucher_barriere_lit;
 				coucherPotenceCB.selected = item.coucher_potence;
+				matelasAntiEscCB.selected = item.matelas_anti_esc;
+				souleveMaladeCB.selected = item.souleve_malade;
 				incontinenceChangeCB.selected = item.incont_bes_change;
 				incontinenceJourCB.selected = item.incont_jour;
 				incontinenceNuitCB.selected	= item.incont_nuit;
@@ -175,12 +178,15 @@
 							" autre_soin_prise_med = "+Number(priseMedicamentControleeCB.selected)+","+
 							" autre_soin_oxygene = "+Number(oxygeneCB.selected)+","+
 							" autre_soin_oxygene_debit = '"+Tools.sanitize(debitOxygene.text)+"',"+
+							" extracteur = '"+Number(extracteurCB.selected)+"',"+
 							" toilette_aide_total = "+Number(toilettesAideTotaleCB.selected)+","+
 							" toilette_aide_partiel = "+Number(toilettesAidePartielleCB.selected)+","+
 							" toilette_aide_lit = "+Number(toiletteLitCB.selected)+","+
 							" coucher_aide = "+Number(coucherAideCB.selected)+","+
 							" coucher_barriere_lit = "+Number(coucherBarriereCB.selected)+","+
 							" coucher_potence = "+Number(coucherPotenceCB.selected)+","+
+							" matelas_anti_esc = "+Number(matelasAntiEscCB.selected)+","+
+							" souleve_malade = "+Number(souleveMaladeCB.selected)+","+
 							" incont_bes_change = "+Number(incontinenceChangeCB.selected)+","+
 							" incont_jour = "+Number(incontinenceJourCB.selected)+","+
 							" incont_nuit = "+Number(incontinenceNuitCB.selected)+","+
@@ -325,7 +331,7 @@
 					<mx:CheckBox label="Injection" id="injectionCB"/>
 					<mx:Label text="Type"/>
 					<mx:TextInput id="injectionType" />
-					<mx:Label text="Horraire"/>
+					<mx:Label text="Horaire"/>
 					<mx:TextInput id="injectionHorraire"/>
 				</mx:HBox>
 				<mx:HBox>
@@ -342,6 +348,7 @@
 					<mx:Label text="Debit par 24h"/>
 					<mx:TextInput id="debitOxygene"/>
 				</mx:HBox>
+				<mx:CheckBox label="Extracteur" id="extracteurCB"/>
 			</mx:FormItem>
 			<mx:FormItem label="Toilettes">
 				<mx:HBox>
@@ -355,6 +362,8 @@
 					<mx:CheckBox label="Aide" id="coucherAideCB"/>
 					<mx:CheckBox label="Barrière au lit" id="coucherBarriereCB"/>
 					<mx:CheckBox label="Potence" id="coucherPotenceCB"/>
+					<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
+					<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Incontinence">

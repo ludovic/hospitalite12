@@ -215,6 +215,13 @@
 					}
 				}
 			}
+			
+			protected function pdfCar(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/transport.php?pele=" +index.peleActuel.id_pele+"&id="+carId;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	<mx:VBox>
@@ -238,6 +245,7 @@
 				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="100" enabled="{!index.visuMode}"/>
 				<mx:Button label="Definir role" click="role(event)" width="100" enabled="{!index.visuMode}"/>
 				<mx:Button label="Enlever role" click="enleverRole(event)" width="100" enabled="{!index.visuMode}"/>
+				<mx:Button label="Générer ce Car" click="pdfCar(event)" />
 			</mx:VBox>
 		</mx:HBox>
 	</mx:VBox>

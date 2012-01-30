@@ -19,9 +19,9 @@
 			
 			[Bindable]
 			public var provider:ArrayCollection;
-			private var moduleId:Number;
+			public var moduleId:Number;
 			
-			public function generateModuleProvider(moduleId:int):void
+			public function generateModuleProvider(moduleId:int,moduleId2:int=0):void
 			{
 				this.moduleId=moduleId;
 				db = Database.getInstance();

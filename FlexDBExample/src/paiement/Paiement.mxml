@@ -31,7 +31,7 @@
 					remiseArray= RemiseProxy.RemiseMalade;
 					moduleInscription.type = "pelerin";
 				}
-				
+				remiseArray.source.reverse();
 				moduleList.push({module:moduleInscription,remise:{id_remise:0}});
 				
 				

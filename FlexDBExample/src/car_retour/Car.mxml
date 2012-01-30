@@ -113,6 +113,13 @@
 				}
 				
 			}
+			
+			protected function pdfCars(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/transport.php?pele=" +index.peleActuel.id_pele+"&ret=true";
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	
@@ -125,6 +132,7 @@
 		</mx:Canvas>
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
+		<mx:Button label="Générer les Cars" click="pdfCars(event)" />
 		<mx:Button label="Exporter Liste des cars" click="exportDatagridFunction(event)"/>
 	</mx:HBox>
 	<mx:HBox width="100%" height="100%" verticalScrollPolicy="off">

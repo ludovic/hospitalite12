@@ -2,7 +2,7 @@
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="955" minHeight="400"
 				xmlns:hospitalier="hospitalier.*" xmlns:menu="menu.*" xmlns:admin="admin.*" xmlns:pelerin="pelerin.*" xmlns:malade="malade.*" 
 				xmlns:car="car.*" xmlns:carR="car_retour.*" xmlns:gestionCar="gestion_car.*" xmlns:affectation="affectation.*" xmlns:salle="salle.*" backgroundColor="#E3EEFB" xmlns:paiement="paiement.*"
-				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*" xmlns:consultationMalade="consultationMalade.*"
+				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*" xmlns:consultationMalade="consultationMalade.*" xmlns:placementConsultation="placementConsultation.*"
 				>
 
 	<mx:Script>
@@ -56,9 +56,9 @@
 			{
 				db = Database.getInstance();
 				query = new Query();
-				   db.connect("conn1", "root", "", "127.0.0.1", "baseha", true);   
+				    db.connect("conn1", "root", "", "127.0.0.1", "baseha", true);    
 						
-			 	/*   db.connect("conn1", "dbo356768667", "+JsLiC2503+", "db3046.1and1.fr", "db356768667", true);   */  
+			 /* 	   db.connect("conn1", "dbo356768667", "+JsLiC2503+", "db3046.1and1.fr", "db356768667", true);     */ 
 				query.connect("conn1", db);
 				query2= new Query();
 				query2.connect("conn1", db);
@@ -164,6 +164,7 @@
 						tabNav.addChild(this.maladeInsc);
 						tabNav.addChild(this.maladeTab);
 						tabNav.addChild(this.placementTab);
+						tabNav.addChild(this.placementConsultationTab);
 						tabNav.addChild(this.car);
 						tabNav.addChild(this.carRetour);
 						tabNav.addChild(this.consultationMalade);
@@ -191,6 +192,7 @@
 						tabNav.addChild(this.maladeInsc);
 						tabNav.addChild(this.maladeTab);
 						tabNav.addChild(this.placementTab);
+						tabNav.addChild(this.placementConsultationTab);
 						tabNav.addChild(this.consultationMalade);
 						tabNav.addChild(this.pelerinInsc);
 						tabNav.addChild(this.pelerinTab);
@@ -334,6 +336,9 @@
 						</mx:Canvas>
 						<mx:Canvas id="placementTab" label="Placement" width="100%" height="100%">
 							<placement:Chambre width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="placementConsultationTab" label="Consultation Placement" width="100%" height="100%">
+							<placementConsultation:consultation width="100%" height="100%"/>
 						</mx:Canvas>
 						<mx:Canvas id="car" label="Cars" width="100%" height="100%">
 							<car:Car id="carA" width="100%" height="100%"/>

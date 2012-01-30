@@ -46,7 +46,8 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideNameGrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT p.id_personne, Titre, Nom, Prenom, Adresse1, CodePostal, Commune, s.section, ch.libelle, ch.etage, ch.ascenseur, ch.lits  FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
+				//p.id_personne, Titre, Nom, Prenom, Adresse1, CodePostal, Commune, s.section, ch.libelle, ch.etage, ch.ascenseur, ch.lits
+				query.execute("SELECT * FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
 					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND s.id_secteur = p.id_secteur AND em.id_pele="+index.peleActuel.id_pele);
 			}
 			

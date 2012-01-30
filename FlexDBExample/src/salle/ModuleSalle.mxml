@@ -25,12 +25,14 @@
 			[Bindable]
 			public var provider:ArrayCollection;
 			private var chambreId:Number;
+			public var moduleId:Number;
 			
 			
 			
-			public function generateModuleProvider(chambreId:int):void
+			public function generateModuleProvider(chambreId:int,moduleId:int):void
 			{
 				this.chambreId=chambreId;
+				this.moduleId=moduleId;
 				db = Database.getInstance();
 				query= new Query();
 				query.connect("conn1", db);
@@ -94,6 +96,12 @@
 				}
 			} 
 			
+			protected function pdfSalle(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/module.php?pele=" +index.peleActuel.id_pele+"&id="+moduleId+"&chambre="+chambreId;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	

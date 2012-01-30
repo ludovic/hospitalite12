@@ -63,6 +63,7 @@
 			private function provideEquipe(evt:Object):void
 			{
 				remiseProvider = query2.getRecords();
+				remiseProvider.source.reverse();
 			}
 			
 			protected function valider(event:MouseEvent):void
@@ -143,7 +144,7 @@
 	</mx:HBox>
 	<mx:HBox>
 		<mx:Label text="Type de paiement :"/>
-		<mx:ComboBox dataProvider="{['Espèces','Chèque']}" id="typePaiement"/>
+		<mx:ComboBox dataProvider="{['Chèque','Espèces']}" id="typePaiement"/>
 	</mx:HBox>
 	<mx:HBox>
 		<mx:Label text="Nouveau solde :"/>

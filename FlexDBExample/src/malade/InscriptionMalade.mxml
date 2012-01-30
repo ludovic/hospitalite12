@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.helper.DataGridDataExporter;
+			import common.helper.SortUtil;
 			
 			import flash.net.FileReference;
 			
@@ -36,6 +37,8 @@
 			private function queryEnd(evt:Object):void
 			{
 				users = query.getRecords();
+				users.sort = SortUtil.nomPrenomSort();
+				users.refresh();
 			}	
 			
 			private function queryError(evt:Object):void
@@ -179,12 +182,15 @@
 				<mx:DataGridColumn dataField="autre_soin_prise_med" headerText="autre_soin_prise_med" visible="false"/>
 				<mx:DataGridColumn dataField="autre_soin_oxygene" headerText="autre_soin_oxygene" visible="false"/>
 				<mx:DataGridColumn dataField="autre_soin_oxygene_debit" headerText="autre_soin_oxygene_debit" visible="false"/>
+				<mx:DataGridColumn dataField="extracteur" headerText="extracteur" visible="false"/>
 				<mx:DataGridColumn dataField="toilette_aide_total" headerText="toilette_aide_total" visible="false"/>
 				<mx:DataGridColumn dataField="toilette_aide_partiel" headerText="toilette_aide_partiel" visible="false"/>
 				<mx:DataGridColumn dataField="toilette_aide_lit" headerText="toilette_aide_lit" visible="false"/>
 				<mx:DataGridColumn dataField="coucher_aide" headerText="coucher_aide" visible="false"/>
 				<mx:DataGridColumn dataField="coucher_barriere_lit" headerText="coucher_barriere_lit" visible="false"/>
 				<mx:DataGridColumn dataField="coucher_potence" headerText="coucher_potence" visible="false"/>
+				<mx:DataGridColumn dataField="matelas_anti_esc" headerText="matelas_anti_esc" visible="false"/>
+				<mx:DataGridColumn dataField="souleve_malade" headerText="souleve_malade" visible="false"/>
 				<mx:DataGridColumn dataField="incont_bes_change" headerText="incont_bes_change" visible="false"/>
 				<mx:DataGridColumn dataField="incont_jour" headerText="incont_jour" visible="false"/>
 				<mx:DataGridColumn dataField="incont_nuit" headerText="incont_nuit" visible="false"/>

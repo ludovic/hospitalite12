@@ -46,8 +46,8 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideNameGrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho WHERE h.id_personne = p.id_personne " +
-					" AND h.id_hospitalier = ho.id_hospitalier AND h.id_pele="+index.peleActuel.id_pele);
+				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
+					" AND h.id_hospitalier = ho.id_hospitalier AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function provideNameGrid(evt:Object):void
@@ -363,6 +363,7 @@
 					myObject.adresse = info.Adresse1;
 					myObject.codepostal = info.CodePostal;
 					myObject.ville = info.Commune;
+					myObject.secteur = info.section;
 					
 					myObject.transportA = myObject.nomHeb = myObject.nomGareA = myObject.heureAller = "";
 					for(var j:int=0;j<transportHebergementList.length;++j)
@@ -447,11 +448,22 @@
 				Alert.show("Confirmation de l'export.","",Alert.OK,this, alertClickHandler);
 			}
 			
+			protected function pdfConsignes(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/consigne.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			
 		]]>
 	</mx:Script>
 	<consultation:ListeNom id="listeNom" width="200"/>
 	<mx:VBox width="100%" height="100%">
-		<mx:Button label="Exporter tout" right="0" click="exportAll2(event)"/>
+		<mx:HBox>
+			<mx:Button label="Exporter tout" right="0" click="exportAll2(event)"/>
+			<mx:Button label="Générer toutes les Consignes" click="pdfConsignes(event)" />
+		</mx:HBox>
+		
 		<consultation:Details id="detailsPersonne" width="100%" height="100%">
 		</consultation:Details>
 	</mx:VBox>

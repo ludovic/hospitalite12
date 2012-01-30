@@ -196,18 +196,31 @@
 				return text;
 			}	
 			
-			
+			protected function pdfEquipes(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/equipe.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			protected function pdfEquipe(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/equipe.php?pele=" +index.peleActuel.id_pele+"&aff="+affectationCB.selectedItem.id_affectation ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	
 	<mx:HBox width="100%">
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
+		<mx:Button label="Générer les Equipes" click="pdfEquipes(event)" />
 		<mx:Button label="Exporter Liste des Equipes" click="exportDatagrid(event)"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
 		<mx:Label text="Affectation :"/><mx:ComboBox id="affectationCB" selectedIndex="0" dataProvider="{this.affectation}" labelField="Service" change="affectationCB_changeHandler(event)"/>
 		<mx:Button label="Créer une equipe" click="addEquipe(event)" enabled="{!index.visuMode}"/>
+		<mx:Button label="Générer ces Equipes" click="pdfEquipe(event)" />
 	</mx:HBox>
 	<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
 		<mx:VBox id="container" height="{this.height*0.9}" width="50%">
