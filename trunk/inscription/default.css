@@ -1,0 +1,114 @@
+#popup {	display: none;	}
+
+.ui-dialog .ui-dialog-buttonpane button {	font-size: 13px;	}
+
+#ui-dialog-title-popup {	font-size: 0.75em;	}
+
+#popup label {
+	width: 75px;
+	float: left;
+	border-width: 0;
+    margin: 2px 2px 2px 0;
+    padding: 2px 0;
+	clear: both;
+	font-size: 0.6em;
+}
+
+#popup label#lbl_complet { width: 130px; }
+	
+#popup input, #popup textarea {	
+	width: 335px;
+	font-size: 0.6em;
+	padding: 2px;
+	margin: 1px;
+}
+	
+#popup input.txtitem, #popup textarea.txtitem {	width: 300px;	}
+
+#popup select {
+    height: 20px;
+    margin: 2px 1px;
+    padding: 2px;
+    text-align: left;
+	width: 306px;
+	font-weight: normal;
+	font-size: 0.6em;
+}
+
+#popup input[type=radio],
+#popup input[type=checkbox] {
+	width: 20px;
+	margin: 0;
+	float: left;
+}
+#popup input[type=radio]#oui {	margin-left: 5px;	}
+#popup input#cp 	{	width: 80px;	}
+#popup input#ville	{	width: 206px;	}
+
+.radio_ON {
+	float: left;
+	padding: 2px 0;
+	margin: 2px 0;
+	border: 0;
+	height: 16px;
+	line-height: 16px;
+	width: auto;
+}
+
+#popup span {
+    display: block;
+    float: left;
+    padding: 0 2px;
+	font-size: 0.6em;
+}
+
+.ui-datepicker-trigger {
+    float: left;
+    margin-left: 3px;
+    margin-top: 4px;
+}
+
+div.ui-datepicker {	
+	font-size: 0.75em; 
+	display: none;
+}
+
+hr	{
+	border-color: #EEEEEE;
+    margin: 3px 0;
+    size: 1px;
+	clear: both;
+}
+
+#popup input#avecqui,
+input#aff_non {
+	width: 200px;
+	margin-top: 7px;
+	margin-bottom: 7px;	
+}
+
+#div_heb {	height:auto; }
+
+label#lbl_reserve, label#lbl_jeune	{	width: 300px;	}
+label#lbl_hebergement, label#lbl_indiv, label#lbl_aff, label#lbl_aff_non {	width: 130px;	}
+label#lbl_avecqui, label#lbl_heb2	{	width: 175px;	}
+#popup input#heb2	{	width: 200px;	}
+#popup #id_affectation {	width : 250px;	}
+#popup #aff_non {	width : 245px;	}
+#popup #lbl_nuit {	width : 180px;	}
+
+label#lbl_total	{	
+	font-weight: bold;
+	width: 130px;
+	clear:both;
+}
+
+#popup input#total {
+	border: 0 none;
+    font-weight: bold;
+    width: auto;
+}
+
+#popup #div_ckb_nuit span {
+	padding-right: 30px;	
+}
