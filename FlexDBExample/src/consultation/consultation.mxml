@@ -5,6 +5,7 @@
 			import common.events.DocEvent;
 			import common.helper.DataGridDataExporter;
 			import common.helper.ProgressPopUp;
+			import common.helper.SortUtil;
 			
 			import flash.utils.flash_proxy;
 			
@@ -46,13 +47,17 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideNameGrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
+				
+				query.execute("SELECT p.id_personne, p.Titre, p.Nom, p.Prenom, p.Adresse1, p.CodePostal, p.Commune, s.section, ho.id_hospitalier FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
 					" AND h.id_hospitalier = ho.id_hospitalier AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function provideNameGrid(evt:Object):void
 			{
-				listeNom.listeNomProvider = query.getRecords();
+				var provider:ArrayCollection = query.getRecords();
+				 provider.sort = SortUtil.nomPrenomSort();
+				 provider.refresh();
+				listeNom.listeNomProvider = provider;
 				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
 				listeNom.addEventListener(ListeNom.REFRESH,canvas1_creationCompleteHandler);
 			}

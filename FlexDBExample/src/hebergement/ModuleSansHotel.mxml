@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.SortUtil;
 			import common.helper.Tools;
 			
 			import mx.collections.ArrayCollection;
@@ -77,6 +78,8 @@
 			private function provideModule(evt:Object):void
 			{
 				provider = query.getRecords();
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
 				for(var i:int=0;i<provider.length;++i)
 				{
 					var myObject:Object = provider[i]

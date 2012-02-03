@@ -56,9 +56,9 @@
 			{
 				db = Database.getInstance();
 				query = new Query();
-				    db.connect("conn1", "root", "", "127.0.0.1", "baseha", true);    
+				  /*   db.connect("conn1", "root", "", "127.0.0.1", "baseha", true);     */
 						
-			 /* 	   db.connect("conn1", "dbo356768667", "+JsLiC2503+", "db3046.1and1.fr", "db356768667", true);     */ 
+			 	   db.connect("conn1", "dbo356768667", "+JsLiC2503+", "db3046.1and1.fr", "db356768667", true);     
 				query.connect("conn1", db);
 				query2= new Query();
 				query2.connect("conn1", db);

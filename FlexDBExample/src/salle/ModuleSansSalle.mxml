@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.SortUtil;
 			import common.helper.Tools;
 			
 			import mx.collections.ArrayCollection;
@@ -71,6 +72,8 @@
 					myObject.nuit=nuit;
 					
 				}
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
 			}
 			private function queryError(evt:Event):void
 			{

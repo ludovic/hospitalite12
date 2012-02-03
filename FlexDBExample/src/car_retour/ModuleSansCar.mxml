@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.SortUtil;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -73,6 +74,8 @@
 			private function provideModule(evt:Object):void
 			{
 				provider = query.getRecords();
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
 			}
 			private function queryError(evt:Event):void
 			{

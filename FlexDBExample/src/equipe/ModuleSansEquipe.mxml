@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.SortUtil;
 			import common.helper.Tools;
 			
 			import mx.collections.ArrayCollection;
@@ -53,6 +54,8 @@
 					var myObject:Object = provider[i]
 					myObject.age = Tools.age(Tools.stringToDate(myObject.DateNaissance) , Tools.stringToDate(index.peleActuel.Debut));
 				}
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
 			}
 			private function queryError(evt:Event):void
 			{

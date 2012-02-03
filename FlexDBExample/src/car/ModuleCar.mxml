@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
+			import common.helper.SortUtil;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -135,6 +136,8 @@
 					newProvider.addItem(liste[i]);
 				}
 				provider = newProvider;
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
 			}
 			private function queryError(evt:Event):void
 			{
