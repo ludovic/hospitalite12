@@ -18,7 +18,6 @@ $(document).ready(function() {
 						bValid = bValid && verif_step2();
 						bValid = bValid && verif_step3();
 						bValid = bValid && verif_step4();
-						bValid = bValid && verif_step5();
 						
 						if(bValid) 	{	$("#frm_ins").submit();	}
 					 },
@@ -26,20 +25,19 @@ $(document).ready(function() {
 						 switch($("#step").val()) {
 							case "1":
 								if(verif_step1()) {
-									charge_per();
 									$("#step").val("2");
 									$(".ui-dialog-buttonset button:eq(3)").show();
+									$("#div_step1").hide();
 									$("#div_step2").show();
-									$("#popup").dialog({title: "Inscription au pélerinage - Etape 2"});
+									$("#popup").dialog({title: "Inscription au pélerinage - Etape 2 / 5"});
 								}
 								break;
 							case "2":
 								if(verif_step2()) {
 									$("#step").val("3");
-									$("#div_step1").hide();
 									$("#div_step2").hide();
 									$("#div_step3").show();
-									$("#popup").dialog({title: "Inscription au pélerinage - Etape 3"});
+									$("#popup").dialog({title: "Inscription au pélerinage - Etape 3 / 5"});
 								}
 								break;
 							case "3":
@@ -47,7 +45,7 @@ $(document).ready(function() {
 									$("#step").val("4");
 									$("#div_step3").hide();
 									$("#div_step4").show();
-									$("#popup").dialog({title: "Inscription au pélerinage - Etape 4"});
+									$("#popup").dialog({title: "Inscription au pélerinage - Etape 4 / 5"});
 								}
 								break;
 							case "4":
@@ -55,19 +53,11 @@ $(document).ready(function() {
 									$("#step").val("5");
 									$("#div_step4").hide();
 									$("#div_step5").show();
-									$("#popup").dialog({title: "Inscription au pélerinage - Etape 5"});
+									$("#popup").dialog({title: "Inscription au pélerinage - Etape 5 / 5"});
 								}
 								break;
 							case "5":
-								if(verif_step5()) {
-									$("#step").val("6");
-									$("#div_step5").hide();
-									$("#div_step6").show();
-									$("#popup").dialog({title: "Inscription au pélerinage - Etape 6"});
-								}
-								break;
-							case "6":
-								$("#step").val("7");
+								$("#step").val("6");
 								$("#div_step1").show();
 								$("#div_step2").show();
 								$("#div_step3").show();
@@ -85,56 +75,39 @@ $(document).ready(function() {
 							case "2":
 								$("#step").val("1");
 								$(".ui-dialog-buttonset button:eq(3)").hide();
+								$("#div_step1").show();
 								$("#div_step2").hide();
-								$("#id_personne").val("0");
-								$("#adresse").val("");
-								$("#adresse2").val("");
-								$("#cp").val("");
-								$("#ville").val("");
-								$("#tel").val("");
-								$("#mobile").val("");
-								$("#email").val("");
-								$("#id_secteur").val("0");
-								$("#id_profession_sante").val("0");								
-								$("#popup").dialog({title: "Inscription au pélerinage - Etape 1"});
+								$("#popup").dialog({title: "Inscription au pélerinage - Etape 1 / 5"});
 								break;
 							case "3":
 								$("#step").val("2");
-								$("#div_step1").show();
 								$("#div_step2").show();
 								$("#div_step3").hide();
-								$("#popup").dialog({title: "Inscription au pélerinage - Etape 2"});
+								$("#popup").dialog({title: "Inscription au pélerinage - Etape 2 / 5"});
 								break;
 							case "4":
 								$("#step").val("3");
 								$("#div_step3").show();
 								$("#div_step4").hide();
-								$("#popup").dialog({title: "Inscription au pélerinage - Etape 3"});
+								$("#popup").dialog({title: "Inscription au pélerinage - Etape 3 / 5"});
 								break;
 							case "5":
 								$("#step").val("4");
 								$("#div_step4").show();
 								$("#div_step5").hide();
-								$("#popup").dialog({title: "Inscription au pélerinage - Etape 4"});
+								$("#popup").dialog({title: "Inscription au pélerinage - Etape 4 / 5"});
 								break;
 							case "6":
 								$("#step").val("5");
-								$("#div_step5").show();
-								$("#div_step6").hide();
-								$("#popup").dialog({title: "Inscription au pélerinage - Etape 5"});
-								break;
-							case "7":
-								$("#step").val("6");
 								$("#div_step1").hide();
 								$("#div_step2").hide();
 								$("#div_step3").hide();
 								$("#div_step4").hide();
-								$("#div_step5").hide();
-								$("#div_step6").show();
+								$("#div_step5").show();
 								$(".sep").hide();
 								$(".ui-dialog-buttonset button:eq(2)").show();
 								$(".ui-dialog-buttonset button:eq(1)").hide();
-								$("#popup").dialog({title: "Inscription au pélerinage - Etape 6"});
+								$("#popup").dialog({title: "Inscription au pélerinage - Etape 5 / 5"});
 								break;
 							default:
 						 }
@@ -164,10 +137,10 @@ $(document).ready(function() {
 			// En cas de succes
 			$("#popup").html(html);
 			$("#id_pele").val($("#pele").val());
-			$("#div_step2, #div_step3, #div_step4, #div_step5, #div_step6, .sep").hide();
+			$("#div_step2, #div_step3, #div_step4, #div_step5, .sep").hide();
 			$(".ui-dialog-buttonset button:eq(1)").hide();
 			$(".ui-dialog-buttonset button:eq(3)").hide();
-			$("#popup").dialog({title: "Inscription au pélerinage - Etape 1"});
+			$("#popup").dialog({title: "Inscription au pélerinage - Etape 1 / 5"});
 			$("#popup").dialog("open");
 		}
 	});
@@ -262,7 +235,7 @@ $(document).ready(function() {
 			$(this).removeClass("ui-state-error");	
 		}
 	});
-	
+/*	
 	function charge_per() {
 		$.ajax({ 
 				type : "POST",
@@ -307,18 +280,14 @@ $(document).ready(function() {
 					}
 				}
 			});
-	}
+	}*/
 	
 	function verif_step1() {
 		var bValid = true;
+		bValid = bValid && checkSel("titre");
 		bValid = bValid && checkNull("nom");
 		bValid = bValid && checkNull("prenom");
 		bValid = bValid && checkIsDate("date_nais");
-		return bValid;			
-	}
-	
-	function verif_step2() {
-		var bValid = true;
 		bValid = bValid && checkNull("adresse");
 		bValid = bValid && checkNull("CP");
 		bValid = bValid && checkNull("ville");
@@ -331,7 +300,7 @@ $(document).ready(function() {
 		return bValid;			
 	}
 	
-	function verif_step3() {
+	function verif_step2() {
 		var bValid = true;
 		if($("input[name=complet]:checked").val() == 0)	{	
 			bValid = bValid && checkIsDate("arr_incomplet"); 
@@ -344,14 +313,14 @@ $(document).ready(function() {
 		return bValid;			
 	}
 	
-	function verif_step4() {
+	function verif_step3() {
 		var bValid = true;		
 		if($("input[name=reserve]:checked").val() == 0)		bValid = bValid && checkNull("heb2");	
 		else	$("#heb2").removeClass("ui-state-error");	
 		return bValid;			
 	}
 	
-	function verif_step5() {
+	function verif_step4() {
 		return checkSel("id_affectation");
 	}
 
@@ -361,7 +330,7 @@ $(document).ready(function() {
 	}
 	
 	function checkSel(item) {
-		if ($("#"+item).val() == "0") {	$("#"+item).addClass("ui-state-error");		return false;	}
+		if ($("#"+item).val() == "0" || $("#"+item).val() == "-") {	$("#"+item).addClass("ui-state-error");		return false;	}
 		$("#"+item).removeClass("ui-state-error");	return true;
 	}
 	
