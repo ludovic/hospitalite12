@@ -6,6 +6,7 @@ switch($_POST['fonction']) {
 		mysql_select_db("db356768667");
 		mysql_query("SET NAMES 'utf8'");	
 		
+		$TabTitre = array('M','Mme','Mlle','Sr','Pr','Dr');
 		$rs->nouveau = 1;
 		$rs->id_profession_sante = 0;
 		$rs->complet = 1;
@@ -29,15 +30,20 @@ switch($_POST['fonction']) {
                 <div class="radio_ON">
                     <input type="radio" name="nouveau" id="non" value="0" <?php echo (!$rs->nouveau) ? 'checked="checked"' : '';?>/><span>Non</span>
                     <input type="radio" name="nouveau" id="oui" value="1" <?php echo ($rs->nouveau) ? 'checked="checked"' : '';?>/><span>Oui</span>
-                </div>            
+                </div>
+                <label for="titre">Titre</label>
+                <select name="titre" id="titre" size="1">
+                    <option value="0">-</option>
+    <?php			foreach($TabTitre as $letitre) {
+	                    echo "\t\t\t\t<option value='".$letitre."'".(($letitre == $titre) ? " selected='selected'" : "" ).">".$letitre."</option>\n";
+                	}?>
+                </select><br />
                 <label for="nom">Nom*</label>
                 <input id="nom" name="nom" class="txtitem" maxlength="50" value="<?php echo $rs->nom;?>" /><br />
                 <label for="prenom">Prénom*</label>
                 <input id="prenom" name="prenom" class="txtitem" maxlength="50" value="<?php echo $rs->prenom;?>" /><br />
                 <label for="date_nais">Née le*</label>
                 <input id="date_nais" name="date_nais" maxlength="10" value="<?php echo $rs->date_nais;?>" style="width: 100px; float: left;" /><br />
-            </div>
-            <div id="div_step2">
                 <label for="adresse">Adresse*</label>
                 <input id="adresse" name="adresse" class="txtitem" maxlength="50" value="<?php echo $rs->adresse;?>" /><br />
                 <label for="adresse2">&nbsp;</label>
@@ -70,7 +76,7 @@ switch($_POST['fonction']) {
                 </select>
             </div>
             <hr class="sep"/>
-            <div id="div_step3">
+            <div id="div_step2">
                 <label for="complet" id="lbl_complet">Pélerinage Complet</label>
                 <div class="radio_ON" id="div_complet">
                     <input type="radio" name="complet" id="non" value="0" <?php echo (!$rs->complet) ? 'checked="checked"' : '';?>/><span>Non</span>
@@ -99,7 +105,7 @@ switch($_POST['fonction']) {
                 </div>
             </div>
             <hr class="sep"/>
-            <div id="div_step4">
+            <div id="div_step3">
                 <label for="reserve" id="lbl_reserve">Désirez-vous que l'hospitalité vous réserve l'hotel :</label>
                 <div class="radio_ON" id="div_reserve">
                     <input type="radio" name="reserve" id="non" value="0" <?php echo (!$rs->reserve) ? 'checked="checked"' : '';?>/><span>Non</span>
@@ -114,7 +120,7 @@ switch($_POST['fonction']) {
                     <div id="div_hebergement" style="height: 180px;">
                         <label for="hebergement" id="lbl_hebergement">Hébergement désiré</label>
                         <div class="radio_ON" id="div_heb">
-                            <input type="radio" name="hebergement" id="ASM" value="0" <?php echo $rs->heb == "0" ? 'checked="checked"' : '';?> prix="100"/><span>Abris Saint Michel - 100€</span><br/>
+                            <input type="radio" name="hebergement" id="ASM" value="0" <?php echo $rs->heb == "0" ? 'checked="checked"' : '';?> prix="100"/><span>Abri Saint Michel - 100€</span><br/>
                             <input type="radio" name="hebergement" id="HOS" value="1" <?php echo $rs->heb == "1" ? 'checked="checked"' : '';?> prix="110"/><span>Hospitalet - 110€</span><br/>
                             <input type="radio" name="hebergement" id="ANG" value="2" <?php echo $rs->heb == "2" ? 'checked="checked"' : '';?> prix="130"/><span>Angelic - 130€</span><br/>
                             <input type="radio" name="hebergement" id="DUA" value="3" <?php echo $rs->heb == "3" ? 'checked="checked"' : '';?> prix="110"/><span>Duchesse Anne - 110€</span><br/>
@@ -142,7 +148,7 @@ switch($_POST['fonction']) {
                 </div>
             </div>
             <hr class="sep"/>
-            <div id="div_step5">
+            <div id="div_step4">
                 <label for="id_affectation" id="lbl_aff">Affectation souhaitée</label>
                 <select name="id_affectation" id="id_affectation" size="1">
                     <option value="0">Faites votre sélection...</option>
@@ -169,9 +175,9 @@ switch($_POST['fonction']) {
                 </div>
             </div>
             <hr class="sep"/>
-            <div id="div_step6">
-            	<label for="commentaires">Comentaires</label>
-				<textarea name="commentaires" cols="100" rows="4" class="txtitem" id="commentaires"> </textarea>
+            <div id="div_step5">
+            	<label for="commentaires">Commentaire</label>
+            	<textarea name="commentaires" cols="100" rows="4" class="txtitem" id="commentaires"> </textarea>
             </div>                       
 		</form>
 <?php	mysql_free_result($db1);
@@ -233,9 +239,12 @@ switch($_POST['fonction']) {
 								".$_POST["id_secteur"].",
 								".$_POST["id_profession_sante"].",
 								'".($_POST["nouveau"] ? "oui" : "non")."',
-								'".($_POST["complet"] ? "oui" : "non")."',
-								'".$tab_arr[2]."-".$tab_arr[1]."-".$tab_arr[0]."',
-								'".$tab_ret[2]."-".$tab_ret[1]."-".$tab_ret[0]."',
+								".($_POST["complet"] ? "'oui', 
+														 NULL, 
+														 NULL"
+													  : "'non',
+													  	 '".$tab_arr[2]."-".$tab_arr[1]."-".$tab_arr[0]."',
+														 '".$tab_ret[2]."-".$tab_ret[1]."-".$tab_ret[0]."'").",
 								'".($_POST["transport"] ? "car" : "voiture")."',
 								".$_POST["id_gare"].",
 								'".($_POST["jeune"] ? "oui" : "non")."',
@@ -256,6 +265,9 @@ switch($_POST['fonction']) {
 		else 		echo "Merci";								
 		mysql_free_result($db);
 		mysql_close($link);
-	default:
+	default: ?>
+    	<script type="text/javascript" src="default.js"> </script>
+		<link href="default.css" type="text/css" rel="stylesheet" />
+<?php 
 }
 ?>
