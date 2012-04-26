@@ -130,7 +130,7 @@
 			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
 			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
 			<mx:Spacer width="100%"/>
-			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 		</mx:HBox>
 		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{this.pelerinList}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
 			<mx:columns>

@@ -34,7 +34,7 @@
 				
 				query.addEventListener(Query.QUERY_END, queryEnd);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_secteur,p.id_profession_sante,ps.Profession,p.id_personne " +
+				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_secteur,p.id_profession_sante,ps.Profession,p.id_personne,p.valid " +
 					"FROM etre_hospitalier h, personne p,secteur s,profession_sante ps  WHERE h.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND ps.id_profession_sante=p.id_profession_sante AND p.valid<>'DET' " +
 					"GROUP BY p.id_personne ");
 				
@@ -117,6 +117,13 @@
 				fileSave.save(csvText,"export_hospitalier.csv");
 			}
 
+			protected function ajoutHospitalier(event:MouseEvent):void
+			{
+				var formulaireHospitalier:FormulaireHospitalier = new FormulaireHospitalier();
+				PopUpManager.addPopUp(formulaireHospitalier,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(formulaireHospitalier);
+				formulaireHospitalier.addEventListener(FormulaireHospitalier.RELOAD,reload);
+			}
 		]]>
 	</mx:Script>
 	<mx:VBox width="100%" height="90%">
@@ -130,8 +137,9 @@
 			<mx:Button icon="@Embed(source='assets/reload.gif')" click="reload(event)" height="22"/>
 			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
 			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
+			<mx:Button label="Ajouter" click="ajoutHospitalier(event)" visible="{(index.categorieUtilisateur =='admin')}"/>
 			<mx:Spacer width="100%"/>
-			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 		</mx:HBox>
 		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{users}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
 			<mx:columns>

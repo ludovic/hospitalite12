@@ -215,7 +215,7 @@
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
 		<mx:Button label="Générer les Equipes" click="pdfEquipes(event)" />
-		<mx:Button label="Exporter Liste des Equipes" click="exportDatagrid(event)"/>
+		<mx:Button label="Exporter Liste des Equipes" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
 		<mx:Label text="Affectation :"/><mx:ComboBox id="affectationCB" selectedIndex="0" dataProvider="{this.affectation}" labelField="Service" change="affectationCB_changeHandler(event)"/>

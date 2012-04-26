@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="216" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="350" height="286" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
@@ -23,6 +23,7 @@
 			private var db       :IDatabase;
 			private var query    :IQuery;
 			private var hospitalierID:int;
+			private var hospitalierIDList:Array;
 			private var carOld:Number;
 			[Bindable]
 			private var carProvider:ArrayCollection;
@@ -46,8 +47,22 @@
 			
 			public function setFormulaire(item:Object,carOld:Number=NaN):void
 			{
-				myLabel.text = item.prenom + " "+item.nom + " voyage avec :";
-				hospitalierID = item.id_personne;
+				hospitalierIDList = new Array;
+				if(item is Array)
+				{
+					var carList:Array =item as Array;
+					myLabel.text = "";
+					for(var i:int=0;i<carList.length;i++)
+					{
+						myLabel.text += carList[i].prenom + " "+carList[i].nom +"\n";
+						hospitalierIDList.push(carList[i].id_personne);
+					}
+				}
+				else
+				{
+					myLabel.text = item.prenom + " "+item.nom;
+					hospitalierID = item.id_personne;
+				}
 				this.carOld = carOld;
 			}
 			
@@ -56,17 +71,44 @@
 				query.addEventListener(Query.QUERY_END,end);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				
-				if(!retourIdentique.selected)
+				if(hospitalierIDList.length>0)
 				{
-					query.execute("UPDATE inscrire " +
+					if(!retourIdentique.selected)
+					{
+						var queryString:String = "UPDATE inscrire " +
 						"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"'"+
-						" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+							" WHERE id_pele = "+ index.peleActuel.id_pele + " and id_personne IN ( ";
+					}
+					else
+					{
+						queryString = "UPDATE inscrire " +
+							"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"',"+ " id_transport_retour ='"+carList.selectedItem.id_transport+"', id_gare_retour ='"+gareList.selectedItem.id_gare+"'"+
+							" WHERE id_pele = "+ index.peleActuel.id_pele + " and  id_personne IN (";
+					}
+					
+					for(var i:int=0;i<hospitalierIDList.length;i++)
+					{
+						queryString += "'"+hospitalierIDList[i]+"',";
+					}
+					
+					queryString = queryString.slice(0,queryString.length-1);
+					queryString += ")"
+					query.execute(queryString, Query.UPDATE );
 				}
 				else
 				{
-					query.execute("UPDATE inscrire " +
-						"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"',"+ " id_transport_retour ='"+carList.selectedItem.id_transport+"', id_gare_retour ='"+gareList.selectedItem.id_gare+"'"+
-						" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+					if(!retourIdentique.selected)
+					{
+						query.execute("UPDATE inscrire " +
+							"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"'"+
+							" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+					}
+					else
+					{
+						query.execute("UPDATE inscrire " +
+							"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"',"+ " id_transport_retour ='"+carList.selectedItem.id_transport+"', id_gare_retour ='"+gareList.selectedItem.id_gare+"'"+
+							" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+					}
 				}
 				
 			}
@@ -110,7 +152,9 @@
 
 		]]>
 	</mx:Script>
-	<mx:Label id="myLabel" text="Affecter" width="100%"/>
+	<mx:Label width="100%" height="19" text="Affecter :"/>
+	<mx:TextArea id="myLabel" width="100%"/>
+	<mx:Label width="100%" height="19" text=" voyage avec :"/>
 	<mx:ComboBox id="carList" labelField="nom_transport" change="carListChange(event)" selectedIndex="0"></mx:ComboBox>
 	<mx:Label text="monte à :" width="100%"/>
 	<mx:ComboBox id="gareList" labelField="label" dataProvider="{gareListProvider}"></mx:ComboBox>

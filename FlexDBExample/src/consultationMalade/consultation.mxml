@@ -281,7 +281,7 @@
 	</mx:Script>
 	<consultation:ListeNom id="listeNom" width="200"/>
 	<mx:VBox width="100%" height="100%">
-		<mx:Button label="Exporter tout" right="0" click="exportAll2(event)"/>
+		<mx:Button label="Exporter tout" right="0" click="exportAll2(event)" visible="false" includeInLayout="false"/>
 		<consultation:Details id="detailsPersonne" width="100%" height="100%">
 		</consultation:Details>
 	</mx:VBox>

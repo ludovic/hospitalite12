@@ -144,7 +144,7 @@
 	</mx:HBox>
 	<mx:HBox>
 		<mx:Label text="Type de paiement :"/>
-		<mx:ComboBox dataProvider="{['Chèque','Espèces']}" id="typePaiement"/>
+		<mx:ComboBox dataProvider="{['Chèque','Espèces','Virement']}" id="typePaiement"/>
 	</mx:HBox>
 	<mx:HBox>
 		<mx:Label text="Nouveau solde :"/>

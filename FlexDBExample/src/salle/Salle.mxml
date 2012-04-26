@@ -262,7 +262,7 @@
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
 		<mx:Button label="Générer les Modules" click="pdfModules(event)" />
-		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)"/>
+		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
 		<mx:Label text="Etage :"/><mx:ComboBox id="etageCB" dataProvider="{[{nom:'1er',value:1},{nom:'2ème',value:2},{nom:'3ème',value:3},{nom:'4ème',value:4}]}" labelField="nom" change="etageCB_changeHandler(event)" selectedIndex="1"/>

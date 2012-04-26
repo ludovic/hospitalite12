@@ -245,7 +245,7 @@
 	<mx:HBox width="100%">
 		<mx:Spacer width="100%"/>
 		<mx:Button label="Générer les Modules" click="pdfModules(event)" />
-		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)"/>
+		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
 	<mx:Canvas>

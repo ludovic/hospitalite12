@@ -465,7 +465,7 @@
 	<consultation:ListeNom id="listeNom" width="200"/>
 	<mx:VBox width="100%" height="100%">
 		<mx:HBox>
-			<mx:Button label="Exporter tout" right="0" click="exportAll2(event)"/>
+			<mx:Button label="Exporter tout" right="0" click="exportAll2(event)" visible="false" includeInLayout="false"/>
 			<mx:Button label="Générer toutes les Consignes" click="pdfConsignes(event)" />
 		</mx:HBox>
 		

@@ -139,7 +139,7 @@
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
 		<mx:Button label="Générer les Cars" click="pdfCars(event)" />
-		<mx:Button label="Exporter Liste des cars" click="exportDatagridFunction(event)"/>
+		<mx:Button label="Exporter Liste des cars" click="exportDatagridFunction(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox width="100%" height="100%">
 		<mx:VBox id="container"  width="100%" height="{this.height*0.9}">

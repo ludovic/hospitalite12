@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="500" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="550" creationComplete="creationCompleteHandler(event)">
 	
 	<mx:Script>
 		<![CDATA[
@@ -7,6 +7,7 @@
 			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
 			import phi.db.Database;
@@ -19,6 +20,7 @@
 			
 			private var db       :IDatabase;
 			private var query    :IQuery;
+			private var query2    :IQuery;
 			private var id_personne:int;
 			public static var RELOAD:String = "reload";
 			
@@ -35,6 +37,7 @@
 				this.telephone.text		= item.Tel;
 				this.portable.text		= item.Portable
 				this.email.text			= item.Courriel;
+				this.valid.selectedItem	= item.valid;
 				this.dateNaissance.selectedDate = Tools.stringToDate(item.DateNaissance);
 				
 				for(var i:int=0;i<secteur.dataProvider.length;++i)
@@ -62,6 +65,8 @@
 				db = Database.getInstance();
 				query = new Query();
 				query.connect("conn1", db);
+				query2 = new Query();
+				query2.connect("conn1", db);
 				
 				this.secteur.dataProvider = SecteurProxy.Secteur;
 				this.profession.dataProvider = ProfessionSanteProxy.Profession;
@@ -69,14 +74,37 @@
 			
 			protected function modifier(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END, updatePersonne);
+				
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("UPDATE personne " +
+				if(id_personne)
+				{
+					query.addEventListener(Query.QUERY_END, updatePersonne);
+					query.execute("UPDATE personne " +
 					"SET Titre ='"+(titre.selectedItem as String)+"', Nom ='"+Tools.sanitize(nom.text)+"', Prenom = '"+Tools.sanitize(prenom.text)+"', " +
 						"Adresse1 ='"+Tools.sanitize(adresse.text)+"', CodePostal='"+cp.text+"', Commune='"+Tools.sanitize(commune.text)+"', DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'," +
 						" sexe ='"+sexe.selectedLabel+"', Tel='"+telephone.text+"', Portable='"+portable.text+"', Courriel='"+email.text+"',  id_secteur='"+secteur.selectedItem.id_secteur+"', " +
-						"id_profession_sante='"+profession.selectedItem.id_profession_sante+"' " +
+						"id_profession_sante='"+profession.selectedItem.id_profession_sante+"', valid=' "+ (valid.selectedItem as String) +"' "+
 						"WHERE id_personne= '"+this.id_personne+"'",Query.UPDATE);
+				}
+				else
+				{
+					query.addEventListener(Query.QUERY_END, insertPersonne);
+					query.execute("INSERT INTO personne (" +
+						" `Titre`, `Nom`, `Prenom`, `Adresse1`," +
+						" `Adresse2`, `Adresse3`, `CodePostal`, `Commune`, `DateNaissance`, `sexe`, `Tel`, `Portable`, `Courriel`, `etre_hospitalier`, `id_secteur`, `id_profession_sante`) " +
+						"	VALUES ('"+(titre.selectedItem as String)+"','"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(prenom.text)+"','"+Tools.sanitize(adresse.text)+"',NULL,NULL,'"+cp.text+"','"+Tools.sanitize(commune.text)+"','"+
+						Tools.dateToString(dateNaissance.selectedDate)+"','"+this.sexe.selectedLabel+"','"+telephone.text+"','"+portable.text+"','"+email.text+"',NULL,'"+
+						this.secteur.selectedItem.id_secteur+"','"+this.profession.selectedItem.id_profession_sante+"')", Query.INSERT);
+				}
+				
+			}
+			
+			private function insertPersonne(evt:Event):void
+			{
+				var personneID:Number = query.getLastInsertID();	
+				query2.addEventListener(Query.QUERY_END, updatePersonne);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("INSERT INTO etre_hospitalier (`id_personne`,`id_hospitalier`,`id_pele`) VALUES ('"+personneID+"','"+0+"','"+0+"')", Query.INSERT);
 				
 			}
 			
@@ -91,6 +119,12 @@
 				Alert.show(query.getError());
 			}
 
+			protected function valid_changeHandler(event:ListEvent):void
+			{
+				if((valid.selectedItem as String) == "DET")
+					Alert.show("Attention! Vous avez choisit DET, si vous validez la personne n'apparaitra plus dans le logiciel.","Attention",Alert.OK);
+			}
+			
 		]]>
 	</mx:Script>
 	<mx:VBox>
@@ -137,9 +171,12 @@
 			<mx:FormItem label="Profession de santé">
 				<mx:ComboBox id="profession" labelField="Profession"/>
 			</mx:FormItem>
+			<mx:FormItem label="Valide" visible="{(index.categorieUtilisateur =='admin')}">
+				<mx:ComboBox id="valid" dataProvider="{['XXX','DET','HON']}" change="valid_changeHandler(event)"/>
+			</mx:FormItem>
 		</mx:Form>
 		<mx:HBox width="100%" horizontalAlign="center">
-			<mx:Button label="Modifier" click="modifier(event)" />
+			<mx:Button label="Valider" click="modifier(event)" />
 			<mx:Button label="Annuler" click="close(event)"/>
 		</mx:HBox>
 	</mx:VBox>

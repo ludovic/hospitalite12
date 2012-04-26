@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="186" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
@@ -22,6 +22,7 @@
 			private var query    :IQuery;
 			private var query2    :IQuery;
 			private var hospitalierID:int;
+			private var hospitalierIDList:Array;
 			private var affectationID:Number;
 			private var equipeOld:Number;
 			[Bindable]
@@ -41,8 +42,22 @@
 			
 			public function setFormulaire(item:Object,affectationID:Number,equipeId:Number=NaN):void
 			{
-				myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";
-				hospitalierID = item.id_hospitalier;
+				hospitalierIDList = new Array;
+				if(item is Array)
+				{
+					var hospitalierList:Array =item as Array;
+					myLabel.text = "";
+					for(var i:int=0;i<hospitalierList.length;i++)
+					{
+						myLabel.text += hospitalierList[i].prenom + " "+hospitalierList[i].nom +"\n";
+						hospitalierIDList.push(hospitalierList[i].id_hospitalier);
+					}
+				}
+				else
+				{
+					myLabel.text = item.prenom + " "+item.nom;
+					hospitalierID = item.id_hospitalier;
+				}
 				equipeOld=equipeId;
 				this.affectationID = affectationID;
 				query2.addEventListener(Query.QUERY_END, provideEquipe);
@@ -61,7 +76,19 @@
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(isNaN(equipeOld))
 				{ 
-					query.execute("INSERT INTO faire_parti (`id_hospitalier`, `id_pele`, `id_equipe` ,`role`) VALUES ("+hospitalierID+","+index.peleActuel.id_pele+", "+equipeList.selectedItem.id_equipe+",'') ", Query.INSERT );
+					if(hospitalierIDList.length>0)
+					{
+						var queryString:String = "INSERT INTO faire_parti (`id_hospitalier`, `id_pele`, `id_equipe` ,`role`) VALUES ";
+						for(var i:int=0;i<hospitalierIDList.length;i++)
+						{
+							queryString += "("+hospitalierIDList[i]+","+index.peleActuel.id_pele+", "+equipeList.selectedItem.id_equipe+",''),";
+						}
+						
+						queryString = queryString.slice(0,queryString.length-1);
+						query.execute(queryString, Query.INSERT );
+					}
+					else
+						query.execute("INSERT INTO faire_parti (`id_hospitalier`, `id_pele`, `id_equipe` ,`role`) VALUES ("+hospitalierID+","+index.peleActuel.id_pele+", "+equipeList.selectedItem.id_equipe+",'') ", Query.INSERT );
 				}
 				else
 				{
@@ -88,8 +115,12 @@
 			
 		]]>
 	</mx:Script>
-	<mx:Label id="myLabel" text="Affecter" width="100%"/>
-	<mx:ComboBox id="equipeList" dataProvider="{equipeProvider}" labelField="libelle"></mx:ComboBox>
+	<mx:Label width="100%" height="19" text="Affecter :"/>
+	<mx:Label id="myLabel" width="100%"/>
+	<mx:HBox width="100%">
+		<mx:Label text="à"/>
+		<mx:ComboBox id="equipeList" dataProvider="{equipeProvider}" labelField="libelle"></mx:ComboBox>
+	</mx:HBox>
 	<mx:HBox width="100%" horizontalAlign="center">
 		<mx:Button label="Valider" click="valider(event)"/>
 		<mx:Button label="Annuler" click="close(event)"/>

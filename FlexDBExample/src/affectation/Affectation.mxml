@@ -120,7 +120,7 @@
 	<mx:HBox width="100%">
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
-		<mx:Button x="647" y="34" label="Exporter Liste des Affectations" click="exportDatagrid(event)"/>
+		<mx:Button x="647" y="34" label="Exporter Liste des Affectations" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
 		<mx:ComboBox id="leftTabs" dataProvider="{containerProvider}" selectedIndex="0" change="leftTabs_changeHandler(event)"/>
