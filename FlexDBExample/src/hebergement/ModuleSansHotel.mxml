@@ -51,6 +51,7 @@
 						" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh" +
 						" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 						" AND h.id_hospitalier = eh.id_hospitalier " +
+						" AND h.annuler='non' " +
 						" AND p.id_personne = eh.id_personne" +
 						" GROUP BY p.id_personne) af, `hebergement` he" +
 						" where ins.id_personne=af.id_personne" +

@@ -146,6 +146,7 @@
 					" AND h.id_hospitalier = eh.id_hospitalier" +
 					" AND p.id_personne = eh.id_personne" +
 					" AND m.id_module = c.id_module " +
+					" AND h.annuler='non' " +
 					"AND c.numero = o.numero " +
 					"ORDER BY o.numero");
 			}

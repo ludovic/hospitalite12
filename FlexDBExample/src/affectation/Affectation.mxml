@@ -89,6 +89,7 @@
 					" AND h.id_hospitalier = eh.id_hospitalier" +
 					" AND p.id_personne = eh.id_personne " +
 					"AND a.id_affectation = o.id_affectation " +
+					 " AND h.annuler='non' " +
 					"ORDER BY o.id_affectation");
 			}
 			

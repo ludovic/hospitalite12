@@ -152,13 +152,14 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideExportDatagrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur" +
+				query.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.reg_chambre, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur" +
 					" FROM `personne` p, `malade` m, `etre_malade` em, `chambre` c, secteur s" +
 					" WHERE em.id_pele = " + index.peleActuel.id_pele+
 					" AND m.id_malade = em.id_malade" +
 					" AND p.id_personne = em.id_personne " +
 					" AND p.id_secteur=s.id_secteur " +
 					" AND c.numero = m.numero " +
+					" AND m.annuler = 'non' " +
 					" ORDER BY p.nom");
 			}
 			
@@ -239,12 +240,26 @@
 				var urlRequest:URLRequest = new URLRequest(url);
 				navigateToURL(urlRequest,"_blank");
 			}
+			
+			protected function pdfEtage(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/plan_accueil.php?pele=" +index.peleActuel.id_pele+"&etg="+etageCB.selectedItem.value ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			protected function pdfAccueil(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/plan_accueil.php?pele=" +index.peleActuel.id_pele ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	
 	<mx:HBox width="100%">
 		<mx:Spacer width="100%"/>
 		<mx:Button label="Générer les Modules" click="pdfModules(event)" />
+		<mx:Button label="Générer plan de l'Accueil" click="pdfAccueil(event)" />
 		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox width="100%">
@@ -259,6 +274,7 @@
 		<mx:Label text="Module :"/><mx:ComboBox id="moduleCB" dataProvider="{moduleSalleList}" labelField="libelle" change="moduleCB_changeHandler(event)"/>
 		<mx:Spacer width="25%" />
 		<mx:Button label="Générer ce Module" click="pdfModule(event)" />
+		<mx:Button label="Générer plan de l'étage" click="pdfEtage(event)" />
 	</mx:HBox>
 	<mx:HBox x="16.5" y="64" width="100%" height="600" verticalScrollPolicy="off">
 		<mx:VBox id="container" height="600"  width="100%" verticalScrollPolicy="on" maxHeight="600">

@@ -37,6 +37,7 @@
 					"(SELECT p.nom, p.prenom,p.DateNaissance, h.id_affectation, h.id_hospitalier, h.nouveau, h.incomplet, h.nuit1, h.nuit2, h.nuit3" +
 					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh,  `affectation` a, `obtenir` ob " +
 					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND h.annuler='non' " +
 					" AND eh.id_hospitalier NOT IN (" +
 					"select id_hospitalier from `s_occuper` UNION SELECT id_hospitalier FROM `responsable_module` UNION SELECT id_hospitalier FROM `ide_module` UNION SELECT id_hospitalier FROM `brancardier_module` " +
 					")" +

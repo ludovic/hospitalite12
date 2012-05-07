@@ -45,6 +45,7 @@
 					" AND h.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne" +
 					" AND p.id_profession_sante = ps.id_profession_sante" +
+					" AND h.annuler='non' " +
 					" GROUP BY p.id_personne) af " +
 					"where aff.id_affectation=af.id_affectation");
 			}

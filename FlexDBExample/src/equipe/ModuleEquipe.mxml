@@ -46,6 +46,7 @@
 					" AND e.id_equipe = fp.id_equipe "+
 					" AND h.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne" +
+					" AND h.annuler='non' " +
 					" GROUP BY p.id_personne ");
 			}
 			
@@ -132,7 +133,7 @@
 				<mx:Button label="Enlever" click="enlever(event)" width="120" enabled="{!index.visuMode}"/>
 				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120" enabled="{!index.visuMode}"/>
 				<mx:Button label="Supprimer équipe" click="supprimer(event)" width="120" enabled="{!index.visuMode}"/>
-				<mx:Button label="Générer cette équipe" click="pdfEquipe(event)" />
+				<mx:Button label="Générer" click="pdfEquipe(event)" />
 			</mx:VBox>
 		</mx:HBox>
 	</mx:VBox>

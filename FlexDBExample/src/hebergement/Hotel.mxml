@@ -127,13 +127,19 @@
 				Alert.show((evt.target as Query).getError());
 			}
 			
-			
+			protected function pdfHebergements(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/hebergement.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	
 	<mx:HBox width="100%">
 		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
 		<mx:Spacer width="100%"/>
+		<mx:Button label="Générer les Hebergements" click="pdfHebergements(event)" visible="{(index.categorieUtilisateur == 'hospitalier')}" />
 		<mx:Button label="Exporter Liste des Hebergement" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 	</mx:HBox>
 	<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">

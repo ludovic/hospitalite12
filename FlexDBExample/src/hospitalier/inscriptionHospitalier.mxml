@@ -12,6 +12,8 @@
 			import mx.collections.Sort;
 			import mx.collections.SortField;
 			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.events.CloseEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
@@ -23,6 +25,7 @@
 			
 			private var db       :IDatabase;
 			private var query    :IQuery;
+			private var query2    :IQuery;
 			
 			public static var INSCRTIPION_CREATED:String = "inscriptionCreated";
 			
@@ -34,6 +37,7 @@
 				query = new Query();
 				query.connect("conn1", db);
 				
+				
 				query.addEventListener(Query.QUERY_END, queryEnd);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				
@@ -43,7 +47,7 @@
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville, ps.Profession " +
-						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne " +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
 						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ " AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
 				else
 					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
@@ -51,7 +55,7 @@
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville, ps.Profession " +
-						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne " +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
 					" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
 			}
 			
@@ -95,7 +99,7 @@
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville " +
-						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne " +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
 						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ "  AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
 				else
 					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
@@ -103,7 +107,7 @@
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville " +
-						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne " +
+						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
 						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement  AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
 				
 				this.dispatchEvent(new Event(INSCRTIPION_CREATED));
@@ -157,13 +161,39 @@
 
 			protected function dataGrid_itemClickHandler(event:ListEvent):void
 			{
-				var modificationInscription:ModificationInscription = new ModificationInscription();
-				PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
-				PopUpManager.centerPopUp(modificationInscription);
-				modificationInscription.setFormulaire(event.itemRenderer.data);
-				modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				if(event.itemRenderer is DataGridItemRenderer)
+				{
+					var modificationInscription:ModificationInscription = new ModificationInscription();
+					PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(modificationInscription);
+					modificationInscription.setFormulaire(event.itemRenderer.data);
+					modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				}
+			}
+			
+			private var hospitalierAnnuler:Number
+			public function annulerInscription(event:MouseEvent):void
+			{
+				event.preventDefault();
+				hospitalierAnnuler = event.target.data.id_hospitalier;
+				Alert.show("Attention, voulez-vous réellement annuler cette inscription ?","Annuler inscription",Alert.OK|Alert.CANCEL,this,annuler_clickHandler);
 			}
 
+			public function annuler_clickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						query2 = new Query();
+						query2.connect("conn1", db);
+						query2.addEventListener(Query.QUERY_END, queryEnd);
+						query2.addEventListener(Query.QUERY_ERROR,queryError); 
+						query2.execute("UPDATE hospitalier " +
+							"SET annuler ='oui'  WHERE id_hospitalier= '"+hospitalierAnnuler+"'",Query.UPDATE); 
+						break;
+					case Alert.CANCEL:
+						break;
+				}
+			}
 		]]>
 	</mx:Script>
 	<mx:VBox width="100%" height="90%">
@@ -182,6 +212,7 @@
 			<mx:Button icon="@Embed(source='assets/reload.gif')" click="reload(event)" height="22"/>
 			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
 			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
+			<!--<mx:Button label="Annuler inscription" click="annuler_clickHandler(event)" visible="{(index.categorieUtilisateur =='admin')}"/>-->
 			<mx:Spacer width="100%"/>
 			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
 		</mx:HBox>
@@ -220,6 +251,14 @@
 				<mx:DataGridColumn dataField="paiementInsc" headerText="Paiement Inscription" visible="false"/>
 				<mx:DataGridColumn dataField="montantInsc" headerText="Montant Inscription" visible="false"/>
 				<mx:DataGridColumn dataField="incomplet" headerText="Fiche incomplète"/>
+				<!--<mx:DataGridColumn  headerText="" visible="{(index.categorieUtilisateur =='admin')}" width="50" itemRenderer="{new ClassFactory(boutonAnnuler)}"/>-->
+				<mx:DataGridColumn width="50" visible="{(index.categorieUtilisateur =='admin')}" id="cancelColumn" >
+					<mx:itemRenderer> 
+						<mx:Component> 	
+							<mx:Button  label="X" click="{outerDocument.annulerInscription(event)}"/>  	 
+						</mx:Component>                        
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:Label text="{'Nombre de lignes : ' + users.length }"/>

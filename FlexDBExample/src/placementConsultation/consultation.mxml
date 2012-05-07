@@ -35,13 +35,14 @@
 				query.addEventListener(Query.QUERY_END, provideNameGrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				
-				query.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur, c.num" +
+				query.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef,  m.reg_chambre, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur, c.num" +
 					" FROM `personne` p, `malade` m, `etre_malade` em, `chambre` c, secteur s" +
 					" WHERE em.id_pele = " + index.peleActuel.id_pele+
 					" AND m.id_malade = em.id_malade" +
 					" AND p.id_personne = em.id_personne " +
 					" AND p.id_secteur=s.id_secteur " +
 					" AND c.numero = m.numero " +
+					" AND m.annuler = 'non' " +
 					" ORDER BY p.nom");
 			}
 			
@@ -81,12 +82,27 @@
 				Alert.show((evt.target as Query).getError());
 			}
 			
+			protected function pdfRegime(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/regime.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			protected function pdfRegimes(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/regime.php?pele=" +index.peleActuel.id_pele+"&etg="+etageCB.selectedItem.value+"&asc="+ascenseurCB.selectedItem.value ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	<mx:VBox width="100%" height="100%">
 		<mx:HBox width="100%">
 			<mx:Label text="Etage :"/><mx:ComboBox id="etageCB" dataProvider="{[{nom:'1er',value:1},{nom:'2ème',value:2},{nom:'3ème',value:3},{nom:'4ème',value:4}]}" labelField="nom"  selectedIndex="1" change="{dataProvider.refresh()}"/>
 			<mx:Label text="Ascenseur :"/><mx:ComboBox id="ascenseurCB" dataProvider="{[{nom:'A',value:'A'},{nom:'B',value:'B'}]}" labelField="nom" change="{dataProvider.refresh()}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Générer ce tableau" click="pdfRegime(event)" />
+			<mx:Button label="Générer tous les tableaux" click="pdfRegimes(event)" />
 		</mx:HBox>
 		<mx:DataGrid id="listeNom" width="100%" height="100%" dataProvider="{this.dataProvider}">
 			<mx:columns>
@@ -96,6 +112,7 @@
 				<mx:DataGridColumn headerText="Normaux" dataField="reg_normal"/>
 				<mx:DataGridColumn headerText="Diabetiques" dataField="reg_diab"/>
 				<mx:DataGridColumn headerText="Sans sel" dataField="reg_ss_sel"/>
+				<mx:DataGridColumn headerText="Mange en chambre" dataField="reg_chambre"/>
 			</mx:columns>
 		</mx:DataGrid>
 	</mx:VBox>

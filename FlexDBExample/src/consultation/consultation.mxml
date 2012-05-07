@@ -49,7 +49,9 @@
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				
 				query.execute("SELECT p.id_personne, p.Titre, p.Nom, p.Prenom, p.Adresse1, p.CodePostal, p.Commune, s.section, ho.id_hospitalier FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
-					" AND h.id_hospitalier = ho.id_hospitalier AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+					" AND h.id_hospitalier = ho.id_hospitalier " +
+					" AND ho.annuler='non' " +
+					" AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function provideNameGrid(evt:Object):void

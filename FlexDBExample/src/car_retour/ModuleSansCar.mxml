@@ -42,6 +42,7 @@
 						" AND p.id_personne = eh.id_personne" +
 						" AND h.transport = 'car'" +
 						" AND h.id_hospitalier = eh.id_hospitalier" +
+						" AND h.annuler='non' " +
 						" AND p.id_secteur = s.id_secteur" +
 						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
 				}
@@ -54,6 +55,7 @@
 						" AND i.id_transport_retour = 0"+
 						" AND p.id_personne = em.id_personne" +
 						" AND m.id_malade = em.id_malade" +
+						" AND m.annuler='non' " +
 						" AND p.id_secteur = s.id_secteur" +
 						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
 				}

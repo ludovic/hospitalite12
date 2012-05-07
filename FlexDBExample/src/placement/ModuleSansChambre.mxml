@@ -37,6 +37,7 @@
 				" where m.numero=0 " +
 				" and em.id_pele=" + index.peleActuel.id_pele+
 				" and m.id_malade=em.id_malade" +
+				" and m.annuler = 'non' " +
 				" and p.id_personne=em.id_personne");
 			}
 			

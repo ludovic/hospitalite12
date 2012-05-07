@@ -9,6 +9,8 @@
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.events.CloseEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
@@ -19,6 +21,7 @@
 			
 			private var db       :IDatabase;
 			private var query    :IQuery;
+			private var query2    :IQuery;
 			
 			[Bindable] public var users   :ArrayCollection;
 			
@@ -31,7 +34,7 @@
 				query.addEventListener(Query.QUERY_END, queryEnd);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne " +
-					" AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND m.id_pele="+index.peleActuel.id_pele);
+					" AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND ma.annuler='non' AND m.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function queryEnd(evt:Object):void
@@ -59,7 +62,7 @@
 			
 			protected function reload(event:Object=null):void
 			{
-				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND m.id_pele="+index.peleActuel.id_pele);
+				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne AND ma.annuler='non' AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND m.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			
@@ -110,11 +113,38 @@
 			
 			protected function dataGrid_itemClickHandler(event:ListEvent):void
 			{
-				var modificationInscription:ModificationInscription = new ModificationInscription();
-				PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
-				PopUpManager.centerPopUp(modificationInscription);
-				modificationInscription.setFormulaire(event.itemRenderer.data);
-				modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				if(event.itemRenderer is DataGridItemRenderer)
+				{
+					var modificationInscription:ModificationInscription = new ModificationInscription();
+					PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(modificationInscription);
+					modificationInscription.setFormulaire(event.itemRenderer.data);
+					modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				}
+			}
+			
+			private var maladeAnnuler:Number
+			public function annulerInscription(event:MouseEvent):void
+			{
+				event.preventDefault();
+				maladeAnnuler = event.target.data.id_malade;
+				Alert.show("Attention, voulez-vous réellement annuler cette inscription ?","Annuler inscription",Alert.OK|Alert.CANCEL,this,annuler_clickHandler);
+			}
+			
+			public function annuler_clickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						query2 = new Query();
+						query2.connect("conn1", db);
+						query2.addEventListener(Query.QUERY_END, queryEnd);
+						query2.addEventListener(Query.QUERY_ERROR,queryError); 
+						query2.execute("UPDATE malade " +
+							"SET annuler ='oui'  WHERE id_malade= '"+maladeAnnuler+"'",Query.UPDATE); 
+						break;
+					case Alert.CANCEL:
+						break;
+				}
 			}
 		]]>
 	</mx:Script>
@@ -173,6 +203,7 @@
 				<mx:DataGridColumn dataField="reg_mix" headerText="reg_mix" visible="false"/>
 				<mx:DataGridColumn dataField="reg_pb_deglutition" headerText="reg_pb_deglutition" visible="false"/>
 				<mx:DataGridColumn dataField="reg_eau_gef" headerText="reg_eau_gef" visible="false"/>
+				<mx:DataGridColumn dataField="reg_chambre" headerText="reg_chambre" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_inj" headerText="soin_inf_inj" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_inj_type" headerText="soin_inf_inj_type" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_inj_horraire" headerText="soin_inf_inj_horraire" visible="false"/>
@@ -202,8 +233,13 @@
 				<mx:DataGridColumn dataField="incomplet" headerText="incomplet" visible="false"/>
 				<mx:DataGridColumn dataField="paiementInsc" headerText="paiementInsc" visible="false"/>
 				<mx:DataGridColumn dataField="montantInsc" headerText="montantInsc" visible="false"/>
-				
-				
+				<mx:DataGridColumn width="50" visible="{(index.categorieUtilisateur =='admin')}" id="cancelColumn" >
+					<mx:itemRenderer> 
+						<mx:Component> 	
+							<mx:Button  label="X" click="{outerDocument.annulerInscription(event)}"/>  	 
+						</mx:Component>                        
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:Label text="{'Nombre de lignes : ' + users.length }"/>

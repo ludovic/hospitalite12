@@ -42,10 +42,12 @@
 				query.execute("(select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('hospitalier') 'personne_type'"+
-					"	FROM `personne` p, `etre_hospitalier` eh, `inscrire` i "+
+					"	FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, `hospitalier` h "+
 					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
 					"	AND i.id_pele = eh.id_pele"+
 					"	AND p.id_personne = i.id_personne"+
+					"	AND eh.id_hospitalier = h.id_hospitalier"+
+					"	AND h.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = eh.id_personne) s "+
 					" where g.id_gare = s.id_gare_retour) " +
@@ -53,10 +55,12 @@
 					" (select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('malade') 'personne_type'"+
-					"	FROM `personne` p, `etre_malade` em, `inscrire` i "+
+					"	FROM `personne` p, `etre_malade` em, `inscrire` i, `malade` m "+
 					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
 					"	AND i.id_pele = em.id_pele"+
 					"	AND p.id_personne = i.id_personne"+
+					"	AND em.id_malade = m.id_malade"+
+					"	AND m.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = em.id_personne) s "+
 					" where g.id_gare = s.id_gare_retour)" +

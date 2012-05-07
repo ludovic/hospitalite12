@@ -42,6 +42,7 @@
 					" AND o.id_affectation = "+affectationId +
 					" AND h.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne" +
+					" AND h.annuler='non' " +
 					" GROUP BY p.id_personne) af " +
 					"where aff.id_affectation=af.id_affectation and id_hospitalier NOT IN (select id_hospitalier from faire_parti where id_pele ="+ index.peleActuel.id_pele+")");
 			}

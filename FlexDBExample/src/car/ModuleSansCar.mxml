@@ -45,6 +45,7 @@
 						" AND h.transport = 'car'" +
 						" AND h.id_hospitalier = eh.id_hospitalier" +
 						" AND p.id_secteur = s.id_secteur" +
+						" AND h.annuler='non' " +
 						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
 				}
 				else if((index.categorieUtilisateur == "malade")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Malade")))
@@ -58,6 +59,7 @@
 						" AND p.id_personne = em.id_personne" +
 						" AND m.id_malade = em.id_malade" +
 						" AND p.id_secteur = s.id_secteur" +
+						" AND m.annuler='non' "+
 						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
 				}
 				else if((index.categorieUtilisateur == "pelerin")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Pélerin")))

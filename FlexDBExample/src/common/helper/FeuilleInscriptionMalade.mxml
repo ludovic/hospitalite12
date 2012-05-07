@@ -96,6 +96,7 @@
 				mixeCB.selected = item.reg_mix;
 				troubleDeglutionCB.selected = item.reg_pb_deglutition;
 				eauGelifieeCB.selected = item.reg_eau_gef;
+				mangeChambreCB.selected = item.reg_chambre;
 				injectionCB.selected = item.soin_inf_inj;
 				injectionType.text = item.soin_inf_inj_type;
 				injectionHorraire.text = item.soin_inf_inj_horraire;
@@ -263,7 +264,10 @@
 					<mx:CheckBox label="Mixé" id="mixeCB"/>
 					<mx:CheckBox label="Troubles de la déglutition" id="troubleDeglutionCB"/>	
 					<mx:CheckBox label="Eau gélifiée" id="eauGelifieeCB"/>
+				</mx:HBox>
+				<mx:HBox>
 					<mx:CheckBox label="Aide au repas" id="aideRepasCB"/>
+					<mx:CheckBox label="Mange en chambre" id="mangeChambreCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Soins infirmiers">
