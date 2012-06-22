@@ -2,7 +2,7 @@
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="955" minHeight="400"
 				xmlns:hospitalier="hospitalier.*" xmlns:menu="menu.*" xmlns:admin="admin.*" xmlns:pelerin="pelerin.*" xmlns:malade="malade.*" 
 				xmlns:car="car.*" xmlns:carR="car_retour.*" xmlns:gestionCar="gestion_car.*" xmlns:affectation="affectation.*" xmlns:salle="salle.*" backgroundColor="#E3EEFB" xmlns:paiement="paiement.*"
-				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*" xmlns:consultationMalade="consultationMalade.*" xmlns:placementConsultation="placementConsultation.*"
+				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*" xmlns:consultationMalade="consultationMalade.*" xmlns:placementConsultation="placementConsultation.*" xmlns:ns="gestion_salle.*"
 				>
 
 	<mx:Script>
@@ -358,8 +358,16 @@
 						<mx:Canvas id="admin" label="Administration" width="100%" height="100%">
 							<admin:AdminMain width="100%" height="100%" />
 						</mx:Canvas>	
-						<mx:Canvas id="gestionCar" label="Car" width="100%" height="100%">
-							<gestionCar:GestionCar width="100%" height="100%" />
+						<mx:Canvas id="gestionCar" label="Admin" width="100%" height="100%">
+							<mx:TabNavigator>
+								<mx:Canvas>
+									<gestionCar:GestionCar width="100%" height="100%" />
+								</mx:Canvas>
+								<mx:Canvas>
+									<ns:GestionSalle width="100%" height="100%"/>
+								</mx:Canvas>
+							</mx:TabNavigator>
+							
 						</mx:Canvas>	
 					</mx:TabNavigator>
 			</mx:VBox>
