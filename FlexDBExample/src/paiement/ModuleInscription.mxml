@@ -36,15 +36,17 @@
 				if(type == "hospitalier")
 					query.execute("select * from inscrire i," +
 						" personne p, etre_hospitalier eh, prix pr, hospitalier h" +
-						" where eh.id_pele=" + index.peleActuel.id_pele+
+						" where i.id_pele=" + index.peleActuel.id_pele+
 						" and i.id_prix = pr.id_prix" +
+						" and i.id_pele = eh.id_pele" +
 						" and eh.id_hospitalier = h.id_hospitalier" +
 						" and i.id_personne = p.id_personne" +
 						" and p.id_personne=eh.id_personne");
 				else
 					query.execute("select * from inscrire i," +
 						" personne p, etre_malade em, prix pr, malade m" +
-						" where em.id_pele=" + index.peleActuel.id_pele+
+						" where i.id_pele=" + index.peleActuel.id_pele+
+						" and i.id_pele = em.id_pele" +
 						" and i.id_prix = pr.id_prix" +
 						" and em.id_malade = m.id_malade" +
 						" and i.id_personne = p.id_personne" +
