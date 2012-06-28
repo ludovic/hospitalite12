@@ -37,7 +37,7 @@
 				this.telephone.text		= item.Tel;
 				this.portable.text		= item.Portable
 				this.email.text			= item.Courriel;
-				this.valid.selectedItem	= item.valid;
+				this.valid.selectedItem 		= item.valid;
 				this.dateNaissance.selectedDate = Tools.stringToDate(item.DateNaissance);
 				
 				for(var i:int=0;i<secteur.dataProvider.length;++i)
@@ -78,12 +78,16 @@
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(id_personne)
 				{
+					var validPersonne:String = "XXX";
+					if(index.categorieUtilisateur =='admin')
+						validPersonne =(valid.selectedItem as String);
+						
 					query.addEventListener(Query.QUERY_END, updatePersonne);
 					query.execute("UPDATE personne " +
 					"SET Titre ='"+(titre.selectedItem as String)+"', Nom ='"+Tools.sanitize(nom.text)+"', Prenom = '"+Tools.sanitize(prenom.text)+"', " +
 						"Adresse1 ='"+Tools.sanitize(adresse.text)+"', CodePostal='"+cp.text+"', Commune='"+Tools.sanitize(commune.text)+"', DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'," +
 						" sexe ='"+sexe.selectedLabel+"', Tel='"+telephone.text+"', Portable='"+portable.text+"', Courriel='"+email.text+"',  id_secteur='"+secteur.selectedItem.id_secteur+"', " +
-						"id_profession_sante='"+profession.selectedItem.id_profession_sante+"', valid='"+ (valid.selectedItem as String) +"' "+
+						"id_profession_sante='"+profession.selectedItem.id_profession_sante+"', valid='"+validPersonne+"' "+
 						"WHERE id_personne= '"+this.id_personne+"'",Query.UPDATE);
 				}
 				else
