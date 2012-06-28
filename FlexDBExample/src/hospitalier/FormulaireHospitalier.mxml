@@ -22,6 +22,7 @@
 			private var query    :IQuery;
 			private var query2    :IQuery;
 			private var id_personne:int;
+			private var validPersonne:String;
 			public static var RELOAD:String = "reload";
 			
 			public function setFormulaire(item:Object):void
@@ -37,6 +38,7 @@
 				this.telephone.text		= item.Tel;
 				this.portable.text		= item.Portable
 				this.email.text			= item.Courriel;
+				validPersonne 			= item.valid;
 				this.valid.selectedItem 		= item.valid;
 				this.dateNaissance.selectedDate = Tools.stringToDate(item.DateNaissance);
 				
@@ -78,7 +80,7 @@
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(id_personne)
 				{
-					var validPersonne:String = "XXX";
+					
 					if(index.categorieUtilisateur =='admin')
 						validPersonne =(valid.selectedItem as String);
 						
