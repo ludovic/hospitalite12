@@ -214,7 +214,7 @@
 			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
 			<!--<mx:Button label="Annuler inscription" click="annuler_clickHandler(event)" visible="{(index.categorieUtilisateur =='admin')}"/>-->
 			<mx:Spacer width="100%"/>
-			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="{(index.categorieUtilisateur =='admin')}" includeInLayout="{(index.categorieUtilisateur =='admin')}"/>
 		</mx:HBox>
 		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{users}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
 			<mx:columns>

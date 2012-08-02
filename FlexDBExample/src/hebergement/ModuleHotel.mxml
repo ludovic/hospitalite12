@@ -51,7 +51,8 @@
 						" AND eh.id_personne = p.id_personne " +
 						" AND eh.id_hospitalier = ho.id_hospitalier "+
 						" AND ho.annuler='non' " +
-						" AND ins.id_pele ="+ index.peleActuel.id_pele
+						" AND ins.id_pele ="+ index.peleActuel.id_pele +
+						" AND eh.id_pele ="+ index.peleActuel.id_pele
 					);
 				}
 				else
