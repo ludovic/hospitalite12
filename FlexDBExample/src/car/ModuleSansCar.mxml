@@ -39,6 +39,7 @@
 					query.execute("select ins.nom,ins.prenom,ins.DateNaissance,ins.nouveau,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.DateNaissance,p.id_personne,h.id_gare,h.nouveau,s.section" +
 						" FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, hospitalier h, secteur s" +
 						" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+						" AND i.id_pele ="+ index.peleActuel.id_pele+
 						" AND p.id_personne = i.id_personne " +
 						" AND i.id_transport = 0"+
 						" AND p.id_personne = eh.id_personne" +
@@ -54,6 +55,7 @@
 					query.execute("select ins.nom,ins.prenom,ins.DateNaissance,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.DateNaissance,p.id_personne,m.id_gare,s.section" +
 						" FROM `personne` p, `etre_malade` em, `inscrire` i, malade m, secteur s" +
 						" WHERE em.id_pele ="+ index.peleActuel.id_pele+
+						" AND i.id_pele ="+ index.peleActuel.id_pele+
 						" AND p.id_personne = i.id_personne " +
 						" AND i.id_transport = 0"+
 						" AND p.id_personne = em.id_personne" +
@@ -68,6 +70,7 @@
 					query.execute("select ins.nom,ins.prenom,ins.DateNaissance,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.DateNaissance,p.id_personne,pel.id_gare,s.section" +
 						" FROM `personne` p, `etre_pelerin` ep, `inscrire` i, pelerin pel, secteur s" +
 						" WHERE ep.id_pele ="+ index.peleActuel.id_pele+
+						" AND i.id_pele ="+ index.peleActuel.id_pele+
 						" AND p.id_personne = i.id_personne " +
 						" AND i.id_transport = 0"+
 						" AND p.id_personne = ep.id_personne" +
