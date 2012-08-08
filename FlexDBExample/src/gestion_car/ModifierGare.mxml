@@ -66,7 +66,7 @@
 				if(heureRetourComplete)
 				{
 					heureRetourComplete.setHours(this.heureRetour.value);
-					heureAllerComplete.setMinutes(this.minuteRetour.value);
+					heureRetourComplete.setMinutes(this.minuteRetour.value);
 				}
 				
 				query.execute("UPDATE  `passer_par` SET  `heure_aller` =  '"+Tools.dateToString(heureAllerComplete)+"', `heure_retour` =  '"+Tools.dateToString(heureRetourComplete)+"' WHERE  `id_transport` ="+transportID+ " AND  `id_gare` ="+gareID+" AND  `id_pele` =" +index.peleActuel.id_pele ,Query.UPDATE);

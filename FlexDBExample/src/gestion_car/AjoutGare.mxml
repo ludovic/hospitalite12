@@ -50,7 +50,7 @@
 				if(heureRetourComplete)
 				{
 					heureRetourComplete.setHours(this.heureRetour.value);
-					heureAllerComplete.setMinutes(this.minuteRetour.value);
+					heureRetourComplete.setMinutes(this.minuteRetour.value);
 				}
 				 
 				query.execute("INSERT INTO passer_par ( `id_transport` ,`id_gare`,`id_pele`,`heure_aller`,`heure_retour`) VALUES ("+transportID+","+gareSel.selectedItem.id_gare+","+index.peleActuel.id_pele+", '"+Tools.dateToString(heureAllerComplete)+"', '"+Tools.dateToString(heureRetourComplete)+"') ", Query.INSERT );

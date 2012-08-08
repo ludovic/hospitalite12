@@ -172,7 +172,8 @@
 					" AND rm.id_module = ch.id_module " +
 					" AND rm.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne " +
-					" AND so.numero = ch.numero");
+					" AND so.numero = ch.numero" +
+					" AND eh.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function getSalles(event:Object):void

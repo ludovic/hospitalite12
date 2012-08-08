@@ -29,7 +29,7 @@ package proxy
 			query.connect("conn1", db);
 			query.addEventListener(Query.QUERY_END, provideCarDispo);
 			query.addEventListener(Query.QUERY_ERROR,queryError);
-			query.execute("Select * from transport where id_transport in (select id_transport from passer_par where id_pele =" + index.peleActuel.id_pele+" and id_transport<>0) " )
+			query.execute("Select * from transport where id_transport in (select id_transport from passer_par where id_pele =" + index.peleActuel.id_pele+" and id_transport<>0) ORDER BY  `nom_transport` ASC " )
 		}
 		
 		private static function provideCarDispo(evt:Object):void
