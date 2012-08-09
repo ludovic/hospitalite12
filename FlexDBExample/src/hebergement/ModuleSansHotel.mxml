@@ -67,6 +67,7 @@
 						" FROM `personne` p, `pelerin` pel, `etre_pelerin` ep" +
 						" WHERE ep.id_pele ="+ index.peleActuel.id_pele+
 						" AND pel.id_pelerin = ep.id_pelerin " +
+						" AND pel.annuler='non' " +
 						" AND p.id_personne = ep.id_personne" +
 						" GROUP BY p.id_personne) af, `hebergement` he" +
 						" where ins.id_personne=af.id_personne" +
@@ -94,12 +95,12 @@
 			
 			protected function affecterA(event:MouseEvent):void
 			{
-				if(listHospi.selectedItem)
+				if((listHospi.selectedItems)&&(listHospi.selectedItems.length>0))
 				{
 					var formulaireHotel:FormulaireHotel = new FormulaireHotel();
 					PopUpManager.addPopUp(formulaireHotel,this.parentApplication as DisplayObject,true);
 					PopUpManager.centerPopUp(formulaireHotel);
-					formulaireHotel.setFormulaire(listHospi.selectedItem);
+					formulaireHotel.setFormulaire(listHospi.selectedItems);
 					formulaireHotel.addEventListener(Hotel.RELOAD_MODULE,refresh);
 				}
 			}
@@ -163,7 +164,7 @@
 			<mx:Spacer width="100%"/>
 			<mx:ComboBox id="roleSelecteur" dataProvider="{new ArrayCollection(['Hospitalier','Pélerin'])}" visible="{(index.categorieUtilisateur == 'admin')}" change="generateModuleProvider(event)"/>
 		</mx:HBox>
-		<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%" width="100%">
+		<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%" width="100%" allowMultipleSelection="true">
 			<mx:columns>
 				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
 				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>

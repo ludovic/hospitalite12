@@ -7,6 +7,8 @@
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.events.CloseEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
@@ -17,6 +19,7 @@
 			
 			private var db       :IDatabase;
 			private var query    :IQuery;
+			private var query2    :IQuery;
 			
 			[Bindable] public var pelerinList   :ArrayCollection;
 			
@@ -31,7 +34,7 @@
 				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, " +
 					" DateNaissance, desiderata, divers, etre_hospitalier, id_gare, pl.id_hebergement, he.Libelle, id_pele, pl.id_pelerin, p.id_personne, id_profession_sante, id_secteur, incomplet, modeHebergement, " +
 					"montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " +
-					" FROM etre_pelerin ep, personne p, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND pl.id_pelerin = ep.id_pelerin AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+					" FROM etre_pelerin ep, personne p, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND pl.id_pelerin = ep.id_pelerin AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function queryEnd(evt:Object):void
@@ -100,11 +103,14 @@
 			
 			protected function dataGrid_itemClickHandler(event:ListEvent):void
 			{
-				var modificationInscription:ModificationInscription = new ModificationInscription();
-				PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
-				PopUpManager.centerPopUp(modificationInscription);
-				modificationInscription.setFormulaire(event.itemRenderer.data);
-				modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				if(event.itemRenderer is DataGridItemRenderer)
+				{
+					var modificationInscription:ModificationInscription = new ModificationInscription();
+					PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(modificationInscription);
+					modificationInscription.setFormulaire(event.itemRenderer.data);
+					modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				}
 			}
 			
 			protected function reload(event:Object=null):void
@@ -112,7 +118,31 @@
 				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, " +
 					" DateNaissance, desiderata, divers, etre_hospitalier, id_gare, pel.id_hebergement, he.Libelle, id_pele, pel.id_pelerin, p.id_personne, id_profession_sante, id_secteur, incomplet, modeHebergement, " +
 					" montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " + 
-					" FROM etre_pelerin ep, personne p, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+					" FROM etre_pelerin ep, personne p, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private var pelerinAnnuler:Number
+			public function annulerInscription(event:MouseEvent):void
+			{
+				event.preventDefault();
+				pelerinAnnuler = event.target.data.id_pelerin;
+				Alert.show("Attention, voulez-vous réellement annuler cette inscription ?","Annuler inscription",Alert.OK|Alert.CANCEL,this,annuler_clickHandler);
+			}
+			
+			public function annuler_clickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						query2 = new Query();
+						query2.connect("conn1", db);
+						query2.addEventListener(Query.QUERY_END, queryEnd);
+						query2.addEventListener(Query.QUERY_ERROR,queryError); 
+						query2.execute("UPDATE pelerin " +
+							"SET annuler ='oui'  WHERE id_pelerin= '"+pelerinAnnuler+"'",Query.UPDATE); 
+						break;
+					case Alert.CANCEL:
+						break;
+				}
 			}
 		]]>
 	</mx:Script>
@@ -146,6 +176,13 @@
 				<mx:DataGridColumn dataField="modeHebergement" headerText="Mode Hebergement"/>
 				<mx:DataGridColumn dataField="styleChambre" headerText="Style Chambre"/>
 				<mx:DataGridColumn dataField="incomplet" headerText="Fiche incomplète"/>
+				<mx:DataGridColumn width="50" visible="{(index.categorieUtilisateur =='admin')}" id="cancelColumn" >
+					<mx:itemRenderer> 
+						<mx:Component> 	
+							<mx:Button  label="X" click="{outerDocument.annulerInscription(event)}"/>  	 
+						</mx:Component>                        
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:Label text="{'Nombre de lignes : ' + this.pelerinList.length }"/>

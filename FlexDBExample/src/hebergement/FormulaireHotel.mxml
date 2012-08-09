@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="255" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
 			import common.events.DocEvent;
@@ -20,6 +20,8 @@
 			private var db       :IDatabase;
 			private var query    :IQuery;
 			private var personneID:int;
+			private var personneIDList:Array;
+			private var sallenOld:Number;
 			private var hebergementID:Number;
 			
 			
@@ -41,12 +43,59 @@
 			private var role:Object;
 			public function setFormulaire(item:Object,sallenOld:Number=NaN):void
 			{
-				myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";
+				/* myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";
 				personneID = item.id_personne;
-				this.hebergementID = sallenOld;
+				this.hebergementID = sallenOld; */
+				
+				
+				personneIDList = new Array;
+				if(item is Array)
+				{
+					var hotelList:Array =item as Array;
+					myLabel.text = "";
+					for(var i:int=0;i<hotelList.length;i++)
+					{
+						myLabel.text += hotelList[i].prenom + " "+hotelList[i].nom +"\n";
+						personneIDList.push(hotelList[i].id_personne);
+					}
+				}
+				else
+				{
+					myLabel.text = item.prenom + " "+item.nom ;
+					personneID = item.id_personne;
+				}
+				this.sallenOld = sallenOld;
 			}
 			
 			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				if(personneIDList.length>0)
+				{
+					var queryString:String = "UPDATE inscrire " +
+						"SET id_hebergement_retenu ='"+hotelList.selectedItem.id_hebergement+"' "+
+						" WHERE id_pele = "+ index.peleActuel.id_pele + " and  id_personne IN (";
+					
+					for(var i:int=0;i<personneIDList.length;i++)
+					{
+						queryString += "'"+personneIDList[i]+"',";
+					}
+					
+					queryString = queryString.slice(0,queryString.length-1);
+					queryString += ")"
+					query.execute(queryString, Query.UPDATE );
+				}
+				else
+				{
+					query.execute("UPDATE inscrire " +
+						"SET id_hebergement_retenu ='"+hotelList.selectedItem.id_hebergement+
+						" WHERE id_personne = "+personneID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+				}
+			}
+			
+			/* protected function valider(event:MouseEvent):void
 			{
 				query.addEventListener(Query.QUERY_END,end);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
@@ -55,7 +104,7 @@
 					"SET id_hebergement_retenu ='"+hotelList.selectedItem.id_hebergement+"'"+
 					" WHERE id_personne = '"+personneID+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.UPDATE);
 				
-			}
+			} */
 			
 			protected function close(event:Object):void
 			{
@@ -74,7 +123,9 @@
 			
 		]]>
 	</mx:Script>
-	<mx:Label id="myLabel" text="Affecter" width="100%"/>
+	<mx:Label width="100%" height="19" text="Affecter :"/>
+	<mx:TextArea id="myLabel" width="100%"/>
+	<mx:Label width="100%" height="19" text="à :"/>
 	<mx:ComboBox id="hotelList" labelField="Libelle"></mx:ComboBox>
 	<mx:HBox width="100%" horizontalAlign="center">
 		<mx:Button label="Valider" click="valider(event)"/>

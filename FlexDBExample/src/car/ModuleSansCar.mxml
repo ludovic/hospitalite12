@@ -76,6 +76,7 @@
 						" AND p.id_personne = ep.id_personne" +
 						" AND pel.id_pelerin = ep.id_pelerin" +
 						" AND p.id_secteur = s.id_secteur" +
+						" AND pel.annuler='non' " +
 						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
 				}
 			}
