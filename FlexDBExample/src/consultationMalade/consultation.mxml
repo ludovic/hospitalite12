@@ -47,7 +47,18 @@
 				query.addEventListener(Query.QUERY_END, provideNameGrid);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				//p.id_personne, Titre, Nom, Prenom, Adresse1, CodePostal, Commune, s.section, ch.libelle, ch.etage, ch.ascenseur, ch.lits
-				query.execute("SELECT * FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
+				//deficit_fugue,
+				query.execute("SELECT actif, Adresse1, annuler,ascenseur, autre_soin_oxygene, autre_soin_oxygene_debit, autre_soin_prise_med, autre_soin_spec, CodePostal, codification," +
+					" Commune, coucher_aide, coucher_barriere_lit, coucher_potence, Courriel, DateNaissance, deficit_audition, deficit_desorientation," +
+					"deficit_parole, deficit_vision,	deplace_aide, deplace_brancard,	deplace_canne, deplace_deambulateur, " +
+					"deplace_escalier, deplace_fauteuil, deplace_seul, divers,	etage, " +
+					"etre_hospitalier, extracteur, hebergement,	id_gare, m.id_malade,	id_module, id_pele,	p.id_personne, id_personne_etre_resposable, "+
+					"id_profession_sante, s.id_secteur, incomplet, incont_bes_change,	incont_etui_pen, incont_jour, incont_nuit, incont_poche_stom, incont_poche_stom_type, incont_sond_uri, "+
+					" lastUpdate, libelle, liea, lits, matelas_anti_esc, montantInsc, monte_marches_car, Nom, num,	ch.numero, ordre, paiementInsc, pers_prev_fam,	"+
+				" pers_prev_hosp, pers_prev_nom, pers_prev_pers_conf, pers_prev_tel, pers_prev_tut, poids, Portable, pos_voy_assis,	pos_voy_assis_ft, pos_voy_couche, Prenom, protheses, reg_chambre, "+	
+				" reg_diab, reg_eau_gef, reg_mix, reg_normal, reg_pb_deglutition, reg_ss_sel, section, sexe, soin_inf_inj, soin_inf_inj_horraire, soin_inf_inj_type, soin_inf_pansement, soin_inf_pansement_type, "+
+				 "souleve_malade,	taille,	Tel, Titre, toilette_aide_lit, toilette_aide_partiel, toilette_aide_total, valid "+
+			 "FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
 					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND s.id_secteur = p.id_secteur AND m.annuler='non' AND em.id_pele="+index.peleActuel.id_pele);
 			}
 			
@@ -281,7 +292,7 @@
 	</mx:Script>
 	<consultation:ListeNom id="listeNom" width="200"/>
 	<mx:VBox width="100%" height="100%">
-		<mx:Button label="Exporter tout" right="0" click="exportAll2(event)" visible="false" includeInLayout="false"/>
+		<mx:Button label="Exporter tout" right="0" click="exportAll2(event)" visible="true" includeInLayout="true"/>
 		<consultation:Details id="detailsPersonne" width="100%" height="100%">
 		</consultation:Details>
 	</mx:VBox>

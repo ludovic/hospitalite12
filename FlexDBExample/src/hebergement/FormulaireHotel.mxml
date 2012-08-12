@@ -90,7 +90,7 @@
 				else
 				{
 					query.execute("UPDATE inscrire " +
-						"SET id_hebergement_retenu ='"+hotelList.selectedItem.id_hebergement+
+						"SET id_hebergement_retenu ='"+hotelList.selectedItem.id_hebergement+"' "+
 						" WHERE id_personne = "+personneID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
 				}
 			}

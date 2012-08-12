@@ -56,6 +56,7 @@
 						" GROUP BY p.id_personne) af, `hebergement` he" +
 						" where ins.id_personne=af.id_personne" +
 						" AND ins.id_hebergement_retenu =0" +
+						" AND ins.id_pele ="+ index.peleActuel.id_pele+
 						" AND af.id_hebergement = he.id_hebergement" 
 					);
 				}
@@ -72,6 +73,7 @@
 						" GROUP BY p.id_personne) af, `hebergement` he" +
 						" where ins.id_personne=af.id_personne" +
 						" AND ins.id_hebergement_retenu =0" +
+						" AND ins.id_pele ="+ index.peleActuel.id_pele+
 						" AND af.id_hebergement = he.id_hebergement" 
 					);
 				}
