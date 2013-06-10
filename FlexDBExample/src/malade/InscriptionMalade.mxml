@@ -228,7 +228,17 @@
 				<mx:DataGridColumn dataField="incont_sond_uri" headerText="incont_sond_uri" visible="false"/>
 				<mx:DataGridColumn dataField="incont_etui_pen" headerText="incont_etui_pen" visible="false"/>
 				<mx:DataGridColumn dataField="incont_poche_stom" headerText="incont_poche_stom" visible="false"/>
-				<mx:DataGridColumn dataField="incont_poche_stom_type" headerText="incont_poche_stom_type" visible="false"/>
+				<mx:DataGridColumn dataField="incont_poche_stom_type" headerText="incont_poche_stom_type" visible="false"/>				
+				<mx:DataGridColumn dataField="medecin_traitant" headerText="medecin_traitant" visible="false"/>
+				<mx:DataGridColumn dataField="tel_medecin" headerText="tel_medecin" visible="false"/>
+				<mx:DataGridColumn dataField="tel_retour" headerText="tel_retour" visible="false"/>
+				<mx:DataGridColumn dataField="pos_voy_electrique" headerText="pos_voy_electrique" visible="false"/>
+				<mx:DataGridColumn dataField="coussin_esc" headerText="coussin_esc" visible="false"/>
+				<mx:DataGridColumn dataField="reg_hache" headerText="reg_hache" visible="false"/>
+				<mx:DataGridColumn dataField="parenterale" headerText="parenterale" visible="false"/>
+				<mx:DataGridColumn dataField="ppc" headerText="ppc" visible="false"/>
+				<mx:DataGridColumn dataField="dialyse" headerText="dialyse" visible="false"/>
+				<mx:DataGridColumn dataField="lit_medicalise" headerText="lit_medicalise" visible="false"/>
 				<mx:DataGridColumn dataField="divers" headerText="divers" visible="false"/>
 				<mx:DataGridColumn dataField="incomplet" headerText="incomplet" visible="false"/>
 				<mx:DataGridColumn dataField="paiementInsc" headerText="paiementInsc" visible="false"/>

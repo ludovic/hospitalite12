@@ -127,6 +127,16 @@
 				paiementInsc.selected = (item.paiementInsc == "oui")?true:false;
 				montantInsc.text = item.montantInsc;
 				codification.text = item.codification;
+				medecin_traitant.text = item.medecin_traitant;
+				tel_medecin.text = item.tel_medecin;
+				tel_retour.text = item.tel_retour;
+				voyageElectriqueCB.selected = item.pos_voy_electrique;
+				escarreCB.selected = item.coussin_esc;
+				hacheCB.selected = item.reg_hache;
+				parenteraleCB.selected = item.parenterale;
+				ppcCB.selected = item.ppc;
+				dialyseCB.selected = item.dialyse;
+				litMedicaliseCB.selected = item.lit_medicalise;
 			}
 			
 			
@@ -201,6 +211,19 @@
 					<mx:NumericStepper id="taille" maximum="300"/>
 				</mx:HBox>
 			</mx:FormItem>
+			<mx:FormItem label="Médecin traitant">
+				<mx:VBox>
+					<mx:HBox>
+						<mx:HBox>
+							<mx:TextInput id="medecin_traitant" />
+						</mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Tél/Port"/>
+							<mx:TextInput id="tel_medecin"/>
+						</mx:HBox>
+					</mx:HBox>
+				</mx:VBox>
+			</mx:FormItem>
 			<mx:FormItem label="Personne à prevenir">
 				<mx:VBox>
 					<mx:HBox>
@@ -219,6 +242,10 @@
 							<mx:TextInput id="tel"/>
 						</mx:HBox>
 					</mx:HBox>
+					<mx:HBox>
+						<mx:Label text="Tel de la personne à contacter pour le retour :"/>
+						<mx:TextInput id="tel_retour"/>
+					</mx:HBox>
 				</mx:VBox>
 			</mx:FormItem>
 			<mx:FormItem label="Position pour le voyage">
@@ -226,6 +253,7 @@
 					<mx:CheckBox label="Assis" id="voyageAssisCB"/>
 					<mx:CheckBox label="Couché" id="voyageCoucheCB"/>
 					<mx:CheckBox label="Assis dans son fauteuil roulant" id="voyageFauteuilRCB"/>
+					<mx:CheckBox label="Electrique" id="voyageElectriqueCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Peut monter les marches">
@@ -242,6 +270,7 @@
 					<mx:CheckBox label="En fauteuil roulant" id="fauteuilRCB"/>
 					<mx:CheckBox label="Sur brancard" id="brancardCB"/>
 					<mx:CheckBox label="Utilise les escaliers" id="escalierCB"/>
+					<mx:CheckBox label="Coussin Anti-escarre" id="escarreCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Prothèses">
@@ -262,12 +291,14 @@
 					<mx:CheckBox label="Diabétique" id="diabetiqueCB"/>
 					<mx:CheckBox label="Sans sel" id="sansSelCB"/>
 					<mx:CheckBox label="Mixé" id="mixeCB"/>
+					<mx:CheckBox label="Haché" id="hacheCB"/>
 					<mx:CheckBox label="Troubles de la déglutition" id="troubleDeglutionCB"/>	
 					<mx:CheckBox label="Eau gélifiée" id="eauGelifieeCB"/>
 				</mx:HBox>
 				<mx:HBox>
 					<mx:CheckBox label="Aide au repas" id="aideRepasCB"/>
 					<mx:CheckBox label="Mange en chambre" id="mangeChambreCB"/>
+					<mx:CheckBox label="Nutrition parentérale" id="parenteraleCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Soins infirmiers">
@@ -292,7 +323,11 @@
 					<mx:Label text="Debit par 24h"/>
 					<mx:TextInput id="debitOxygene"/>
 				</mx:HBox>
-				<mx:CheckBox label="Extracteur" id="extracteurCB"/>
+				<mx:HBox>
+					<mx:CheckBox label="Extracteur" id="extracteurCB"/>
+					<mx:CheckBox label="PPC" id="ppcCB"/>
+					<mx:CheckBox label="Dialyse" id="dialyseCB"/>
+				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Toilettes">
 				<mx:HBox>
@@ -308,6 +343,7 @@
 					<mx:CheckBox label="Potence" id="coucherPotenceCB"/>
 					<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
 					<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
+					<mx:CheckBox label="Lit médicalisé" id="litMedicaliseCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Incontinence">

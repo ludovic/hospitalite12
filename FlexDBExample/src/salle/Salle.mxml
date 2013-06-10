@@ -57,7 +57,8 @@
 				sousContainer.setStyle("borderStyle","Solid");
 				sousContainer.percentHeight = sousContainer.percentWidth = 100;
 				
-				var moduleSelectedId:int = moduleCB.selectedItem.id_module;
+				if(moduleCB.selectedItem)
+					var moduleSelectedId:int = moduleCB.selectedItem.id_module;
 				var etageSelectedId:int =  etageCB.selectedItem.value;
 				for(var i:int=0;i<chambreArray.length;++i)
 				{

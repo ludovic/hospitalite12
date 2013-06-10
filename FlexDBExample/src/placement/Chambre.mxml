@@ -80,7 +80,8 @@
 				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
 				var tabList:Array = [];
 				
-				var moduleSelectedId:int = moduleCB.selectedItem.id_module;
+				if(moduleCB.selectedItem)
+					var moduleSelectedId:int = moduleCB.selectedItem.id_module;
 				var etageSelectedId:int =  etageCB.selectedItem.value;
 				var moduleFound:Boolean = false;
 				for(var i:int=0;i<chambreArray.length;++i)

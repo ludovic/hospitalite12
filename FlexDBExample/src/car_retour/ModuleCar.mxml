@@ -68,10 +68,12 @@
 					" (select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('pelerin') 'personne_type'"+
-					"	FROM `personne` p, `etre_pelerin` ep, `inscrire` i "+
+					"	FROM `personne` p, `etre_pelerin` ep, `inscrire` i, `pelerin` pe "+
 					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
 					"	AND i.id_pele = ep.id_pele"+
 					"	AND p.id_personne = i.id_personne"+
+					"	AND ep.id_pelerin = pe.id_pelerin"+
+					"	AND pe.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = ep.id_personne) s "+
 					" where g.id_gare = s.id_gare_retour)");
