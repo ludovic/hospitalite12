@@ -319,13 +319,13 @@
 				if(this.chambreInd.selected)
 				{
 					if(this.hotel.selectedItem.Libelle == "Helgon")
-						prix += 78;
+						prix += 80;
 					else
 						prix += 60;
 				}
 				
 				if(this.carRb.selected)
-					prix += 67;
+					prix += 65;
 				else
 					prix += 35;//frais généraux
 				
