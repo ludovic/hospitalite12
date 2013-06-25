@@ -104,7 +104,7 @@
 			
 			public function reload(event:Object=null):void
 			{
-				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_secteur,p.id_profession_sante,ps.Profession,p.id_personne " +
+				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_secteur,p.id_profession_sante,ps.Profession,p.id_personne,p.valid " +
 					"FROM etre_hospitalier h, personne p,secteur s,profession_sante ps  WHERE h.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND ps.id_profession_sante=p.id_profession_sante AND p.valid<>'DET' " +
 					"GROUP BY p.id_personne ");
 			}
