@@ -35,9 +35,9 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideModule);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("select nom, prenom,DateNaissance, aff.service, id_hospitalier,af.Profession " +
-					"from `affectation` aff, " +
-					"(SELECT p.nom, p.prenom,p.DateNaissance, h.id_affectation,h.id_hospitalier, ps.Profession" +
+				query.execute("select nom, prenom,DateNaissance, aff.service, aff2.service as service2, id_hospitalier,af.Profession " +
+					"from `affectation` aff, `affectation` aff2, " +
+					"(SELECT p.nom, p.prenom,p.DateNaissance, h.id_affectation, h.id_affectation_comp, h.id_hospitalier, ps.Profession" +
 					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh, `obtenir` o, `affectation` a, `profession_sante` ps " +
 					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 					" AND eh.id_hospitalier = o.id_hospitalier " +
@@ -47,7 +47,8 @@
 					" AND p.id_profession_sante = ps.id_profession_sante" +
 					" AND h.annuler='non' " +
 					" GROUP BY p.id_personne) af " +
-					"where aff.id_affectation=af.id_affectation");
+					"where aff.id_affectation=af.id_affectation "+
+					"and aff2.id_affectation=af.id_affectation_comp");
 			}
 			
 			private function provideModule(evt:Object):void
@@ -114,6 +115,7 @@
 				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
 				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
 				<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
+				<mx:DataGridColumn headerText="Aff. Fac. Dem." dataField="service2"/>
 				<mx:DataGridColumn headerText="Age" dataField="age" width="50"/>
 				<mx:DataGridColumn headerText="Profession S." dataField="Profession"/>
 			</mx:columns>

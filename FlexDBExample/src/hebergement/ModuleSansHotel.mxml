@@ -45,9 +45,9 @@
 					
 				if((index.categorieUtilisateur == "hospitalier")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Hospitalier")))
 				{
-					query.execute("select nom, prenom,DateNaissance,af.id_personne, he.Libelle " +
+					query.execute("select nom, prenom,DateNaissance,af.id_personne, he.Libelle,desiderata,chambreInd,couple,conjoint " +
 						"from `inscrire` ins, " +
-						"(SELECT p.nom, p.prenom, p.id_personne, p.DateNaissance,h.id_hospitalier,h.id_hebergement" +
+						"(SELECT p.nom, p.prenom, p.id_personne, p.DateNaissance,h.id_hospitalier,h.id_hebergement,h.desiderata,h.chambreInd,h.couple,h.conjoint" +
 						" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh" +
 						" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 						" AND h.id_hospitalier = eh.id_hospitalier " +
@@ -62,7 +62,7 @@
 				}
 				else if((index.categorieUtilisateur == "pelerin")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Pélerin")))
 				{
-					query.execute("select nom, prenom,DateNaissance, af.id_personne, he.Libelle " +
+					query.execute("select nom, prenom,DateNaissance, af.id_personne, he.Libelle,'' as desiderata,'' as chambreInd, '' as couple,'' as conjoint  " +
 						"from `inscrire` ins, " +
 						"(SELECT p.nom, p.prenom, p.id_personne,p.DateNaissance, pel.id_pelerin,pel.id_hebergement" +
 						" FROM `personne` p, `pelerin` pel, `etre_pelerin` ep" +
@@ -171,6 +171,11 @@
 				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
 				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
 				<mx:DataGridColumn headerText="Age" dataField="age"/><mx:DataGridColumn headerText="Hotel Demandé" dataField="Libelle"/>
+				<mx:DataGridColumn headerText="En Couple" dataField="couple" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				<mx:DataGridColumn headerText="Nom Conjoint" dataField="conjoint" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				<mx:DataGridColumn headerText="Ch. Ind." dataField="chambreInd" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				<mx:DataGridColumn headerText="Desiderata" dataField="desiderata" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				 
 			</mx:columns>
 		</mx:DataGrid>
 	</mx:VBox>
