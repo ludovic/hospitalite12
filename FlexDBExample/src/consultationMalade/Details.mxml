@@ -3,6 +3,7 @@
 	<mx:Script>
 		<![CDATA[
 			import mx.collections.ArrayCollection;
+			private var idPersonne:int;
 			override public function set data(value:Object):void
 			{
 				titre.text = "";
@@ -38,6 +39,7 @@
 				
 				var soldes:Object = value.soldes;
 				
+				idPersonne = info.id_personne;
 				titre.text = info.Titre;
 				nom.text = info.Nom;
 				prenom.text = info.Prenom;
@@ -121,6 +123,7 @@
 				ppcCB.selected = info.ppc;
 				dialyseCB.selected = info.dialyse;
 				litMedicaliseCB.selected = info.lit_medicalise;
+				aideRepasCB.selected = info.reg_aide_repas;
 				
 				if(transHeb)
 				{
@@ -144,9 +147,16 @@
 					solde.text =  soldes.solde;
 				}
 			}
+			protected function genererLettre(event:MouseEvent):void
+			{
+				var url:String = " http://logiciel.bouges.fr/pdf/lettre_malades.php?pele=" +index.peleActuel.id_pele + "&id=" +idPersonne;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	<mx:VBox width="100%">
+		<mx:Button label="Générer cette lettre" right="0" click="genererLettre(event)" visible="true" includeInLayout="true"/>
 		<mx:VBox id="info" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
 			<mx:HBox>
 				<mx:Label text="Titre : " fontWeight="bold"/><mx:Label id="titre"/>

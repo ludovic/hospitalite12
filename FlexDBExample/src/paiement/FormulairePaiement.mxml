@@ -57,7 +57,7 @@
 				this.remiseID = remiseID;
 				query2.addEventListener(Query.QUERY_END, provideEquipe);
 				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT * FROM remise where type='"+type+"'");
+				query2.execute("SELECT * FROM remise where type='"+type+"'and id_pele =" + index.peleActuel.id_pele);
 			}
 			
 			private function provideEquipe(evt:Object):void

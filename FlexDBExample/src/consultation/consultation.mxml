@@ -37,6 +37,8 @@
 			private var query13   :IQuery;
 			private var query14   :IQuery;
 			private var query15   :IQuery;
+			private var query16   :IQuery;
+			private var query17   :IQuery;
 			
 			private var personneData:Object;
 			
@@ -161,6 +163,21 @@
 			{
 				if(query10.getRecords().length>0)
 					personneData.soldes = query10.getRecords()[0];
+				
+				query17 = new Query();
+				query17.connect("conn1", db);
+				query17.addEventListener(Query.QUERY_END, getRemise);
+				query17.addEventListener(Query.QUERY_ERROR,queryError);
+				query17.execute("SELECT r.libelle FROM remise r, paiement p, etre_paye ep," +
+					" inscrire i WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND r.id_remise = p.id_remise AND p.id_paiement = ep.id_paiement AND ep.id_prix = i.id_prix " +
+					" AND i.id_pele ="+index.peleActuel.id_pele +"");
+			}
+			
+			private function getRemise(event:Object):void
+			{
+				if(query17.getRecords().length>0)
+					personneData.remise = query17.getRecords()[0];
 				
 				query12 = new Query();
 				query12.connect("conn1", db);
@@ -301,7 +318,7 @@
 				
 				query11 = new Query();
 				query11.connect("conn1", db);
-				query11.addEventListener(Query.QUERY_END, getSalleList);
+				query11.addEventListener(Query.QUERY_END, getRemiseList);
 				query11.addEventListener(Query.QUERY_ERROR,queryError);
 				query11.execute("SELECT i.id_personne, p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
 					" WHERE i.id_pele="+index.peleActuel.id_pele +
@@ -309,10 +326,24 @@
 				
 			}
 			
+			private var remiseList:ArrayCollection;
+			private function getRemiseList(event:Object):void
+			{
+				paiementList= query11.getRecords();
+				
+				query16 = new Query();
+				query16.connect("conn1", db);
+				query16.addEventListener(Query.QUERY_END, getSalleList);
+				query16.addEventListener(Query.QUERY_ERROR,queryError);
+				query16.execute("SELECT i.id_personne, r.libelle FROM remise r, paiement p, etre_paye ep," +
+					" inscrire i WHERE r.id_remise = p.id_remise AND p.id_paiement = ep.id_paiement AND ep.id_prix = i.id_prix " +
+					" AND i.id_pele ="+index.peleActuel.id_pele +"");
+			}
+			
 			private var salleList:ArrayCollection;
 			private function getSalleList(event:Object):void
 			{
-				paiementList= query11.getRecords();
+				remiseList= query16.getRecords();
 				
 				query13 = new Query();
 				query13.connect("conn1", db);
@@ -423,6 +454,15 @@
 							myObject.Total = paiementList[n].Total;
 							myObject.TotalP = paiementList[n].TotalPaye;
 							myObject.Solde =  paiementList[n].solde;
+						}
+					}
+					
+					myObject.remise = "";
+					for(var q:int=0;q<remiseList.length;++q)
+					{
+						if(remiseList[q].id_personne == info.id_personne)
+						{
+							myObject.remise = remiseList[q].libelle;
 						}
 					}
 					

@@ -129,6 +129,7 @@
 				ppcCB.selected = item.ppc;
 				dialyseCB.selected = item.dialyse;
 				litMedicaliseCB.selected = item.lit_medicalise;
+				aideRepasCB.selected = item.reg_aide_repas;
 			}
 			
 			
@@ -220,7 +221,8 @@
 							" parenterale='" + Number(parenteraleCB.selected)+ "'," +
 							" ppc='" + Number(ppcCB.selected)+ "'," +
 							" dialyse='" + Number(dialyseCB.selected)+ "'," +
-							" lit_medicalise='"+ Number(litMedicaliseCB.selected)+"' " +
+							" lit_medicalise='"+ Number(litMedicaliseCB.selected)+"', " +
+							" reg_aide_repas='" + Number(aideRepasCB.selected)+ "' " +
 							" WHERE id_malade ="+maladeID ,Query.UPDATE);
 			}
 			

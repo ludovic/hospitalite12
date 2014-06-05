@@ -208,7 +208,7 @@
 				}
 				
 				if(this.carRb.selected)
-					prix += 67;
+					prix += 65;
 				else
 					prix += 35;//frais généraux
 				

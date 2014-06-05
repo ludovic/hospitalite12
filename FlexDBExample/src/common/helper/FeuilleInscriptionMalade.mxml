@@ -137,6 +137,7 @@
 				ppcCB.selected = item.ppc;
 				dialyseCB.selected = item.dialyse;
 				litMedicaliseCB.selected = item.lit_medicalise;
+				aideRepasCB.selected = item.reg_aide_repas;
 			}
 			
 			

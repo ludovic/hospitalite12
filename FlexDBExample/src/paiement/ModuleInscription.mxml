@@ -34,23 +34,67 @@
 				query.addEventListener(Query.QUERY_END, provideModule);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(type == "hospitalier")
-					query.execute("select * from inscrire i," +
+					/*query.execute("select * from inscrire i," +
 						" personne p, etre_hospitalier eh, prix pr, hospitalier h" +
 						" where i.id_pele=" + index.peleActuel.id_pele+
 						" and i.id_prix = pr.id_prix" +
 						" and i.id_pele = eh.id_pele" +
 						" and eh.id_hospitalier = h.id_hospitalier" +
 						" and i.id_personne = p.id_personne" +
-						" and p.id_personne=eh.id_personne");
+						" and p.id_personne=eh.id_personne");*/
+				
+					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle" +
+						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h, etre_paye e_p, paiement pa, remise r" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = eh.id_pele" +
+						" AND eh.id_hospitalier = h.id_hospitalier" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = eh.id_personne" +
+						" and pr.id_prix = e_p.id_prix" +
+						" and e_p.id_paiement = pa.id_paiement" +
+						" and pa.id_remise = r.id_remise" +
+						" UNION "+
+						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle" +
+						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = eh.id_pele" +
+						" AND eh.id_hospitalier = h.id_hospitalier" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = eh.id_personne" +
+						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" );
+				
 				else
-					query.execute("select * from inscrire i," +
+					/*query.execute("select * from inscrire i," +
 						" personne p, etre_malade em, prix pr, malade m" +
 						" where i.id_pele=" + index.peleActuel.id_pele+
 						" and i.id_pele = em.id_pele" +
 						" and i.id_prix = pr.id_prix" +
 						" and em.id_malade = m.id_malade" +
 						" and i.id_personne = p.id_personne" +
-						" and p.id_personne=em.id_personne");
+						" and p.id_personne=em.id_personne");*/
+					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle" +
+						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m, etre_paye e_p, paiement pa, remise r" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = em.id_pele" +
+						" AND em.id_malade = m.id_malade" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = em.id_personne" +
+						" and pr.id_prix = e_p.id_prix" +
+						" and e_p.id_paiement = pa.id_paiement" +
+						" and pa.id_remise = r.id_remise" +
+						" UNION "+
+						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle" +
+						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = em.id_pele" +
+						" AND em.id_malade = m.id_malade" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = em.id_personne" +
+						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" );
 			}
 			
 			private function provideModule(evt:Object):void
@@ -153,6 +197,7 @@
 				<mx:DataGridColumn headerText="Total" dataField="Total"/>
 				<mx:DataGridColumn headerText="Total payé" dataField="TotalPaye"/>
 				<mx:DataGridColumn headerText="Solde" dataField="solde"/>
+				<mx:DataGridColumn headerText="Remise" dataField="libelle"/>
 			</extension:columns>
 		</extension:RowColorDataGrid>
 	</mx:HBox>

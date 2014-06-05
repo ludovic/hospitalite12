@@ -26,6 +26,7 @@
 				total.text = "";
 				totalP.text = "";
 				solde.text = "";
+				remiseLbl.text ="";
 				
 				salleNom.text = "";
 				module.text = "";
@@ -38,6 +39,7 @@
 				var affectations:ArrayCollection = value.affectations;
 				var equipes:ArrayCollection = value.equipes;
 				var soldes:Object = value.soldes;
+				var remise:Object = value.remise;
 				var salleN:Object = value.salle;
 				var fonctionN:Object = value.fonction;
 				
@@ -95,6 +97,8 @@
 					totalP.text = soldes.TotalPaye;
 					solde.text =  soldes.solde;
 				}
+				if(remise)
+					remiseLbl.text = remise.libelle
 				if(salleN)
 				{
 					salleNom.text = salleN.libelle as String;
@@ -168,6 +172,7 @@
 				<mx:Label text="Total : " fontWeight="bold"/><mx:Label id="total"/>
 				<mx:Label text="Payé : " fontWeight="bold"/><mx:Label id="totalP"/>
 				<mx:Label text="Solde : " fontWeight="bold"/><mx:Label id="solde"/>
+				<mx:Label text="Remise : " fontWeight="bold"/><mx:Label id="remiseLbl"/>
 			</mx:HBox>
 		</mx:VBox>
 	</mx:VBox>
