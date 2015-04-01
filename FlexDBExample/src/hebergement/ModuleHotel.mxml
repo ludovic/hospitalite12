@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="200" label="{this.titleText}">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var capacite:int;
+			
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var chambreId:Number;
+			
+			[Bindable]
+			private var typeHeb:String = "Hospitalier"
+			
+			public function generateModuleProvider(chambreId:int,type:String):void
+			{
+				this.chambreId=chambreId;
+				typeHeb = type;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(typeHeb == "hospitalier")
+				{
+					query.execute("select nom, prenom, p.id_personne, p.DateNaissance, he.Libelle, ho.nomHeb ,ho.desiderata " +
+						" from `inscrire` ins, " +
+						" personne p, `hebergement` he,`hospitalier` ho,`etre_hospitalier` eh" +
+						" where ins.id_personne=p.id_personne" +
+						" AND ins.id_hebergement_retenu ="+chambreId +
+						" AND ins.id_hebergement = he.id_hebergement"+
+						" AND eh.id_personne = p.id_personne " +
+						" AND eh.id_hospitalier = ho.id_hospitalier "+
+						" AND ho.annuler='non' " +
+						" AND ins.id_pele ="+ index.peleActuel.id_pele +
+						" AND eh.id_pele ="+ index.peleActuel.id_pele
+					);
+				}
+				else
+				{
+					query.execute("select nom, prenom, p.DateNaissance, p.id_personne, he.Libelle " +
+						" from `inscrire` ins, " +
+						" personne p, `hebergement` he " +
+						" where ins.id_personne=p.id_personne" +
+						" AND ins.id_hebergement_retenu ="+chambreId +
+						" AND ins.id_hebergement = he.id_hebergement"+
+						" AND ins.id_pele ="+ index.peleActuel.id_pele
+					);
+				}
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				for(var i:int=0;i<provider.length;++i)
+				{
+					var myObject:Object = provider[i]
+					myObject.age = Tools.age(Tools.stringToDate(myObject.DateNaissance) , Tools.stringToDate(index.peleActuel.Debut));
+				}
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			
+			protected function enlever(event:Object=null):void
+			{
+				if(listHospi.selectedItem)
+				{
+				 	query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,refresh);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("UPDATE inscrire " +
+						"SET id_hebergement_retenu ='0'"+
+						" WHERE id_personne = '"+listHospi.selectedItem.id_personne+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.UPDATE);
+				 }
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Hotel.RELOAD_MODULE));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{ 
+					var formulaireSalle:FormulaireHotel = new FormulaireHotel();
+					PopUpManager.addPopUp(formulaireSalle,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireSalle);
+					formulaireSalle.setFormulaire(listHospi.selectedItem,chambreId);
+					formulaireSalle.addEventListener(Hotel.RELOAD_MODULE,refresh); 
+				}
+			} 
+			
+			protected function pdfHotel(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/hebergement.php?pele=" +index.peleActuel.id_pele+"&id="+chambreId;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:VBox>
+		<mx:HBox width="100%">
+			<mx:Label text="{this.titleText}"/>
+			<mx:Label text="{this.provider.length + '/' + this.capacite +' lits'}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Enlever" click="enlever(event)" enabled="{!index.visuMode}"/>
+			<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120" enabled="{!index.visuMode}"/>
+			<mx:Button label="Générer" click="pdfHotel(event)" />
+		</mx:HBox>
+		<mx:HBox height="100%">
+			<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+					<mx:DataGridColumn headerText="Hotel Demandé" dataField="Libelle"/>
+					<mx:DataGridColumn headerText="Hotel(se loge)" dataField="nomHeb" visible="{(typeHeb=='hospitalier')}"/>
+					<mx:DataGridColumn headerText="Desiderata" dataField="desiderata" visible="{(typeHeb=='hospitalier')}"/>
+					<mx:DataGridColumn headerText="Age" dataField="age" visible="{(typeHeb=='hospitalier')}" width="40"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:HBox>
+	</mx:VBox>
+	
+</mx:Canvas>

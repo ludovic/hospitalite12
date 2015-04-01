@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="canvas1_creationCompleteHandler(event)" verticalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			import proxy.ModuleProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable]
+			private var moduleSalleList:ArrayCollection;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			private var moduleList:Array = [];
+			
+			/* protected function canvas1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var chambreArray:ArrayCollection = ChambreProxy.ChambreDispo;
+				var moduleSans:ModuleSansChambre = new ModuleSansChambre();
+				
+				moduleList.push({module:moduleSans,chambre:{numero:0}});
+				containerSans.addChild(moduleSans);
+				
+				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
+				var tabList:Array = [];
+				for(var i:int=0;i<chambreArray.length;++i)
+				{
+					var module:ModuleChambre = new ModuleChambre();
+					module.titleText = chambreArray[i].libelle as String;
+					module.capacite = chambreArray[i].lits as int;
+					moduleList.push({module:module,chambre:chambreArray[i]});
+					container.addChild(module);
+					tabList.push(module.titleText);
+					module.addEventListener(RELOAD_MODULE,provideModules);
+				}
+				 provideModules();  
+			} */
+			
+			/* private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].chambre.numero);
+				}
+			} */
+			
+			protected function canvas1_creationCompleteHandler(event:FlexEvent=null):void
+			{
+				if(moduleSalleList == null)
+				{
+					moduleSalleList = ModuleProxy.ModuleDispo;
+					moduleSalleList.filterFunction = function(item:Object):Boolean{ return item.etage == etageCB.selectedItem.value; }
+					moduleSalleList.refresh();
+				}
+				
+				moduleList = [];
+				container.removeAllChildren();
+				containerSans.removeAllChildren();
+				var chambreArray:ArrayCollection = ChambreProxy.ChambreDispo;
+				var moduleSans:ModuleSansChambre = new ModuleSansChambre();
+				
+				
+				moduleList.push({module:moduleSans,chambre:{numero:0}});
+				containerSans.addChild(moduleSans);
+				
+				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
+				var tabList:Array = [];
+				
+				if(moduleCB.selectedItem)
+					var moduleSelectedId:int = moduleCB.selectedItem.id_module;
+				var etageSelectedId:int =  etageCB.selectedItem.value;
+				var moduleFound:Boolean = false;
+				for(var i:int=0;i<chambreArray.length;++i)
+				{
+					if(searchInput.text=="")
+					{
+						if(chambreArray[i].etage == etageSelectedId)
+						{
+							if(chambreArray[i].id_module == moduleSelectedId)
+							{ 
+								moduleFound = true;
+								
+								var module:ModuleChambre = new ModuleChambre();
+								module.titleText = chambreArray[i].libelle as String;
+								module.capacite = chambreArray[i].lits as int;
+								moduleList.push({module:module,id:chambreArray[i].numero});
+								container.addChild(module);
+								tabList.push(module.titleText);
+								module.addEventListener(RELOAD_MODULE,provideModules);
+							}
+							
+						} 
+					}
+					else
+					{
+						var chambreName:String = chambreArray[i].libelle as String;
+						if(chambreName.toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+						{
+							module = new ModuleChambre();
+							module.titleText = chambreArray[i].libelle as String;
+							module.capacite = chambreArray[i].lits as int;
+							moduleList.push({module:module,id:chambreArray[i].numero});
+							container.addChild(module);
+							tabList.push(module.titleText);
+							module.addEventListener(RELOAD_MODULE,provideModules);
+						}
+					}
+				}
+				provideModules();  
+				container.invalidateDisplayList();
+			}
+			
+			 private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].id);
+				}
+			} 
+			protected function etageCB_changeHandler(event:ListEvent):void
+			{
+				moduleSalleList = ModuleProxy.ModuleDispo;
+				moduleSalleList.filterFunction = function(item:Object):Boolean{ return item.etage == etageCB.selectedItem.value; }
+				moduleSalleList.refresh();
+				moduleCB.selectedIndex = 0;
+				canvas1_creationCompleteHandler(null);
+			}
+			
+			protected function moduleCB_changeHandler(event:ListEvent):void
+			{
+				canvas1_creationCompleteHandler(null);
+			}
+			
+			////Export////
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideExportDatagrid);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.reg_chambre, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur" +
+					" FROM `personne` p, `malade` m, `etre_malade` em, `chambre` c, secteur s" +
+					" WHERE em.id_pele = " + index.peleActuel.id_pele+
+					" AND m.id_malade = em.id_malade" +
+					" AND p.id_personne = em.id_personne " +
+					" AND p.id_secteur=s.id_secteur " +
+					" AND c.numero = m.numero " +
+					" AND m.annuler = 'non' " +
+					" ORDER BY p.nom");
+			}
+			
+			private function provideExportDatagrid(evt:Object):void
+			{
+				Alert.show("Voulez-vous exporter les salles ?","",Alert.OK|Alert.CANCEL,this, alertClickHandler);
+			}
+			
+			private function alertClickHandler(event:CloseEvent):void
+			{
+				var arraySalle:ArrayCollection = query.getRecords();
+				
+				switch (event.detail){
+					case Alert.OK:
+						var csvText:String = exportCSVFromArrayCollection(arraySalle);
+						var fileSave:FileReference= new FileReference();
+						fileSave.save(csvText,"export_salle.csv");
+						break;
+					case Alert.CANCEL:
+						break;
+				}
+				
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			public function exportCSVFromArrayCollection(ac:ArrayCollection,header:Boolean=true):String
+			{
+				var text:String = "";
+				var rows:int = ac.length;
+				if(header)
+				{
+					for(var n:String in ac[0])
+					{
+						text = text + n +";";
+					}
+					text = text + "\n";
+				}
+				for(var m:int=0;m<rows;++m)
+				{
+					for each(var o:String in ac[m])
+					{
+						text = text + o +";";
+					}
+					text = text.slice(0,text.length-1);
+					text = text + "\n";
+				}
+				return text;
+			}	
+			
+			private var searchTimer:Timer;
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						canvas1_creationCompleteHandler();
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			protected function pdfModules(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/module.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			protected function pdfModule(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/module.php?pele=" +index.peleActuel.id_pele+"&id="+moduleCB.selectedItem.id_module ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			
+			protected function pdfEtage(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/plan_accueil.php?pele=" +index.peleActuel.id_pele+"&etg="+etageCB.selectedItem.value ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			protected function pdfAccueil(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/plan_accueil.php?pele=" +index.peleActuel.id_pele ;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%">
+		<mx:Spacer width="100%"/>
+		<mx:Button label="Générer les Modules" click="pdfModules(event)" />
+		<mx:Button label="Générer plan de l'Accueil" click="pdfAccueil(event)" />
+		<mx:Button label="Exporter Liste des Salles" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
+	</mx:HBox>
+	<mx:HBox width="100%">
+	<mx:Canvas>
+		<mx:Image source="@Embed('/assets/search.png')" />
+		<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"  borderSkin="@Embed('/assets/blank.png')" textAlign="left" />
+	</mx:Canvas>
+	</mx:HBox>
+	<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
+	<mx:HBox width="100%" visible="{(searchInput.text=='')}">
+		<mx:Label text="Etage :"/><mx:ComboBox id="etageCB" dataProvider="{[{nom:'1er',value:1},{nom:'2ème',value:2},{nom:'3ème',value:3},{nom:'4ème',value:4}]}" labelField="nom" change="etageCB_changeHandler(event)" selectedIndex="1"/>
+		<mx:Label text="Module :"/><mx:ComboBox id="moduleCB" dataProvider="{moduleSalleList}" labelField="libelle" change="moduleCB_changeHandler(event)"/>
+		<mx:Spacer width="25%" />
+		<mx:Button label="Générer ce Module" click="pdfModule(event)" />
+		<mx:Button label="Générer plan de l'étage" click="pdfEtage(event)" />
+	</mx:HBox>
+	<mx:HBox x="16.5" y="64" width="100%" height="600" verticalScrollPolicy="off">
+		<mx:VBox id="container" height="600"  width="100%" verticalScrollPolicy="on" maxHeight="600">
+		</mx:VBox>
+		<mx:VBox id="containerSans" height="100%"  >
+		</mx:VBox>
+		
+	</mx:HBox>
+	
+</mx:VBox>

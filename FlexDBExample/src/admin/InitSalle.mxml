@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="678" height="466" creationComplete="titlewindow1_creationCompleteHandler(event)">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.ChambreProxy;
+			
+			private  static var db       :IDatabase;
+			private static var query    :IQuery;
+
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			protected function titlewindow1_creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				salleDispo.dataProvider = ChambreProxy.ChambreDispo;
+				salleNonDispo.dataProvider = ChambreProxy.ChambreNonDispo;
+			}
+
+
+			protected function rendreDispo(event:MouseEvent):void
+			{
+				var salles:Array = salleNonDispo.selectedItems;
+				var requete:String = "Insert into etre_disponible (`numero`, `id_pele`) values ";
+				for (var i:int=0;i<salles.length; ++i)
+				{
+					if(i+1<salles.length)
+						requete += "("+salles[i].numero +","+ index.peleActuel.id_pele+"),"
+					else
+						requete += "("+salles[i].numero +","+ index.peleActuel.id_pele+")"
+				}
+				
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, rendreDispoSuccess);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute(requete, Query.INSERT)
+
+			}
+			
+			private static function rendreDispoSuccess(evt:Event):void
+			{
+				
+			}
+			private static function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function rendreNonDispo(event:MouseEvent):void
+			{
+				var salles:Array = salleNonDispo.selectedItems;
+				var requete:String = "Insert into etre_disponible (`numero`, `id_pele`) values ";
+				for (var i:int=0;i<salles.length; ++i)
+				{
+					if(i+1<salles.length)
+						requete += "("+salles[i].numero +","+ index.peleActuel.id_pele+"),"
+					else
+						requete += "("+salles[i].numero +","+ index.peleActuel.id_pele+")"
+				}
+				
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, rendreDispoSuccess);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute(requete, Query.INSERT)
+				
+			}
+
+			protected function button2_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+			}
+
+		]]>
+	</mx:Script>
+	
+	
+		<mx:VBox width="100%" height="100%">
+			<mx:Label text="{'Pele en cours :' +index.peleActuel.Libelle_pele}"/>
+			<mx:HBox width="100%">
+				<mx:Label text="Salles à sélectionner"/>
+				<mx:Spacer width="100%"/>
+				<mx:Label text="Salles selectionnées"/>
+			</mx:HBox>
+			<mx:HBox width="100%"  height="100%">
+				<mx:List id="salleNonDispo" width="100%" height="100%" labelField="libelle" allowMultipleSelection="true"/>
+				<mx:VBox height="100%" horizontalAlign="center">
+					<mx:Button label="+="  click="rendreNonDispo(event)"/>
+					<mx:Button label="=>" click="rendreDispo(event)"/>
+				</mx:VBox>
+				<mx:List id="salleDispo" width="100%" height="100%" labelField="libelle"/>
+			</mx:HBox>
+			<mx:HBox width="100%" horizontalAlign="center">
+				<mx:Button label="Quitter" click="button1_clickHandler(event)" />
+			</mx:HBox>
+		</mx:VBox>
+</mx:TitleWindow>

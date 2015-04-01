@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var capacite:Number;
+			
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var chambreId:Number;
+			public var moduleId:Number;
+			
+			
+			
+			public function generateModuleProvider(chambreId:int,moduleId:int):void
+			{
+				this.chambreId=chambreId;
+				this.moduleId=moduleId;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT p.nom, p.prenom,eh.id_hospitalier" +
+					" FROM `personne` p, `etre_hospitalier` eh, `s_occuper` o, `chambre` c " +
+					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = o.id_hospitalier " +
+					" AND o.numero = "+chambreId +
+					" AND p.id_personne = eh.id_personne" +
+					" GROUP BY p.id_personne");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			protected function affecterAussiA(event:Object=null):void
+			{
+				if(listHospi.selectedItem)
+				{
+					var formulaireSalle:FormulaireSalle = new FormulaireSalle();
+					PopUpManager.addPopUp(formulaireSalle,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireSalle);
+					formulaireSalle.setFormulaire(listHospi.selectedItem);
+					formulaireSalle.addEventListener(Salle.RELOAD_MODULE,refresh);
+				}
+			}
+			
+			protected function enlever(event:Object=null):void
+			{
+				if(listHospi.selectedItem)
+				{
+				 	query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,refresh);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("DELETE FROM s_occuper " +
+						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND numero = '"+chambreId+"'",Query.DELETE);
+				 }
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Salle.RELOAD_MODULE));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{ 
+					var formulaireSalle:FormulaireSalle = new FormulaireSalle();
+					PopUpManager.addPopUp(formulaireSalle,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireSalle);
+					formulaireSalle.setFormulaire(listHospi.selectedItem,chambreId);
+					formulaireSalle.addEventListener(Salle.RELOAD_MODULE,refresh); 
+				}
+			} 
+			
+			protected function pdfSalle(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/module.php?pele=" +index.peleActuel.id_pele+"&id="+moduleId+"&chambre="+chambreId;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	
+		<mx:HBox>
+			<mx:Label text="{this.titleText}"/>
+			<mx:Label text="{this.capacite +' lits'}"/>
+		</mx:HBox>
+		<mx:HBox height="100%" width="100%">
+			<mx:DataGrid id="listHospi" dataProvider="{provider}" width="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+					<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:VBox height="100%">
+				<mx:Button label="Affecter aussi à" click="affecterAussiA(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Enlever" click="enlever(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120" enabled="{!index.visuMode}"/>
+			</mx:VBox>
+		</mx:HBox>
+</mx:VBox>

@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="942" height="580" creationComplete="onCreateComplete()">
+	
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.SecteurProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			private var maladeID:Number
+			
+			public static var RELOAD:String = "reload";
+			
+			private function onCreateComplete():void
+			{			
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				this.secteur.dataProvider = SecteurProxy.Secteur;
+				
+			}
+			
+			public function setFormulaire(idMalade:int):void
+			{
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne " +
+					" AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND ma.id_malade = "+ idMalade);
+			}
+			
+			public function queryEnd(obj:Object):void
+			{
+				var item:Object = query.getRecords()[0];
+				
+				this.titre.selectedItem	= item.Titre;
+				this.nom.text 			= item.Nom;
+				this.prenom.text 		= item.Prenom;
+				this.sexe.selectedItem	= item.sexe;
+				this.cp.text			= item.CodePostal;
+				this.commune.text		= item.Commune;
+				this.adresse.text		= item.Adresse1;
+				this.telephone.text		= item.Tel;
+				this.portable.text		= item.Portable
+				this.email.text			= item.Courriel;
+				this.dateNaissance.selectedDate = Tools.stringToDate(item.DateNaissance);
+				for(var i:int=0;i<secteur.dataProvider.length;++i)
+				{
+					secteur.selectedIndex = i;
+					if(secteur.selectedItem.section == item.section)
+						break;
+				}
+				maladeID = item.id_malade;
+				taille.value = item.taille; 
+				poids.value = item.poids;
+				hospitalierCB.selected = item.pers_prev_hosp;
+				familleCB.selected = item.pers_prev_fam;
+				tuteurCB.selected =	item.pers_prev_tut;
+				personneCB.selected = item.pers_prev_pers_conf;
+				nom_prenom.text = item.pers_prev_nom;
+				tel.text = item.pers_prev_tel;
+				voyageAssisCB.selected = item.pos_voy_assis;
+				voyageCoucheCB.selected = item.pos_voy_couche;
+				voyageFauteuilRCB.selected = item.pos_voy_assis_ft;
+				peutMonterMarcheCB.selected = item.monte_marches_car;
+				deplaceSeulCB.selected = item.deplace_seul;
+				aideCB.selected = item.deplace_aide;
+				cannesCB.selected = item.deplace_canne;
+				deambulateurCB.selected = item.deplace_deambulateur;
+				fauteuilRCB.selected = item.deplace_fauteuil;
+				brancardCB.selected = item.deplace_brancard;
+				escalierCB.selected = item.deplace_escalier;
+				protheses.text = item.protheses;
+				visionCB.selected = item.deficit_vision;
+				auditionCB.selected = item.deficit_audition;
+				paroleCB.selected = item.deficit_parole;
+				desorientationCB.selected = item.deficit_desorientation;
+				fugueCB.selected = item.deficit_fugue;
+				regimeNormalCB.selected = item.reg_normal;
+				diabetiqueCB.selected = item.reg_diab;
+				sansSelCB.selected = item.reg_ss_sel;
+				mixeCB.selected = item.reg_mix;
+				troubleDeglutionCB.selected = item.reg_pb_deglutition;
+				eauGelifieeCB.selected = item.reg_eau_gef;
+				mangeChambreCB.selected = item.reg_chambre;
+				injectionCB.selected = item.soin_inf_inj;
+				injectionType.text = item.soin_inf_inj_type;
+				injectionHorraire.text = item.soin_inf_inj_horraire;
+				pansementCB.selected = item.soin_inf_pansement;
+				pansementType.text = item.soin_inf_pansement_type;
+				autreSoin.text = item.autre_soin_spec;
+				priseMedicamentControleeCB.selected = item.autre_soin_prise_med;
+				oxygeneCB.selected = item.autre_soin_oxygene;
+				extracteurCB.selected = item.extracteur;
+				debitOxygene.text =	item.autre_soin_oxygene_debit;
+				toilettesAideTotaleCB.selected =item.toilette_aide_total;
+				toilettesAidePartielleCB.selected =	item.toilette_aide_partiel;
+				toiletteLitCB.selected = item.toilette_aide_lit;
+				coucherAideCB.selected = item.coucher_aide;
+				coucherBarriereCB.selected = item.coucher_barriere_lit;
+				coucherPotenceCB.selected = item.coucher_potence;
+				matelasAntiEscCB.selected = item.matelas_anti_esc;
+				souleveMaladeCB.selected = item.souleve_malade;
+				incontinenceChangeCB.selected = item.incont_bes_change;
+				incontinenceJourCB.selected = item.incont_jour;
+				incontinenceNuitCB.selected	= item.incont_nuit;
+				sondeUrinaireCB.selected = item.incont_sond_uri;
+				etuiPenienCB.selected =	item.incont_etui_pen;
+				pochesPourStomieCB.selected = item.incont_poche_stom;
+				typeStomie.text = item.incont_poche_stom_type;
+				divers.text = item.divers;
+				incomplet.selected = (item.incomplet== "oui")?true:false;
+				paiementInsc.selected = (item.paiementInsc == "oui")?true:false;
+				montantInsc.text = item.montantInsc;
+				codification.text = item.codification;
+				medecin_traitant.text = item.medecin_traitant;
+				tel_medecin.text = item.tel_medecin;
+				tel_retour.text = item.tel_retour;
+				voyageElectriqueCB.selected = item.pos_voy_electrique;
+				escarreCB.selected = item.coussin_esc;
+				hacheCB.selected = item.reg_hache;
+				parenteraleCB.selected = item.parenterale;
+				ppcCB.selected = item.ppc;
+				dialyseCB.selected = item.dialyse;
+				litMedicaliseCB.selected = item.lit_medicalise;
+				aideRepasCB.selected = item.reg_aide_repas;
+			}
+			
+			
+			private function close(evt:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}	
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Form width="100%" height="500" verticalScrollPolicy="on">
+			<mx:Box borderColor="#000000" borderStyle="solid" borderThickness="1">
+				<mx:HBox>
+					<mx:FormItem label="Titre">
+						<mx:ComboBox id="titre" dataProvider="['Mr','Mme','Mlle','Sr','Pr','Dr']"/>
+					</mx:FormItem>
+					<mx:FormItem label="Nom">
+						<mx:Label id="nom" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Prenom">
+						<mx:Label id="prenom" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Sexe">
+						<mx:ComboBox id="sexe" dataProvider="{['M','F']}"/>
+					</mx:FormItem>
+					<mx:FormItem label="Date de naissance">
+						<mx:DateField id="dateNaissance" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+									  firstDayOfWeek="0"
+									  dayNames="['D','L','M','M','J','V','S']" 
+									  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+					</mx:FormItem>
+				</mx:HBox>		
+				<mx:HBox>
+					<mx:FormItem label="Adresse">
+						<mx:Label id="adresse" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Code Postal">
+						<mx:Label id="cp" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Commune">
+						<mx:Label id="commune" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Secteur">
+						<mx:ComboBox id="secteur" labelField="section"/>
+					</mx:FormItem>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:FormItem label="Telephone">
+						<mx:Label id="telephone" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Portable">
+						<mx:Label id="portable" fontWeight="bold"/>
+					</mx:FormItem>
+					<mx:FormItem label="Email">
+						<mx:Label id="email" fontWeight="bold"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:Box>
+			
+			
+			<mx:FormItem label="Poids">
+				<mx:HBox>
+					<mx:NumericStepper id="poids" maximum="300"/>
+					<mx:Label text="Taille" />
+					<mx:NumericStepper id="taille" maximum="300"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Médecin traitant">
+				<mx:VBox>
+					<mx:HBox>
+						<mx:HBox>
+							<mx:TextInput id="medecin_traitant" />
+						</mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Tél/Port"/>
+							<mx:TextInput id="tel_medecin"/>
+						</mx:HBox>
+					</mx:HBox>
+				</mx:VBox>
+			</mx:FormItem>
+			<mx:FormItem label="Personne à prevenir">
+				<mx:VBox>
+					<mx:HBox>
+						<mx:CheckBox label="Hospitalier" id="hospitalierCB"/>
+						<mx:CheckBox label="Famille" id="familleCB"/>
+						<mx:CheckBox label="Tuteur" id="tuteurCB"/>
+						<mx:CheckBox label="Personne de confiance" id="personneCB"/>
+					</mx:HBox>
+					<mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Nom et Prénom"/>
+							<mx:TextInput id="nom_prenom" />
+						</mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Tél/Port"/>
+							<mx:TextInput id="tel"/>
+						</mx:HBox>
+					</mx:HBox>
+					<mx:HBox>
+						<mx:Label text="Tel de la personne à contacter pour le retour :"/>
+						<mx:TextInput id="tel_retour"/>
+					</mx:HBox>
+				</mx:VBox>
+			</mx:FormItem>
+			<mx:FormItem label="Position pour le voyage">
+				<mx:HBox>
+					<mx:CheckBox label="Assis" id="voyageAssisCB"/>
+					<mx:CheckBox label="Couché" id="voyageCoucheCB"/>
+					<mx:CheckBox label="Assis dans son fauteuil roulant" id="voyageFauteuilRCB"/>
+					<mx:CheckBox label="Electrique" id="voyageElectriqueCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Peut monter les marches">
+				<mx:CheckBox id="peutMonterMarcheCB"/>
+			</mx:FormItem>
+			<mx:FormItem label="Locomotion">
+				<mx:HBox>
+					<mx:CheckBox label="Déplacement seul" id="deplaceSeulCB"/>
+					<mx:CheckBox label="Avec aide" id="aideCB"/>
+					<mx:CheckBox label="Avec cannes" id="cannesCB"/>
+					<mx:CheckBox label="Avec déambulateur" id="deambulateurCB"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="En fauteuil roulant" id="fauteuilRCB"/>
+					<mx:CheckBox label="Sur brancard" id="brancardCB"/>
+					<mx:CheckBox label="Utilise les escaliers" id="escalierCB"/>
+					<mx:CheckBox label="Coussin Anti-escarre" id="escarreCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Prothèses">
+				<mx:TextInput id="protheses"/>
+			</mx:FormItem>
+			<mx:FormItem label="Déficit neurosensoriel">
+				<mx:HBox>
+					<mx:CheckBox label="Vision" id="visionCB"/>
+					<mx:CheckBox label="Audition" id="auditionCB"/>
+					<mx:CheckBox label="Parole" id="paroleCB"/>
+					<mx:CheckBox label="Désorientation" id="desorientationCB"/>
+					<mx:CheckBox label="Risque de fugue" id="fugueCB"/>	
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Régime alimentaire">
+				<mx:HBox>
+					<mx:CheckBox label="Normal" id="regimeNormalCB"/>
+					<mx:CheckBox label="Diabétique" id="diabetiqueCB"/>
+					<mx:CheckBox label="Sans sel" id="sansSelCB"/>
+					<mx:CheckBox label="Mixé" id="mixeCB"/>
+					<mx:CheckBox label="Haché" id="hacheCB"/>
+					<mx:CheckBox label="Troubles de la déglutition" id="troubleDeglutionCB"/>	
+					<mx:CheckBox label="Eau gélifiée" id="eauGelifieeCB"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="Aide au repas" id="aideRepasCB"/>
+					<mx:CheckBox label="Mange en chambre" id="mangeChambreCB"/>
+					<mx:CheckBox label="Nutrition parentérale" id="parenteraleCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Soins infirmiers">
+				<mx:HBox>
+					<mx:CheckBox label="Injection" id="injectionCB"/>
+					<mx:Label text="Type"/>
+					<mx:TextInput id="injectionType" />
+					<mx:Label text="Horaire"/>
+					<mx:TextInput id="injectionHorraire"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="Pansement" id="pansementCB"/>
+					<mx:Label text="Type"/>
+					<mx:TextInput id="pansementType" />
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Autre soins spécifiques">
+				<mx:TextInput id="autreSoin"/>
+				<mx:HBox>
+					<mx:CheckBox label="Prise de médicament contrôlée par l'infirmière" id="priseMedicamentControleeCB"/>
+					<mx:CheckBox label="Oxygène" id="oxygeneCB"/>
+					<mx:Label text="Debit par 24h"/>
+					<mx:TextInput id="debitOxygene"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="Extracteur" id="extracteurCB"/>
+					<mx:CheckBox label="PPC" id="ppcCB"/>
+					<mx:CheckBox label="Dialyse" id="dialyseCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Toilettes">
+				<mx:HBox>
+					<mx:CheckBox label="Aide totale" id="toilettesAideTotaleCB"/>
+					<mx:CheckBox label="Aide partielle" id="toilettesAidePartielleCB"/>
+					<mx:CheckBox label="Toilette au lit" id="toiletteLitCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Coucher">
+				<mx:HBox>
+					<mx:CheckBox label="Aide" id="coucherAideCB"/>
+					<mx:CheckBox label="Barrière au lit" id="coucherBarriereCB"/>
+					<mx:CheckBox label="Potence" id="coucherPotenceCB"/>
+					<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
+					<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
+					<mx:CheckBox label="Lit médicalisé" id="litMedicaliseCB"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Incontinence">
+				<mx:HBox>
+					<mx:CheckBox label="Besoins de change" id="incontinenceChangeCB"/>
+					<mx:CheckBox label="Jour" id="incontinenceJourCB"/>
+					<mx:CheckBox label="Nuit" id="incontinenceNuitCB"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:CheckBox label="Sonde urinaire" id="sondeUrinaireCB"/>
+					<mx:CheckBox label="Etui pénien" id="etuiPenienCB"/>
+					<mx:CheckBox label="Poches pour stomie" id="pochesPourStomieCB"/>
+					<mx:Label text="Type"/>
+					<mx:TextInput id="typeStomie"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Paiement à l'inscription">
+				<mx:HBox>
+					<mx:CheckBox id="paiementInsc"/>
+					<mx:FormItem label="Montant">
+						<mx:TextInput id="montantInsc" restrict="0-9\."/>
+					</mx:FormItem>
+				</mx:HBox>
+				
+			</mx:FormItem>
+			<mx:FormItem label="Divers">
+				<mx:TextArea id="divers" width="425" height="60"/>
+			</mx:FormItem>
+			<mx:FormItem label="Fiche incomplète">
+				<mx:CheckBox id="incomplet"/>
+			</mx:FormItem>
+			<mx:FormItem label="Codification">
+				<mx:TextInput id="codification" maxChars="5"/>
+			</mx:FormItem>
+		</mx:Form>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="Fermer" click="close(event)"/>
+		</mx:HBox>	
+	</mx:VBox>
+</mx:TitleWindow>

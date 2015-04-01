@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var hospitalierID:int;
+			private var salleOld:Number;
+			
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				this.salleList.dataProvider = ChambreProxy.ChambreDispo;
+			}
+			
+			public function setFormulaire(item:Object,sallenOld:Number=NaN):void
+			{
+				myLabel.text = "Affecter "+item.prenom + " "+item.nom + " à :";
+				hospitalierID = item.id_hospitalier;
+				this.salleOld = sallenOld;
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(isNaN(salleOld))
+				{
+					query.execute("INSERT INTO s_occuper (`id_hospitalier`, `numero`) VALUES ("+hospitalierID+", "+salleList.selectedItem.numero+") ", Query.INSERT );
+				}
+				else
+				{
+					query.execute("UPDATE s_occuper " +
+						"SET id_hospitalier ='"+hospitalierID+"', numero ='"+salleList.selectedItem.numero+"'"+
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND numero = '"+salleOld+"'",Query.UPDATE);
+				}
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(Salle.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="myLabel" text="Affecter" width="100%"/>
+	<mx:ComboBox id="salleList" labelField="libelle"></mx:ComboBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

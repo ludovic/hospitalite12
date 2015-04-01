@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="200"  creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(nom.text != "")
+				{ 
+					query.execute("INSERT INTO transport ( `nom_transport` ,`Capacite`,`compagnie`,`cout`) VALUES ('"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(capacite.text)+"','"+Tools.sanitize(compagnie.text)+"', '"+Tools.sanitize(cout.text)+"') ", Query.INSERT );
+				}
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(GestionCar.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Nom : "/>
+		<mx:TextInput id="nom" width="298"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Capacité : "/>
+		<mx:TextInput id="capacite" width="298"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Compagnie : "/>
+		<mx:TextInput id="compagnie" width="280"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Cout : "/>
+		<mx:TextInput id="cout" width="298"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+</mx:TitleWindow>

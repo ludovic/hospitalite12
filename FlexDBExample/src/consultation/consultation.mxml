@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" xmlns:consultation="consultation.*" creationComplete="canvas1_creationCompleteHandler(event)" >
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.DataGridDataExporter;
+			import common.helper.ProgressPopUp;
+			import common.helper.SortUtil;
+			
+			import flash.utils.flash_proxy;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.IFlexDisplayObject;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			private var query4    :IQuery;
+			private var query5    :IQuery;
+			private var query6    :IQuery;
+			private var query7    :IQuery;
+			private var query8    :IQuery;
+			private var query9    :IQuery;
+			private var query10   :IQuery;
+			private var query11   :IQuery;
+			private var query12   :IQuery;
+			private var query13   :IQuery;
+			private var query14   :IQuery;
+			private var query15   :IQuery;
+			private var query16   :IQuery;
+			private var query17   :IQuery;
+			
+			private var personneData:Object;
+			
+			protected function canvas1_creationCompleteHandler(event:Object):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideNameGrid);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				query.execute("SELECT p.id_personne, p.Titre, p.Nom, p.Prenom, p.Adresse1, p.CodePostal, p.Commune, s.section, ho.id_hospitalier FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
+					" AND h.id_hospitalier = ho.id_hospitalier " +
+					" AND ho.annuler='non' " +
+					" AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function provideNameGrid(evt:Object):void
+			{
+				var provider:ArrayCollection = query.getRecords();
+				 provider.sort = SortUtil.nomPrenomSort();
+				 provider.refresh();
+				listeNom.listeNomProvider = provider;
+				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
+				listeNom.addEventListener(ListeNom.REFRESH,canvas1_creationCompleteHandler);
+			}
+
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			//////////////////////////////////////////////consultation////////////////////////////////////////////////////////////////
+			private function setPersonneFields(event:DocEvent):void
+			{
+				personneData = new Object();
+				personneData.info = event.body;
+				query2 = new Query();
+				query2.connect("conn1", db);
+				query2.addEventListener(Query.QUERY_END, getTransportHebergement);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_hebergement_retenu = h.id_hebergement"+ 
+					" AND i.id_transport = t.id_transport"+ 
+					" AND i.id_gare = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare"+
+					" AND pp.id_transport = i.id_transport"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+			}
+			
+			private function getTransportHebergement(event:Object):void
+			{
+				if(query2.getRecords().length>0)
+					personneData.transHeb = query2.getRecords()[0];
+				else
+					personneData.transHeb = null;
+				
+				query3 = new Query();
+				query3.connect("conn1", db);
+				query3.addEventListener(Query.QUERY_END, getTransportRetour);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				query3.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_transport_retour = t.id_transport"+ 
+					" AND i.id_gare_retour = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare_retour"+
+					" AND pp.id_transport = i.id_transport_retour"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+				
+			}
+			
+			private function getTransportRetour(event:Object):void
+			{
+				if(query3.getRecords().length>0)
+					personneData.transRetour = query3.getRecords()[0];
+				else
+					personneData.transRetour = null;
+				
+				query4 = new Query();
+				query4.connect("conn1", db);
+				query4.addEventListener(Query.QUERY_END, getAffectations);
+				query4.addEventListener(Query.QUERY_ERROR,queryError);
+				query4.execute("SELECT a.Service  FROM obtenir o, affectation a" +
+					" WHERE o.id_hospitalier ="+personneData.info.id_hospitalier +
+					" AND o.id_affectation = a.id_affectation");
+			}
+			
+			private function getAffectations(event:Object):void
+			{
+				personneData.affectations = query4.getRecords();
+				
+				query5 = new Query();
+				query5.connect("conn1", db);
+				query5.addEventListener(Query.QUERY_END, getEquipes);
+				query5.addEventListener(Query.QUERY_ERROR,queryError);
+				query5.execute("SELECT e.libelle  FROM equipe e, faire_parti fp" +
+					" WHERE fp.id_hospitalier ="+personneData.info.id_hospitalier +
+					" AND e.id_equipe = fp.id_equipe");
+				
+			}
+			
+			private function getEquipes(event:Object):void
+			{
+				personneData.equipes = query5.getRecords();
+				
+				query10 = new Query();
+				query10.connect("conn1", db);
+				query10.addEventListener(Query.QUERY_END, getSoldes);
+				query10.addEventListener(Query.QUERY_ERROR,queryError);
+				query10.execute("SELECT p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" AND i.id_prix = p.id_prix");
+			}
+			
+			private function getSoldes(event:Object):void
+			{
+				if(query10.getRecords().length>0)
+					personneData.soldes = query10.getRecords()[0];
+				
+				query17 = new Query();
+				query17.connect("conn1", db);
+				query17.addEventListener(Query.QUERY_END, getRemise);
+				query17.addEventListener(Query.QUERY_ERROR,queryError);
+				query17.execute("SELECT r.libelle FROM remise r, paiement p, etre_paye ep," +
+					" inscrire i WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND r.id_remise = p.id_remise AND p.id_paiement = ep.id_paiement AND ep.id_prix = i.id_prix " +
+					" AND i.id_pele ="+index.peleActuel.id_pele +"");
+			}
+			
+			private function getRemise(event:Object):void
+			{
+				if(query17.getRecords().length>0)
+					personneData.remise = query17.getRecords()[0];
+				
+				query12 = new Query();
+				query12.connect("conn1", db);
+				query12.addEventListener(Query.QUERY_END, getSalles);
+				query12.addEventListener(Query.QUERY_ERROR,queryError);
+				query12.execute("SELECT ch.libelle, m.libelle as module, p.Nom, p.Prenom FROM s_occuper so, chambre ch, module m, responsable_module rm, etre_hospitalier eh, personne p" +
+					" WHERE so.id_hospitalier ="+personneData.info.id_hospitalier +
+					" AND m.id_module = ch.id_module " +
+					" AND rm.id_module = ch.id_module " +
+					" AND rm.id_hospitalier = eh.id_hospitalier " +
+					" AND p.id_personne = eh.id_personne " +
+					" AND so.numero = ch.numero" +
+					" AND eh.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function getSalles(event:Object):void
+			{
+				if(query12.getRecords().length>0)
+					personneData.salle = query12.getRecords()[0];
+				
+				query14 = new Query();
+				query14.connect("conn1", db);
+				query14.addEventListener(Query.QUERY_END, getFonction);
+				query14.addEventListener(Query.QUERY_ERROR,queryError);
+				query14.execute("select  m.libelle as module, p.Nom, p.Prenom, u.fonction from " +
+					"( SELECT id_module, id_hospitalier, ('ide de module') 'fonction' from ide_module where id_hospitalier="+personneData.info.id_hospitalier +
+					" UNION SELECT id_module, id_hospitalier, ('brancardier de module') 'fonction' from brancardier_module where id_hospitalier="+personneData.info.id_hospitalier +
+					" UNION SELECT id_module, id_hospitalier, ('responsable de module') 'fonction' from responsable_module where id_hospitalier="+personneData.info.id_hospitalier +
+					") u, module m, responsable_module rm, etre_hospitalier eh, personne p" +
+					" WHERE  m.id_module = u.id_module" +
+					" AND rm.id_module = u.id_module " +
+					" AND p.id_personne = eh.id_personne " +
+					" AND rm.id_hospitalier = eh.id_hospitalier " );
+					
+			}
+			
+			private function getFonction(event:Object):void
+			{
+				if(query14.getRecords().length>0)
+					personneData.fonction = query14.getRecords()[0];
+				
+				detailsPersonne.data = personneData;
+			}
+			
+			private var exportData:ArrayCollection;
+			private var popUpWindow:IFlexDisplayObject
+		
+			
+			private function alertClickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						var csvText:String = DataGridDataExporter.exportCSVFromArrayCollection(exportData);
+						var fileSave:FileReference= new FileReference();
+						fileSave.save(csvText,"export_all.csv");
+						break;
+				}
+				
+			}
+			
+			
+			
+			
+			/////////////////////////////////////////////// export///////////////////////////////////////////////////////////////
+			protected function exportAll2(event:MouseEvent):void
+			{
+				getTransportHebergementList(null);
+			}
+			
+			private var transportHebergementList:ArrayCollection;
+			private function getTransportHebergementList(event:DocEvent):void
+			{
+				query6 = new Query();
+				query6.connect("conn1", db);
+				query6.addEventListener(Query.QUERY_END, getTransportRetourList);
+				query6.addEventListener(Query.QUERY_ERROR,queryError);
+				query6.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller, i.id_personne  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
+					" WHERE i.id_hebergement_retenu = h.id_hebergement"+ 
+					" AND i.id_transport = t.id_transport"+ 
+					" AND i.id_gare = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare"+
+					" AND pp.id_transport = i.id_transport"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+			}
+			private var transportRetourList:ArrayCollection;
+			private function getTransportRetourList(event:Object):void
+			{
+				if(query6.getRecords().length>0)
+					transportHebergementList= query6.getRecords();
+				
+				query7 = new Query();
+				query7.connect("conn1", db);
+				query7.addEventListener(Query.QUERY_END, getAffectationsList);
+				query7.addEventListener(Query.QUERY_ERROR,queryError);
+				query7.execute("SELECT i.id_personne, t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+					" WHERE  i.id_transport_retour = t.id_transport"+ 
+					" AND i.id_gare_retour = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare_retour"+
+					" AND pp.id_transport = i.id_transport_retour"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+				
+			}
+			private var affectationsList:ArrayCollection;
+			private function getAffectationsList(event:Object):void
+			{
+				if(query7.getRecords().length>0)
+					transportRetourList= query7.getRecords();
+			
+				
+				query8 = new Query();
+				query8.connect("conn1", db);
+				query8.addEventListener(Query.QUERY_END, getEquipesList);
+				query8.addEventListener(Query.QUERY_ERROR,queryError);
+				query8.execute("SELECT a.Service, o.id_hospitalier  FROM obtenir o, affectation a" +
+					" WHERE  o.id_affectation = a.id_affectation");
+			}
+			private var equipesList:ArrayCollection;
+			private function getEquipesList(event:Object):void
+			{
+				affectationsList = query8.getRecords();
+				
+				query9 = new Query();
+				query9.connect("conn1", db);
+				query9.addEventListener(Query.QUERY_END, getPaiementList);
+				query9.addEventListener(Query.QUERY_ERROR,queryError);
+				query9.execute("SELECT e.libelle, fp.id_hospitalier  FROM equipe e, faire_parti fp" +
+					" WHERE  e.id_equipe = fp.id_equipe");
+				
+			}
+			private var paiementList:ArrayCollection;
+			private function getPaiementList(event:Object):void
+			{
+				equipesList = query9.getRecords();
+				
+				query11 = new Query();
+				query11.connect("conn1", db);
+				query11.addEventListener(Query.QUERY_END, getRemiseList);
+				query11.addEventListener(Query.QUERY_ERROR,queryError);
+				query11.execute("SELECT i.id_personne, p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
+					" WHERE i.id_pele="+index.peleActuel.id_pele +
+					" AND i.id_prix = p.id_prix");
+				
+			}
+			
+			private var remiseList:ArrayCollection;
+			private function getRemiseList(event:Object):void
+			{
+				paiementList= query11.getRecords();
+				
+				query16 = new Query();
+				query16.connect("conn1", db);
+				query16.addEventListener(Query.QUERY_END, getSalleList);
+				query16.addEventListener(Query.QUERY_ERROR,queryError);
+				query16.execute("SELECT i.id_personne, r.libelle FROM remise r, paiement p, etre_paye ep," +
+					" inscrire i WHERE r.id_remise = p.id_remise AND p.id_paiement = ep.id_paiement AND ep.id_prix = i.id_prix " +
+					" AND i.id_pele ="+index.peleActuel.id_pele +"");
+			}
+			
+			private var salleList:ArrayCollection;
+			private function getSalleList(event:Object):void
+			{
+				remiseList= query16.getRecords();
+				
+				query13 = new Query();
+				query13.connect("conn1", db);
+				query13.addEventListener(Query.QUERY_END, getFonctionList);
+				query13.addEventListener(Query.QUERY_ERROR,queryError);
+				query13.execute("SELECT so.id_hospitalier,ch.libelle, m.libelle as module, p.Nom, p.Prenom FROM s_occuper so, chambre ch, module m, responsable_module rm, etre_hospitalier eh, personne p" +
+					" WHERE  m.id_module = ch.id_module " +
+					" AND rm.id_module = ch.id_module " +
+					" AND rm.id_hospitalier = eh.id_hospitalier " +
+					" AND p.id_personne = eh.id_personne " +
+					" AND so.numero = ch.numero");
+			}
+			
+			private var fonctionList:ArrayCollection;
+			private function getFonctionList(event:Object):void
+			{
+				salleList= query13.getRecords();
+				
+				query15 = new Query();
+				query15.connect("conn1", db);
+				query15.addEventListener(Query.QUERY_END, buildExport);
+				query15.addEventListener(Query.QUERY_ERROR,queryError);
+				query15.execute("select u.id_hospitalier, m.libelle as module, p.Nom, p.Prenom, u.fonction from " +
+					"( SELECT id_module, id_hospitalier, ('ide de module') 'fonction' from ide_module " +
+					" UNION SELECT id_module, id_hospitalier, ('brancardier de module') 'fonction' from brancardier_module " +
+					" UNION SELECT id_module, id_hospitalier, ('responsable de module') 'fonction' from responsable_module " +
+					") u, module m, responsable_module rm, etre_hospitalier eh, personne p" +
+					" WHERE  m.id_module = u.id_module" +
+					" AND rm.id_module = u.id_module " +
+					" AND p.id_personne = eh.id_personne " +
+					" AND rm.id_hospitalier = eh.id_hospitalier " );
+				
+			}
+			
+			
+			
+			
+			private function buildExport(event:Object):void
+			{
+				fonctionList= query15.getRecords();
+				
+				exportData = new ArrayCollection();
+				popUpWindow = PopUpManager.createPopUp(this,ProgressPopUp,false);
+				
+				PopUpManager.centerPopUp(popUpWindow);
+				
+				for(var i:int=0;i<listeNom.listeNomProvider.length;++i)
+				{
+					ProgressPopUp(popUpWindow).setprogress(i,listeNom.listeNomProvider.length);
+					var myObject:Object = new Object
+					var info:Object = listeNom.listeNomProvider[i];
+					
+					myObject.titre = info.Titre;
+					myObject.nom = info.Nom;
+					myObject.prenom = info.Prenom;
+					myObject.adresse = info.Adresse1;
+					myObject.codepostal = info.CodePostal;
+					myObject.ville = info.Commune;
+					myObject.secteur = info.section;
+					
+					myObject.transportA = myObject.nomHeb = myObject.nomGareA = myObject.heureAller = "";
+					for(var j:int=0;j<transportHebergementList.length;++j)
+					{
+						if(transportHebergementList[j].id_personne == info.id_personne)
+						{
+							myObject.transportA = transportHebergementList[j].nom_transport;
+							myObject.nomHeb = transportHebergementList[j].Libelle;
+							myObject.nomGareA =  transportHebergementList[j].nom;
+							myObject.heureAller = transportHebergementList[j].heure_aller;
+						}
+					}
+					
+					myObject.transportR = myObject.nomGareR = myObject.heureRetour = "";
+					for(var k:int=0;k<transportRetourList.length;++k)
+					{
+						if(transportRetourList[k].id_personne == info.id_personne)
+						{
+							myObject.transportR = transportRetourList[k].nom_transport;
+							myObject.nomGareR =  transportRetourList[k].nom;
+							myObject.heureRetour = transportRetourList[k].heure_retour;
+						}
+					}
+					
+					myObject.affectations =""
+					for(var l:int=0;l<affectationsList.length;++l)
+					{
+						if(affectationsList[l].id_hospitalier == info.id_hospitalier)
+						{
+							myObject.affectations += affectationsList[l].Service + " ";
+						}
+					}
+					
+					myObject.equipes =""
+					
+					for(var m:int=0;m<equipesList.length;++m)
+					{
+						if(equipesList[m].id_hospitalier == info.id_hospitalier)
+						{
+							myObject.equipes += equipesList[m].libelle + " ";
+						}
+					}
+					
+					myObject.Total = myObject.TotalP = myObject.Solde  = "";
+					for(var n:int=0;n<paiementList.length;++n)
+					{
+						if(paiementList[n].id_personne == info.id_personne)
+						{
+							myObject.Total = paiementList[n].Total;
+							myObject.TotalP = paiementList[n].TotalPaye;
+							myObject.Solde =  paiementList[n].solde;
+						}
+					}
+					
+					myObject.remise = "";
+					for(var q:int=0;q<remiseList.length;++q)
+					{
+						if(remiseList[q].id_personne == info.id_personne)
+						{
+							myObject.remise = remiseList[q].libelle;
+						}
+					}
+					
+					myObject.Salle = myObject.RespNom = myObject.Module = myObject.RespPrenom ="";
+					for(var o:int=0;o<salleList.length;++o)
+					{
+						if(salleList[o].id_hospitalier == info.id_hospitalier)
+						{
+							myObject.Salle = salleList[o].libelle;
+							myObject.Module = salleList[o].module;
+							myObject.RespNom =  salleList[o].Nom;
+							myObject.RespPrenom =  salleList[o].Prenom;
+						}
+					}
+					
+					myObject.Fonction ="";
+					for(var p:int=0;p<fonctionList.length;++p)
+					{
+						if(fonctionList[p].id_hospitalier == info.id_hospitalier)
+						{
+							myObject.Fonction = fonctionList[p].fonction;
+							myObject.Module = fonctionList[p].module;
+							myObject.RespNom =  fonctionList[p].Nom;
+							myObject.RespPrenom =  fonctionList[p].Prenom;
+						}
+					}
+					exportData.addItem(myObject);
+				}
+				
+				PopUpManager.removePopUp(popUpWindow);
+				Alert.show("Confirmation de l'export.","",Alert.OK,this, alertClickHandler);
+			}
+			
+			protected function pdfConsignes(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/consigne.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+			
+		]]>
+	</mx:Script>
+	<consultation:ListeNom id="listeNom" width="200"/>
+	<mx:VBox width="100%" height="100%">
+		<mx:HBox>
+			<mx:Button label="Exporter tout" right="0" click="exportAll2(event)" visible="false" includeInLayout="false"/>
+			<mx:Button label="Générer toutes les Consignes" click="pdfConsignes(event)" />
+		</mx:HBox>
+		
+		<consultation:Details id="detailsPersonne" width="100%" height="100%">
+		</consultation:Details>
+	</mx:VBox>
+	
+	
+</mx:HBox>

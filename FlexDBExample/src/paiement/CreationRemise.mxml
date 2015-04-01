@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="114"  creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.RemiseProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			public var type:String;
+			
+			private var affectationID:int;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(libelle.text != "")
+				{ 
+					query.execute("INSERT INTO remise ( `libelle` ,`type`,`id_pele`) VALUES ('"+Tools.sanitize(libelle.text)+"', '"+type+"', "+index.peleActuel.id_pele+") ", Query.INSERT );
+				}
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				RemiseProxy.addRemise({libelle:Tools.sanitize(libelle.text), type:type, id_pele:index.peleActuel.id_pele});
+				this.dispatchEvent(new DocEvent(Paiement.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Libelle : "/>
+		<mx:TextInput id="libelle" width="298"/>
+	</mx:HBox>			  
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+</mx:TitleWindow>

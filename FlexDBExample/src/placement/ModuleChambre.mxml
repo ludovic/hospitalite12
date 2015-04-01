@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="432" height="200" label="{this.titleText}">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var capacite:int;
+			
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var chambreId:Number;
+			
+			
+			
+			public function generateModuleProvider(chambreId:int):void
+			{
+				this.chambreId=chambreId;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("select * from malade m," +
+					" personne p, etre_malade em " +
+					" where m.numero="+chambreId +
+					" and em.id_pele=" + index.peleActuel.id_pele+
+					" and m.id_malade=em.id_malade" +
+					" and m.annuler = 'non' " +
+					" and p.id_personne=em.id_personne");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				provider.sort = SortUtil.nomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function enlever(event:Object=null):void
+			{
+				if(listMalade.selectedItem)
+				{
+				 	query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,refresh);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute(	"UPDATE malade " +
+						"SET numero = 0"+
+						" WHERE id_malade = "+listMalade.selectedItem.id_malade,Query.UPDATE);
+				 }
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Chambre.RELOAD_MODULE));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if(listMalade.selectedItem)
+				{ 
+					var formulaireSalle:FormulaireChambre = new FormulaireChambre();
+					PopUpManager.addPopUp(formulaireSalle,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireSalle);
+					formulaireSalle.setFormulaire(listMalade.selectedItem,chambreId);
+					formulaireSalle.addEventListener(Chambre.RELOAD_MODULE,refresh); 
+				}
+			} 
+			
+		]]>
+	</mx:Script>
+	<mx:VBox>
+		<mx:HBox width="{listMalade.width}">
+			<mx:Label text="{this.titleText}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Label text="{provider.length+'/'+this.capacite +' lits'}"/>
+		</mx:HBox>
+		<mx:HBox height="100%">
+			<mx:DataGrid id="listMalade" dataProvider="{provider}" height="100%" rowCount="{this.capacite}">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
+					<mx:DataGridColumn headerText="Codification" dataField="codification"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:VBox height="100%">
+				<mx:Button label="Enlever" click="enlever(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120" enabled="{!index.visuMode}"/>
+			</mx:VBox>
+		</mx:HBox>
+	</mx:VBox>
+	
+</mx:Canvas>

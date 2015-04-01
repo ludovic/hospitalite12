@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="362" height="310" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			private var query4    :IQuery;
+			private var prixID:int;
+			private var remiseID:Number;
+			private var equipeOld:Number;
+			private var montantDejaPaye:Number;
+			public var type:String;
+			[Bindable]
+			public var remiseProvider:ArrayCollection;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				query3 = new Query();
+				query3.connect("conn1", db);
+				query4 = new Query();
+				query4.connect("conn1", db);
+				
+				
+			}
+			
+			public function setFormulaire(item:Object,remiseID:Number=NaN):void
+			{
+				myLabel.text = "Ajouter un paiement pour "+item.Prenom + " "+item.Nom + " à :";
+				montantDu.text = item.solde;
+				montantDejaPaye = item.TotalPaye
+				prixID = item.id_prix;
+				this.remiseID = remiseID;
+				query2.addEventListener(Query.QUERY_END, provideEquipe);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * FROM remise where type='"+type+"'and id_pele =" + index.peleActuel.id_pele);
+			}
+			
+			private function provideEquipe(evt:Object):void
+			{
+				remiseProvider = query2.getRecords();
+				remiseProvider.source.reverse();
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,modEtre_paye);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+			 	if(isNaN(remiseID))
+				{ 
+					query.execute("INSERT INTO paiement (`payeur`, `type_paiement`, `montant` ,`id_remise`) VALUES ('"+Tools.sanitize(this.payeur.text)+"','"+Tools.sanitize(this.typePaiement.selectedLabel)+"', "+this.montantPaiement.text+","+remiseList.selectedItem.id_remise+") ", Query.INSERT );
+				}
+				/*else
+				{
+					query.execute("UPDATE faire_parti " +
+						"SET id_equipe ='"+equipeList.selectedItem.id_equipe+"'"+
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_equipe = '"+equipeOld+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.UPDATE);
+				} */ 
+			}
+			protected function modEtre_paye(event:Object):void
+			{
+				var paiementID:Number = query.getLastInsertID();
+				query3.addEventListener(Query.QUERY_END,modPrix);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				if(isNaN(remiseID))
+				{ 
+					query3.execute("INSERT INTO etre_paye (`id_prix`, `id_paiement`) VALUES ('"+this.prixID+"','"+paiementID+"') ", Query.INSERT );
+				}
+			}
+			
+			protected function modPrix(event:Object):void
+			{
+				query4.addEventListener(Query.QUERY_END,end);
+				query4.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				var totalPaye:Number = montantDejaPaye + Number(this.montantPaiement.text);
+				query4.execute("UPDATE prix " +
+					"SET solde ='"+this.solde.text+"',"+
+					" TotalPaye ='"+totalPaye+"'"+
+					" WHERE id_prix = '"+prixID+"'",Query.UPDATE);
+				
+			}
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(Paiement.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+
+			protected function montantPaiement_changeHandler(event:Event):void
+			{
+				var soldeValue:Number = Number(montantDu.text) - Number(montantPaiement.text);
+				solde.text = soldeValue.toString();
+			}
+
+		]]>
+	</mx:Script>
+	<mx:Label id="myLabel" text="Affecter" width="100%"/>
+	<mx:ComboBox id="remiseList" dataProvider="{remiseProvider}" labelField="libelle"></mx:ComboBox>
+	<mx:HBox>
+		<mx:Label text="Montant actuellement du:"/>
+		<mx:TextInput id="montantDu" editable="false"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="Montant du paiement:"/>
+		<mx:TextInput id="montantPaiement" change="montantPaiement_changeHandler(event)"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="Payeur :"/>
+		<mx:TextInput id="payeur"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="Type de paiement :"/>
+		<mx:ComboBox dataProvider="{['Chèque','Espèces','Virement']}" id="typePaiement"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Label text="Nouveau solde :"/>
+		<mx:TextInput editable="false" id="solde" />
+	</mx:HBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

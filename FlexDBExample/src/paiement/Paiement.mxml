@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="canvas1_creationCompleteHandler(event)" updateComplete="provideModules(event)" verticalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			import proxy.RemiseProxy;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			private var moduleList:Array = [];
+			
+			protected function canvas1_creationCompleteHandler(event:Object = null):void
+			{
+				container.removeAllChildren();
+				containerSans.removeAllChildren();
+				containerMalade.removeAllChildren();
+				containerSansMalade.removeAllChildren();
+				var moduleInscription:ModuleInscription = new ModuleInscription();
+				
+				if(viewstack1.selectedChild.label == "Hospitalier")
+				{
+					var remiseArray:ArrayCollection = RemiseProxy.RemiseHospitalier;
+					moduleInscription.type = "hospitalier";
+				}
+				else
+				{
+					remiseArray= RemiseProxy.RemiseMalade;
+					moduleInscription.type = "pelerin";
+				}
+				remiseArray.source.reverse();
+				moduleList.push({module:moduleInscription,remise:{id_remise:0}});
+				
+				
+				if(viewstack1.selectedChild.label == "Hospitalier")
+					containerSans.addChild(moduleInscription);
+				else
+					containerSansMalade.addChild(moduleInscription);
+				moduleInscription.addEventListener(RELOAD_MODULE,provideModules); 
+				for(var i:int=0;i<remiseArray.length;++i)
+				{
+					var module:ModulePaiement = new ModulePaiement();
+					module.titleText = remiseArray[i].libelle as String;
+					moduleList.push({module:module,remise:remiseArray[i]});
+					
+					if(viewstack1.selectedChild.label == "Hospitalier")
+					{
+						module.type = "hospitalier";
+						container.addChild(module);
+					}
+					else
+					{
+						module.type = "pelerin";
+						containerMalade.addChild(module);
+					}
+					module.addEventListener(RELOAD_MODULE,provideModules);
+				}
+				provideModules();  
+				/* 	leftTabs.dataProvider(tabList); */
+			}
+			
+			private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].remise.id_remise);
+				}
+			}
+			
+			protected function addRemise(event:MouseEvent):void
+			{
+				var creationRemise:CreationRemise = new CreationRemise();
+				if(viewstack1.selectedChild.label == "Hospitalier")
+					creationRemise.type = "hospitalier";
+				else
+					creationRemise.type = "pelerin";
+				PopUpManager.addPopUp(creationRemise,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(creationRemise);
+				creationRemise.addEventListener(Paiement.RELOAD_MODULE,canvas1_creationCompleteHandler); 
+			} 
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						for(var j:int=0;j<moduleList.length;j++)
+						{
+							moduleList[j].module.provider.filterFunction = searchModel;
+							moduleList[j].module.provider.refresh();	
+							if((searchInput.text.length !=0)&&(moduleList[j].module.provider.length == 0))
+							{
+								moduleList[j].module.visible = moduleList[j].module.includeInLayout = false;
+							}
+							else
+							{
+								moduleList[j].module.visible = moduleList[j].module.includeInLayout = true;
+							}
+						}
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				if(item['Nom']!=null)
+				{
+					if(String(item['Nom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				if(item['Prenom']!=null)
+				{
+					if(String(item['Prenom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				
+				return isMatch;    
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%">
+		<mx:ToggleButtonBar dataProvider="viewstack1" id="tb" >
+		</mx:ToggleButtonBar>
+		
+		<mx:Spacer width="100%"/>
+		<mx:Button label="Exporter Liste des Paiements"/>
+	</mx:HBox>
+	<mx:HBox>
+		<mx:Canvas>
+			<mx:Image source="@Embed('/assets/search.png')" />
+			<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+						  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+						  />
+		</mx:Canvas>
+	</mx:HBox>
+	<mx:ViewStack id="viewstack1" width="100%" height="100%" change="canvas1_creationCompleteHandler(event)">
+		<mx:Canvas label="Hospitalier" width="100%" height="100%">
+			<mx:HBox>
+				<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
+				<mx:Button label="Créer une remise" click="addRemise(event)"/>
+			</mx:HBox>
+			<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
+				<mx:VBox id="container" height="{this.height*0.9}" width="50%">
+				</mx:VBox>
+				<mx:VBox id="containerSans" height="100%" width="50%">
+				</mx:VBox>
+			</mx:HBox>
+		</mx:Canvas>
+		<mx:Canvas label="Malade" width="100%" height="100%">
+			<mx:HBox>
+				<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
+				<mx:Button label="Créer une remise" click="addRemise(event)"/>
+			</mx:HBox>
+			<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
+				<mx:VBox id="containerMalade" height="{this.height*0.9}" width="50%">
+				</mx:VBox>
+				<mx:VBox id="containerSansMalade" height="100%" width="50%">
+				</mx:VBox>
+			</mx:HBox>
+		</mx:Canvas>
+	</mx:ViewStack>
+</mx:VBox>

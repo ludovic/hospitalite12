@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:HGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" width="400" height="300" xmlns:consultation="consultationMobile.*" creationComplete="canvas1_creationCompleteHandler(event)" >
+	<fx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			
+		//	import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			private var query4    :IQuery;
+			
+			private var personneData:Object;
+			
+			protected function canvas1_creationCompleteHandler(event:Object):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideNameGrid);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho WHERE h.id_personne = p.id_personne " +
+					" AND h.id_hospitalier = ho.id_hospitalier AND h.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function provideNameGrid(evt:Object):void
+			{
+				listeNom.listeNomProvider = query.getRecords();
+				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
+				listeNom.addEventListener(ListeNom.REFRESH,canvas1_creationCompleteHandler);
+			}
+
+			private function queryError(evt:Event):void
+			{
+				//Alert.show((evt.target as Query).getError());
+			}
+			
+			private function setPersonneFields(event:DocEvent):void
+			{
+				personneData = new Object();
+				personneData.info = event.body;
+				query2 = new Query();
+				query2.connect("conn1", db);
+				query2.addEventListener(Query.QUERY_END, getTransportHebergement);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_hebergement_retenu = h.id_hebergement"+ 
+					" AND i.id_transport = t.id_transport"+ 
+					" AND i.id_gare = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare"+
+					" AND pp.id_transport = i.id_transport"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+			}
+			
+			private function getTransportHebergement(event:Object):void
+			{
+				if(query2.getRecords().length>0)
+					personneData.transHeb = query2.getRecords()[0];
+				else
+					personneData.transHeb = null;
+				
+				query3 = new Query();
+				query3.connect("conn1", db);
+				query3.addEventListener(Query.QUERY_END, getTransportRetour);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				query3.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+					" WHERE i.id_personne ="+personneData.info.id_personne +
+					" AND i.id_transport_retour = t.id_transport"+ 
+					" AND i.id_gare_retour = g.id_gare"+ 
+					" AND pp.id_gare = i.id_gare_retour"+
+					" AND pp.id_transport = i.id_transport_retour"+
+					" AND pp.id_pele = i.id_pele"+
+					" AND i.id_pele="+index.peleActuel.id_pele +
+					" GROUP BY i.id_personne");
+				
+			}
+			
+			private function getTransportRetour(event:Object):void
+			{
+				if(query3.getRecords().length>0)
+					personneData.transRetour = query3.getRecords()[0];
+				else
+					personneData.transRetour = null;
+				
+				query4 = new Query();
+				query4.connect("conn1", db);
+				query4.addEventListener(Query.QUERY_END, getAffectations);
+				query4.addEventListener(Query.QUERY_ERROR,queryError);
+				query4.execute("SELECT a.Service  FROM obtenir o, affectation a" +
+					" WHERE o.id_hospitalier ="+personneData.info.id_hospitalier +
+					" AND o.id_affectation = a.id_affectation");
+			}
+			
+			private function getAffectations(event:Object):void
+			{
+				personneData.affectations = query4.getRecords();
+				detailsPersonne.data = personneData;
+			}
+		]]>
+	</fx:Script>
+	<consultation:ListeNom id="listeNom" width="200"/>
+	<consultation:Details id="detailsPersonne" width="100%" height="100%">
+	</consultation:Details>
+	
+</s:HGroup>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="186" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var hospitalierID:int;
+			private var hospitalierIDList:Array;
+			private var affectationID:Number;
+			private var equipeOld:Number;
+			[Bindable]
+			public var equipeProvider:ArrayCollection;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				
+			}
+			
+			public function setFormulaire(item:Object,affectationID:Number,equipeId:Number=NaN):void
+			{
+				hospitalierIDList = new Array;
+				if(item is Array)
+				{
+					var hospitalierList:Array =item as Array;
+					myLabel.text = "";
+					for(var i:int=0;i<hospitalierList.length;i++)
+					{
+						myLabel.text += hospitalierList[i].prenom + " "+hospitalierList[i].nom +"\n";
+						hospitalierIDList.push(hospitalierList[i].id_hospitalier);
+					}
+				}
+				else
+				{
+					myLabel.text = item.prenom + " "+item.nom;
+					hospitalierID = item.id_hospitalier;
+				}
+				equipeOld=equipeId;
+				this.affectationID = affectationID;
+				query2.addEventListener(Query.QUERY_END, provideEquipe);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * FROM equipe where id_affectation="+affectationID);
+			}
+			
+			private function provideEquipe(evt:Object):void
+			{
+				equipeProvider = query2.getRecords();
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(isNaN(equipeOld))
+				{ 
+					if(hospitalierIDList.length>0)
+					{
+						var queryString:String = "INSERT INTO faire_parti (`id_hospitalier`, `id_pele`, `id_equipe` ,`role`) VALUES ";
+						for(var i:int=0;i<hospitalierIDList.length;i++)
+						{
+							queryString += "("+hospitalierIDList[i]+","+index.peleActuel.id_pele+", "+equipeList.selectedItem.id_equipe+",''),";
+						}
+						
+						queryString = queryString.slice(0,queryString.length-1);
+						query.execute(queryString, Query.INSERT );
+					}
+					else
+						query.execute("INSERT INTO faire_parti (`id_hospitalier`, `id_pele`, `id_equipe` ,`role`) VALUES ("+hospitalierID+","+index.peleActuel.id_pele+", "+equipeList.selectedItem.id_equipe+",'') ", Query.INSERT );
+				}
+				else
+				{
+					query.execute("UPDATE faire_parti " +
+						"SET id_equipe ='"+equipeList.selectedItem.id_equipe+"'"+
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_equipe = '"+equipeOld+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.UPDATE);
+				} 
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(Equipe.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label width="100%" height="19" text="Affecter :"/>
+	<mx:Label id="myLabel" width="100%"/>
+	<mx:HBox width="100%">
+		<mx:Label text="à"/>
+		<mx:ComboBox id="equipeList" dataProvider="{equipeProvider}" labelField="libelle"></mx:ComboBox>
+	</mx:HBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

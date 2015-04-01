@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="canvas1_creationCompleteHandler(event)" verticalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import common.helper.DataGridDataExporter;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.ChambreProxy;
+			import proxy.HotelProxy;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			private var moduleList:Array = [];
+			
+			protected function canvas1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var hotelArray:ArrayCollection = HotelProxy.Hotel;
+				var moduleSans:ModuleSansHotel = new ModuleSansHotel();
+				
+				moduleList.push({module:moduleSans,hotel:{id_hebergement:0},type:""});
+				containerSans.addChild(moduleSans);
+				
+				moduleSans.addEventListener(RELOAD_MODULE,provideModules); 
+				var tabList:Array = [];
+				for(var i:int=1;i<hotelArray.length;++i)
+				{
+					if(( hotelArray[i].type == index.categorieUtilisateur)||( "admin"== index.categorieUtilisateur))
+					{
+						var module:ModuleHotel = new ModuleHotel();
+						module.titleText = hotelArray[i].Libelle as String;
+						moduleList.push({module:module,hotel:hotelArray[i],type:hotelArray[i].type});
+						container.addChild(module);
+						tabList.push(module.titleText);
+						module.addEventListener(RELOAD_MODULE,provideModules);
+					}
+				}
+				 provideModules();  
+			/* 	leftTabs.dataProvider(tabList); */
+			}
+			
+			private function provideModules(evt:Object=null):void
+			{
+				for(var j:int=0;j<moduleList.length;j++)
+				{
+					moduleList[j].module.generateModuleProvider(moduleList[j].hotel.id_hebergement,moduleList[j].type);
+				}
+			}
+			
+			private var myEvent:MouseEvent;
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideExportDatagrid);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(index.categorieUtilisateur == "hospitalier")
+				{
+					query.execute("SELECT p.nom, p.prenom, he.Libelle" +
+						" FROM `personne` p, `etre_hospitalier` eh, `inscrire` ins, `hebergement` he" +
+						" WHERE eh.id_pele = " + index.peleActuel.id_pele+
+						" AND ins.id_personne = p.id_personne" +
+						" AND p.id_personne = eh.id_personne " +
+						"AND he.id_hebergement = ins.id_hebergement_retenu " +
+						" GROUP BY p.id_personne " +
+						"ORDER BY ins.id_hebergement_retenu"
+					);
+				}
+				else if(index.categorieUtilisateur == "pelerin")
+				{
+					query.execute("SELECT p.nom, p.prenom, he.Libelle" +
+						" FROM `personne` p, `etre_pelerin` ep, `inscrire` ins, `hebergement` he" +
+						" WHERE ep.id_pele = " + index.peleActuel.id_pele+
+						" AND ins.id_personne = p.id_personne" +
+						" AND p.id_personne = ep.id_personne " +
+						"AND he.id_hebergement = ins.id_hebergement_retenu " +
+						" GROUP BY p.id_personne " +
+						"ORDER BY ins.id_hebergement_retenu"
+					);
+				}
+				else if(index.categorieUtilisateur == "admin")
+				{
+					query.execute("SELECT p.nom, p.prenom, he.Libelle" +
+						" FROM `personne` p, `inscrire` ins, `hebergement` he" +
+						" WHERE ins.id_pele = " + index.peleActuel.id_pele+
+						" AND ins.id_personne = p.id_personne" +
+						"AND he.id_hebergement = ins.id_hebergement_retenu " +
+						" GROUP BY p.id_personne " +
+						"ORDER BY ins.id_hebergement_retenu"
+					);
+				}
+			}
+			
+			private function provideExportDatagrid(evt:Object):void
+			{
+				Alert.show("Voulez-vous exporter les hebergements ?","",Alert.OK|Alert.CANCEL,this, alertClickHandler);
+			}
+			
+			private function alertClickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						var csvText:String = DataGridDataExporter.exportCSVFromArrayCollection(query.getRecords());
+						var fileSave:FileReference= new FileReference();
+						fileSave.save(csvText,"export_hebergement.csv");
+						break;
+					case Alert.CANCEL:
+						break;
+				}
+				
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function pdfHebergements(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/hebergement.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%">
+		<mx:Button icon="@Embed(source='assets/reload.gif')" click="provideModules(event)" height="22"/>
+		<mx:Spacer width="100%"/>
+		<mx:Button label="Générer les Hebergements" click="pdfHebergements(event)" visible="{(index.categorieUtilisateur == 'hospitalier')}" />
+		<mx:Button label="Exporter Liste des Hebergement" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
+	</mx:HBox>
+	<mx:HBox x="16.5" y="64" width="100%" height="100%" verticalScrollPolicy="off">
+		<mx:VBox id="container" height="{this.height*0.9}" width="100%">
+		</mx:VBox>
+		<mx:VBox id="containerSans" height="100%" width="100%">
+		</mx:VBox>
+	</mx:HBox>
+	
+</mx:VBox>

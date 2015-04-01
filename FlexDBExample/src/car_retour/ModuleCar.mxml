@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="570" height="200" label="{this.titleText}">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			private var query4    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var capacite:int;
+			
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var carId:Number;
+			
+			
+			
+			public function generateModuleProvider(carId:int):void
+			{
+				this.carId=carId;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, getRole);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("(select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
+					" ('hospitalier') 'personne_type'"+
+					"	FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, `hospitalier` h "+
+					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
+					"	AND i.id_pele = eh.id_pele"+
+					"	AND p.id_personne = i.id_personne"+
+					"	AND eh.id_hospitalier = h.id_hospitalier"+
+					"	AND h.annuler='non'"+
+					"	AND i.id_transport_retour = "+carId +
+					"	AND p.id_personne = eh.id_personne) s "+
+					" where g.id_gare = s.id_gare_retour) " +
+					" UNION " +
+					" (select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
+					" ('malade') 'personne_type'"+
+					"	FROM `personne` p, `etre_malade` em, `inscrire` i, `malade` m "+
+					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
+					"	AND i.id_pele = em.id_pele"+
+					"	AND p.id_personne = i.id_personne"+
+					"	AND em.id_malade = m.id_malade"+
+					"	AND m.annuler='non'"+
+					"	AND i.id_transport_retour = "+carId +
+					"	AND p.id_personne = em.id_personne) s "+
+					" where g.id_gare = s.id_gare_retour)" +
+					" UNION " +
+					" (select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
+					" ('pelerin') 'personne_type'"+
+					"	FROM `personne` p, `etre_pelerin` ep, `inscrire` i, `pelerin` pe "+
+					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
+					"	AND i.id_pele = ep.id_pele"+
+					"	AND p.id_personne = i.id_personne"+
+					"	AND ep.id_pelerin = pe.id_pelerin"+
+					"	AND pe.annuler='non'"+
+					"	AND i.id_transport_retour = "+carId +
+					"	AND p.id_personne = ep.id_personne) s "+
+					" where g.id_gare = s.id_gare_retour)");
+			}
+			
+			private function getRole(evt:Object):void
+			{
+				query3= new Query();
+				query3.connect("conn1", db);
+				query3.addEventListener(Query.QUERY_END, provideModule);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				query3.execute("(SELECT p.id_personne, ('responsable') 'personne_role'" +
+					" FROM `personne` p, `avoir_responsable` ar" +
+					" WHERE ar.id_pele ="+ index.peleActuel.id_pele+
+					" AND ar.id_transport = "+carId +
+					" AND p.id_personne = ar.id_personne " +
+					" AND ar.direction = 'retour')" +
+					" UNION " +
+					"(SELECT p.id_personne, ('ide') 'personne_role'" +
+					" FROM `personne` p, `ide` id" +
+					" WHERE id.id_pele ="+ index.peleActuel.id_pele+
+					" AND id.id_transport = "+carId +
+					" AND p.id_personne = id.id_personne " +
+					" AND id.direction = 'retour')" +
+					" UNION " +
+					"(SELECT p.id_personne, ('animation') 'personne_role'" +
+					" FROM `personne` p, `animation` an" +
+					" WHERE an.id_pele ="+ index.peleActuel.id_pele+
+					" AND an.id_transport = "+carId +
+					" AND p.id_personne = an.id_personne " +
+					" AND an.direction = 'retour')"+
+					" UNION " +
+					"(SELECT p.id_personne, ('bagages') 'personne_role'" +
+					" FROM `personne` p, `bagages` bg" +
+					" WHERE bg.id_pele ="+ index.peleActuel.id_pele+
+					" AND bg.id_transport = "+carId +
+					" AND p.id_personne = bg.id_personne " +
+					" AND bg.direction = 'retour')" +
+					" UNION " +
+					"(SELECT p.id_personne, ('intendance') 'personne_role'" +
+					" FROM `personne` p, `intendance` it" +
+					" WHERE it.id_pele ="+ index.peleActuel.id_pele+
+					" AND it.id_transport = "+carId +
+					" AND p.id_personne = it.id_personne " +
+					" AND it.direction = 'retour')");
+			}
+			private function provideModule(evt:Object):void
+			{
+				var role:ArrayCollection = query3.getRecords();
+				var liste:ArrayCollection = query.getRecords();
+				var newProvider:ArrayCollection = new ArrayCollection();
+				for(var i:int=0;i<liste.length;i++)
+				{
+					for(var j:int=0;j<role.length;j++)
+					{
+						if(liste[i].id_personne==role[j].id_personne)
+						{
+							liste[i].personne_role = role[j].personne_role;
+							break;
+						}
+						else
+							liste[i].personne_role ="";
+						
+					}
+					newProvider.addItem(liste[i]);
+				}
+				provider = newProvider;
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function enlever(event:Object=null):void
+			{
+				if((listHospi.selectedItem))//&&(listHospi.selectedItem.personne_type == index.categorieUtilisateur))
+				{
+				 	query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,refresh);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("UPDATE inscrire " +
+						"SET id_transport_retour = 0, id_gare_retour = 0 "+
+						" WHERE id_personne = "+listHospi.selectedItem.id_personne +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+				 }
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Car.RELOAD_MODULE));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if((listHospi.selectedItem))//&&(listHospi.selectedItem.personne_type == index.categorieUtilisateur))
+				{ 
+					var formulaireCar:FormulaireCar = new FormulaireCar();
+					PopUpManager.addPopUp(formulaireCar,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireCar);
+					formulaireCar.setFormulaire(listHospi.selectedItem,carId);
+					formulaireCar.addEventListener(Car.RELOAD_MODULE,refresh); 
+				}
+			} 
+			
+			protected function role(event:MouseEvent):void
+			{
+				if((listHospi.selectedItem))//&&(listHospi.selectedItem.personne_type == index.categorieUtilisateur))
+				{
+					var formulaireRole:FormulaireRole = new FormulaireRole();
+					PopUpManager.addPopUp(formulaireRole,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireRole);
+					formulaireRole.setFormulaire(listHospi.selectedItem,carId);
+					formulaireRole.addEventListener(Car.RELOAD_MODULE,refresh); 
+				}
+			}
+			
+			protected function enleverRole(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{
+					query4= new Query();
+					query4.connect("conn1", db);
+					query4.addEventListener(Query.QUERY_END,refresh);
+					query4.addEventListener(Query.QUERY_ERROR,queryError);
+					var hospitalierID:Number = listHospi.selectedItem.id_personne;
+					if(listHospi.selectedItem.personne_role != "")
+					{
+						switch (listHospi.selectedItem.personne_role ){
+							case'responsable':
+								query4.execute("DELETE FROM avoir_responsable  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								break;
+							case'ide':
+								query4.execute("DELETE FROM ide  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								break;
+							case'bagages':
+								query4.execute("DELETE FROM bagages  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								break;
+							case'intendance':
+								query4.execute("DELETE FROM intendance  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								break;
+							case'animation':
+								query4.execute("DELETE FROM animation  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								break;
+						}
+						
+					}
+				}
+			}
+			
+			protected function pdfCar(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/transport.php?pele=" +index.peleActuel.id_pele+"&id="+carId+"&ret=true";
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox>
+		<mx:HBox width="{listHospi.width}">
+			<mx:Label text="{this.titleText}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Label text="{provider.length+'/'+ this.capacite +' Places'}"/>
+		</mx:HBox>
+		<mx:HBox height="100%">
+			<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="nom" width="90"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="prenom" width="90"/>
+					<mx:DataGridColumn headerText="Gare" dataField="gare"/>
+					<mx:DataGridColumn headerText="Categorie" dataField="personne_type"  width="75"/>
+					<mx:DataGridColumn headerText="Role" dataField="personne_role"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:VBox height="100%">
+				<mx:Button label="Enlever" click="enlever(event)" width="100" enabled="{!index.visuMode}"/>
+				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="100" enabled="{!index.visuMode}"/>
+				<mx:Button label="Definir role" click="role(event)" width="100" enabled="{!index.visuMode}"/>
+				<mx:Button label="Enlever role" click="enleverRole(event)" width="100" enabled="{!index.visuMode}"/>
+				<mx:Button label="Générer ce Car" click="pdfCar(event)" />
+			</mx:VBox>
+		</mx:HBox>
+	</mx:VBox>
+	
+</mx:Canvas>

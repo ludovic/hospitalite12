@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			public function set data(value:Object):void
+			{
+				var info:Object = value.info;
+				var transHeb:Object = value.transHeb;
+				var transRetour:Object = value.transRetour;
+				var affectations:ArrayCollection = value.affectations;
+				titre.text = info.Titre;
+				nom.text = info.Nom;
+				prenom.text = info.Prenom;
+				adresse.text = info.Adresse1;
+				codep.text = info.CodePostal;
+				ville.text = info.Commune;
+				if(transHeb)
+				{
+					transport.text = transHeb.nom_transport;
+					nomHeb.text = transHeb.Libelle;
+					nomGare.text =  transHeb.nom;
+					heureAller.text = transHeb.heure_aller;
+				}
+				
+				if(transRetour)
+				{
+					transportR.text = transRetour.nom_transport;
+					nomGareR.text =  transRetour.nom;
+					heureRetour.text = transRetour.heure_retour;
+				}
+			//	affectationVB.remov();
+				var affectationLabel:Label = new Label();
+				affectationLabel.setStyle("fontWeight","bold");
+				affectationLabel.text = "Affectation(s) : ";
+				affectationVB.addChild(affectationLabel);
+				
+				for(var i:int=0;i<affectations.length;++i)
+				{
+					affectationLabel = new Label();
+					affectationLabel.text = affectations[i].Service;
+					affectationVB.addChild(affectationLabel);
+				}
+				
+			}
+		]]>
+	</fx:Script>
+	<s:BorderContainer borderStyle="solid" borderColor="0" borderWeight="1" width="100%">
+	<s:VGroup width="100%">
+		<s:VGroup id="info"  width="100%">
+			<s:HGroup>
+				<s:Label text="Titre : " fontWeight="bold"/><s:Label id="titre"/>
+				<s:Label text="Nom : " fontWeight="bold"/><s:Label id="nom"/>
+				<s:Label text="Prénom : " fontWeight="bold"/><s:Label id="prenom"/>
+			</s:HGroup>
+			<s:Label text="Adresse : " fontWeight="bold"/><s:Label id="adresse"/>
+			<s:HGroup>
+				<s:Label text="Code Postal : " fontWeight="bold"/><s:Label id="codep"/>
+				<s:Label text="Ville : " fontWeight="bold"/><s:Label id="ville"/>
+			</s:HGroup>
+		</s:VGroup>
+		<s:BorderContainer borderStyle="solid" borderColor="0" borderWeight="1" width="100%">
+		<s:VGroup id="affectationVB"  width="100%">
+			<s:Label text="Affectation(s) : " fontWeight="bold"/>
+		</s:VGroup>
+		</s:BorderContainer>
+		<s:BorderContainer borderStyle="solid" borderColor="0" borderWeight="1" width="100%">
+		<s:VGroup id="Transport"   width="100%">
+			<s:HGroup>
+				<s:Label text="Transport aller : " fontWeight="bold"/><s:Label id="transport"/>
+				<s:Label text="Gare aller : " fontWeight="bold"/><s:Label id="nomGare"/>
+				<s:Label text="Heure départ : " fontWeight="bold"/><s:Label id="heureAller"/>
+			</s:HGroup>
+			<s:HGroup>
+				<s:Label text="Transport retour : " fontWeight="bold"/><s:Label id="transportR"/>
+				<s:Label text="Gare retour: " fontWeight="bold"/><s:Label id="nomGareR"/>
+				<s:Label text="Heure retour: " fontWeight="bold"/><s:Label id="heureRetour"/>
+			</s:HGroup>
+		</s:VGroup>
+		</s:BorderContainer>
+		<s:BorderContainer borderStyle="solid" borderColor="0" borderWeight="1" width="100%">
+		<s:VGroup id="Logement"  width="100%">
+			<s:Label text="Nom : " fontWeight="bold"/><s:Label id="nomHeb"/>
+		</s:VGroup>
+		</s:BorderContainer>
+	</s:VGroup>
+		
+	</s:BorderContainer>
+</s:VGroup>

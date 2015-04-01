@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="onCreateComplete()" xmlns:helper="common.helper.*">
+	<mx:Script>
+		<![CDATA[
+			import common.helper.DataGridDataExporter;
+			import common.helper.SortUtil;
+			
+			import flash.net.FileReference;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable] public var users   :ArrayCollection;
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne " +
+					" AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND ma.annuler='non' AND m.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				users = query.getRecords();
+				users.sort = SortUtil.nomPrenomSort();
+				users.refresh();
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show(query.getError());
+			}
+			
+
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var formulaireInscription:FormulaireInscription = new FormulaireInscription();
+				PopUpManager.addPopUp(formulaireInscription,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(formulaireInscription);
+				formulaireInscription.addEventListener(FormulaireInscription.RELOAD,reload);
+
+			}
+
+			
+			protected function reload(event:Object=null):void
+			{
+				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne AND ma.annuler='non' AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND m.id_pele="+index.peleActuel.id_pele);
+			}
+			
+			
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				var csvText:String = DataGridDataExporter.exportCSV(dataGrid);
+				var fileSave:FileReference= new FileReference();
+				fileSave.save(csvText,"export_inscription_malade.csv");
+			}
+			
+			///////////////////////// SEARCH ////////////////////////////////////////////////////
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						users.filterFunction = searchModel;
+						users.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				for(var prop:String in item)
+				{
+					if(item[prop]!=null)
+					{
+						if(String(item[prop]).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+						{
+							isMatch = true
+						}
+					}
+				}
+				return isMatch;    
+			}
+			
+			
+			protected function dataGrid_itemClickHandler(event:ListEvent):void
+			{
+				if(event.itemRenderer is DataGridItemRenderer)
+				{
+					var modificationInscription:ModificationInscription = new ModificationInscription();
+					PopUpManager.addPopUp(modificationInscription,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(modificationInscription);
+					modificationInscription.setFormulaire(event.itemRenderer.data);
+					modificationInscription.addEventListener(ModificationInscription.RELOAD,reload);
+				}
+			}
+			
+			private var maladeAnnuler:Number
+			public function annulerInscription(event:MouseEvent):void
+			{
+				event.preventDefault();
+				maladeAnnuler = event.target.data.id_malade;
+				Alert.show("Attention, voulez-vous réellement annuler cette inscription ?","Annuler inscription",Alert.OK|Alert.CANCEL,this,annuler_clickHandler);
+			}
+			
+			public function annuler_clickHandler(event:CloseEvent):void
+			{
+				switch (event.detail){
+					case Alert.OK:
+						query2 = new Query();
+						query2.connect("conn1", db);
+						query2.addEventListener(Query.QUERY_END, queryEnd);
+						query2.addEventListener(Query.QUERY_ERROR,queryError); 
+						query2.execute("UPDATE malade " +
+							"SET annuler ='oui'  WHERE id_malade= '"+maladeAnnuler+"'",Query.UPDATE); 
+						break;
+					case Alert.CANCEL:
+						break;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="90%">
+		<mx:Label text="{'Pele en cours :' +index.peleActuel.Libelle_pele}"/>
+		<mx:HBox width="100%">
+			<mx:Button label="Nouvelle" click="button1_clickHandler(event)" enabled="{!index.visuMode}"/>
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
+			<mx:Button icon="@Embed(source='assets/reload.gif')" click="reload(event)" height="22"/>
+			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
+			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="true" includeInLayout="true"/>
+		</mx:HBox>
+		<mx:DataGrid id="dataGrid" width="100%" height="100%"  dataProvider="{users}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
+			<mx:columns>
+				<mx:DataGridColumn dataField="Nom" headerText="Nom"/>
+				<mx:DataGridColumn dataField="Prenom" headerText="Prenom"/>
+				<mx:DataGridColumn dataField="poids" headerText="Poids"/>
+				<mx:DataGridColumn dataField="taille" headerText="Taille"/>
+				<mx:DataGridColumn dataField="incomplet" headerText="Fiche incomplète"/>
+				<mx:DataGridColumn dataField="codification" headerText="Codification"/>
+				<mx:DataGridColumn dataField="section" headerText="Secteur"/>
+				
+				<mx:DataGridColumn dataField="pers_prev_hosp" headerText="pers_prev_hosp" visible="false"/>
+				<mx:DataGridColumn dataField="pers_prev_fam" headerText="pers_prev_fam" visible="false"/>
+				<mx:DataGridColumn dataField="pers_prev_tut" headerText="pers_prev_tut" visible="false"/>
+				<mx:DataGridColumn dataField="pers_prev_pers_conf" headerText="pers_prev_pers_conf" visible="false"/>
+				<mx:DataGridColumn dataField="pers_prev_nom" headerText="pers_prev_nom" visible="false"/>
+				<mx:DataGridColumn dataField="pers_prev_tel" headerText="pers_prev_tel" visible="false"/>
+				<mx:DataGridColumn dataField="pos_voy_assis" headerText="pos_voy_assis" visible="false"/>
+				<mx:DataGridColumn dataField="pos_voy_couche" headerText="pos_voy_couche" visible="false"/>
+				<mx:DataGridColumn dataField="pos_voy_assis_ft" headerText="pos_voy_assis_ft" visible="false"/>
+				<mx:DataGridColumn dataField="monte_marches_car" headerText="monte_marches_car" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_seul" headerText="deplace_seul" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_aide" headerText="deplace_aide" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_canne" headerText="deplace_canne" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_deambulateur" headerText="deplace_deambulateur" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_fauteuil" headerText="deplace_fauteuil" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_brancard" headerText="deplace_brancard" visible="false"/>
+				<mx:DataGridColumn dataField="deplace_escalier" headerText="deplace_escalier" visible="false"/>
+				<mx:DataGridColumn dataField="protheses" headerText="protheses" visible="false"/>
+				<mx:DataGridColumn dataField="deficit_vision" headerText="deficit_vision" visible="false"/>
+				<mx:DataGridColumn dataField="deficit_audition" headerText="deficit_audition" visible="false"/>
+				<mx:DataGridColumn dataField="deficit_parole" headerText="deficit_parole" visible="false"/>
+				<mx:DataGridColumn dataField="deficit_desorientation" headerText="deficit_desorientation" visible="false"/>
+				<mx:DataGridColumn dataField="deficit_fugue" headerText="deficit_fugue" visible="false"/>
+				<mx:DataGridColumn dataField="reg_normal" headerText="reg_normal" visible="false"/>
+				<mx:DataGridColumn dataField="reg_diab" headerText="reg_diab" visible="false"/>
+				<mx:DataGridColumn dataField="reg_ss_sel" headerText="reg_ss_sel" visible="false"/>
+				<mx:DataGridColumn dataField="reg_mix" headerText="reg_mix" visible="false"/>
+				<mx:DataGridColumn dataField="reg_pb_deglutition" headerText="reg_pb_deglutition" visible="false"/>
+				<mx:DataGridColumn dataField="reg_eau_gef" headerText="reg_eau_gef" visible="false"/>
+				<mx:DataGridColumn dataField="reg_chambre" headerText="reg_chambre" visible="false"/>
+				<mx:DataGridColumn dataField="soin_inf_inj" headerText="soin_inf_inj" visible="false"/>
+				<mx:DataGridColumn dataField="soin_inf_inj_type" headerText="soin_inf_inj_type" visible="false"/>
+				<mx:DataGridColumn dataField="soin_inf_inj_horraire" headerText="soin_inf_inj_horraire" visible="false"/>
+				<mx:DataGridColumn dataField="soin_inf_pansement" headerText="soin_inf_pansement" visible="false"/>
+				<mx:DataGridColumn dataField="soin_inf_pansement_type" headerText="soin_inf_pansement_type" visible="false"/>
+				<mx:DataGridColumn dataField="autre_soin_spec" headerText="autre_soin_spec" visible="false"/>
+				<mx:DataGridColumn dataField="autre_soin_prise_med" headerText="autre_soin_prise_med" visible="false"/>
+				<mx:DataGridColumn dataField="autre_soin_oxygene" headerText="autre_soin_oxygene" visible="false"/>
+				<mx:DataGridColumn dataField="autre_soin_oxygene_debit" headerText="autre_soin_oxygene_debit" visible="false"/>
+				<mx:DataGridColumn dataField="extracteur" headerText="extracteur" visible="false"/>
+				<mx:DataGridColumn dataField="toilette_aide_total" headerText="toilette_aide_total" visible="false"/>
+				<mx:DataGridColumn dataField="toilette_aide_partiel" headerText="toilette_aide_partiel" visible="false"/>
+				<mx:DataGridColumn dataField="toilette_aide_lit" headerText="toilette_aide_lit" visible="false"/>
+				<mx:DataGridColumn dataField="coucher_aide" headerText="coucher_aide" visible="false"/>
+				<mx:DataGridColumn dataField="coucher_barriere_lit" headerText="coucher_barriere_lit" visible="false"/>
+				<mx:DataGridColumn dataField="coucher_potence" headerText="coucher_potence" visible="false"/>
+				<mx:DataGridColumn dataField="matelas_anti_esc" headerText="matelas_anti_esc" visible="false"/>
+				<mx:DataGridColumn dataField="souleve_malade" headerText="souleve_malade" visible="false"/>
+				<mx:DataGridColumn dataField="incont_bes_change" headerText="incont_bes_change" visible="false"/>
+				<mx:DataGridColumn dataField="incont_jour" headerText="incont_jour" visible="false"/>
+				<mx:DataGridColumn dataField="incont_nuit" headerText="incont_nuit" visible="false"/>
+				<mx:DataGridColumn dataField="incont_sond_uri" headerText="incont_sond_uri" visible="false"/>
+				<mx:DataGridColumn dataField="incont_etui_pen" headerText="incont_etui_pen" visible="false"/>
+				<mx:DataGridColumn dataField="incont_poche_stom" headerText="incont_poche_stom" visible="false"/>
+				<mx:DataGridColumn dataField="incont_poche_stom_type" headerText="incont_poche_stom_type" visible="false"/>				
+				<mx:DataGridColumn dataField="medecin_traitant" headerText="medecin_traitant" visible="false"/>
+				<mx:DataGridColumn dataField="tel_medecin" headerText="tel_medecin" visible="false"/>
+				<mx:DataGridColumn dataField="tel_retour" headerText="tel_retour" visible="false"/>
+				<mx:DataGridColumn dataField="pos_voy_electrique" headerText="pos_voy_electrique" visible="false"/>
+				<mx:DataGridColumn dataField="coussin_esc" headerText="coussin_esc" visible="false"/>
+				<mx:DataGridColumn dataField="reg_hache" headerText="reg_hache" visible="false"/>
+				<mx:DataGridColumn dataField="parenterale" headerText="parenterale" visible="false"/>
+				<mx:DataGridColumn dataField="ppc" headerText="ppc" visible="false"/>
+				<mx:DataGridColumn dataField="dialyse" headerText="dialyse" visible="false"/>
+				<mx:DataGridColumn dataField="lit_medicalise" headerText="lit_medicalise" visible="false"/>
+				<mx:DataGridColumn dataField="reg_aide_repas" headerText="reg_aide_repas" visible="false"/>
+				<mx:DataGridColumn dataField="divers" headerText="divers" visible="false"/>
+				<mx:DataGridColumn dataField="incomplet" headerText="incomplet" visible="false"/>
+				<mx:DataGridColumn dataField="paiementInsc" headerText="paiementInsc" visible="false"/>
+				<mx:DataGridColumn dataField="montantInsc" headerText="montantInsc" visible="false"/>
+				<mx:DataGridColumn width="50" visible="{(index.categorieUtilisateur =='admin')}" id="cancelColumn" >
+					<mx:itemRenderer> 
+						<mx:Component> 	
+							<mx:Button  label="X" click="{outerDocument.annulerInscription(event)}"/>  	 
+						</mx:Component>                        
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label text="{'Nombre de lignes : ' + users.length }"/>
+	</mx:VBox>
+</mx:VBox>

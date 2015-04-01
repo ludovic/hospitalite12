@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="816" height="526" horizontalScrollPolicy="off" >
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			
+			public function setFormulaire(idHosp:int):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho WHERE h.id_personne = p.id_personne " +
+						" AND h.id_hospitalier = ho.id_hospitalier AND h.id_pele="+index.peleActuel.id_pele+" AND ho.id_hospitalier ="+ idHosp );
+			}
+			private function Close(evt:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			private function queryError(evt:Object):void
+			{
+				Alert.show(query.getError());
+			}
+			public function queryEnd(evt:Object):void
+			{
+				var item:Object = query.getRecords()[0];
+				var myObject:Object = item;
+				nouveau.selected = (item.nouveau == "oui")?true:false;
+				peleComplet.selected = (item.complet == "oui")?true:false;
+				dateArrivee = Tools.stringToDate(item.dateArrivee);
+				heureArrivee.text = Tools.stringToDate(item.dateArrivee).hours;
+				dateDepart.text = Tools.stringToDate(item.datedepart);
+				heureDepart.text= Tools.stringToDate(item.datedepart).hours;
+				couple.selected = (item.couple == "oui")?true:false;
+				conjoint.text = item.conjoint;
+				modeTransport.text = item.transport;
+				gare.text  = item.gare;
+				hotel.text = item.hebergement;
+				
+				nomHeb.text = item.nomHeb;
+				chambreInd.selected = (item.chambreInd  == "oui")?true:false;
+				forfaitJeune.selected = (item.forfaitJeune == "oui")?true:false;
+				desiderata.text = item.desiderata;
+				affectationDem.text = item.affectation
+				affectationComp.text = item.affectation_comp
+					
+				capaciteRest.text = item.capacite_restrainte;
+				nuit1.selected = (item.nuit1 == "oui")?true:false;
+				nuit2.selected = (item.nuit2 == "oui")?true:false;
+				nuit3.selected = (item.nuit3== "oui")?true:false;
+				divers.text = item.divers;
+				paiementInsc.selected = (item.paiementInsc == "oui")?true:false;
+				montantInsc.text = item.montantInsc;
+				incomplet.selected = (item.incomplet== "oui")?true:false;
+			}
+		]]>
+	</mx:Script>
+			
+<mx:VBox width="100%">
+	<mx:Form width="100%" height="436">
+		
+		<mx:FormItem label="Nouveau">
+			<mx:CheckBox id="nouveau"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Pélérinage Complet">
+			<mx:HBox>
+				<mx:CheckBox id="peleComplet" selected="true"/>
+				<mx:HBox enabled="{!peleComplet.selected}">
+					<mx:FormItem label="Du" >
+						<mx:Label id="dateArrivee" />
+					</mx:FormItem>
+					<mx:Label id="heureArrivee"/>
+					<mx:FormItem label="Au"  width="126">
+						<mx:Label id="dateDepart" />
+					</mx:FormItem>
+					<mx:Label id="heureDepart" maximum="23"/>
+				</mx:HBox>
+			</mx:HBox>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Vient en couple">
+			<mx:HBox>
+				<mx:CheckBox id="couple"/>
+				<mx:FormItem label="Nom du conjoint :">
+					<mx:Label id="conjoint"/>
+				</mx:FormItem>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Vient en:">
+			<mx:Label id="modeTransport"/>
+		</mx:FormItem>
+		<mx:FormItem label="Monte à">
+			<mx:Label id="gare" />
+		</mx:FormItem>
+		<mx:FormItem label="Hébergement souhaité">
+			<mx:Label id="hotel" />
+		</mx:FormItem>
+		<mx:FormItem label="Nom de l'hebergement si se loge">
+			<mx:Label id="nomHeb"/>
+		</mx:FormItem>
+		<mx:FormItem label="Chambre individuelle">
+			<mx:CheckBox id="chambreInd"/>
+		</mx:FormItem>
+		<mx:FormItem label="Forfait jeune">
+			<mx:CheckBox id="forfaitJeune"/>
+		</mx:FormItem>
+		<mx:FormItem label="Désiderata">
+			<mx:Label id="desiderata" width="425"/>
+		</mx:FormItem>
+		<mx:FormItem label="Affectation demandée">
+			<mx:Label id="affectationDem" />
+		</mx:FormItem>
+		<mx:FormItem label="Affectation complémentaire (Facultative)">
+			<mx:Label id="affectationComp" />
+		</mx:FormItem>
+		<mx:FormItem label="Capacité restreinte">
+			<mx:Label id="capaciteRest"/>
+		</mx:FormItem>
+		<mx:FormItem label="Nuit">
+			<mx:HBox>
+				<mx:CheckBox id="nuit1" label="Nuit 1" labelPlacement="left"/>
+				<mx:Spacer width="20"/>
+				<mx:CheckBox id="nuit2" label="Nuit 2" labelPlacement="left"/>
+				<mx:Spacer width="20"/>
+				<mx:CheckBox id="nuit3" label="Nuit 3" labelPlacement="left"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Divers">
+			<mx:TextArea id="divers" width="425" height="60"/>
+		</mx:FormItem>
+		<mx:FormItem label="Paiement à l'inscription">
+			<mx:HBox>
+				<mx:CheckBox id="paiementInsc"/>
+				<mx:FormItem label="Montant">
+					<mx:TextInput id="montantInsc" restrict="0-9\."/>
+				</mx:FormItem>
+			</mx:HBox>
+			
+		</mx:FormItem>
+		<mx:FormItem label="Fiche incomplète">
+			<mx:CheckBox id="incomplet"/>
+		</mx:FormItem>	
+	</mx:Form>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Fermer" click="Close(event)"/>
+	</mx:HBox>
+</mx:VBox>
+</mx:TitleWindow>

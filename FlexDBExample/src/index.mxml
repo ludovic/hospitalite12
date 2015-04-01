@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="955" minHeight="400"
+				xmlns:hospitalier="hospitalier.*" xmlns:menu="menu.*" xmlns:admin="admin.*" xmlns:pelerin="pelerin.*" xmlns:malade="malade.*" 
+				xmlns:car="car.*" xmlns:carR="car_retour.*" xmlns:gestionCar="gestion_car.*" xmlns:affectation="affectation.*" xmlns:salle="salle.*" backgroundColor="#E3EEFB" xmlns:paiement="paiement.*"
+				 initialize="onCreateComplete()" xmlns:placement="placement.*" xmlns:hebergement="hebergement.*" xmlns:equipe="equipe.*" xmlns:consultation="consultation.*" xmlns:consultationMalade="consultationMalade.*" xmlns:placementConsultation="placementConsultation.*" xmlns:ns="gestion_salle.*"
+				>
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.utils.Base64Encoder;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.CarProxy;
+			import proxy.ChambreProxy;
+			import proxy.GareProxy;
+			import proxy.HotelProxy;
+			import proxy.ModuleProxy;
+			import proxy.ProfessionSanteProxy;
+			import proxy.RemiseProxy;
+			import proxy.SecteurProxy;
+			/** */
+			
+			public var db       :IDatabase;
+			public var query    :IQuery;
+			public var query2   :IQuery;
+			public var users   	:ArrayCollection;
+			[Bindable]
+			public var role		:Number =0;
+			[Bindable]
+			public static var peleActuel:Object;
+			[Bindable]
+			public static var categorieUtilisateur:String;
+			[Bindable]
+			public static var secteurUtilisateur:int=0;
+			[Bindable]
+			public static var secteurNomUtilisateur:String;
+			[Bindable]
+			public static var currentHospitalierInscription:Canvas;
+			[Bindable]
+			public static var visuMode:Boolean=false;
+			
+			/**
+			 * This will be call when Application creation
+			 * has complete.
+			 */
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				    /*  db.connect("conn1", "root", "", "127.0.0.1", "baseha", true);    */  
+						
+			 	db.connect("conn1", "dbo356768667", "+JsLiC2503+", "db3046.1and1.fr", "db356768667", true);      
+				query.connect("conn1", db);
+				query2= new Query();
+				query2.connect("conn1", db);
+				query2.addEventListener(Query.QUERY_END, retrievePele);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * FROM pele WHERE id_pele =(SELECT MAX(id_pele) FROM pele)");
+				
+				AffectationProxy.loadAffectation();
+				GareProxy.loadGare();
+				SecteurProxy.load();
+				ProfessionSanteProxy.load();
+				ChambreProxy.loadChambre();
+				HotelProxy.loadHotel();
+				
+			}
+			protected function retrievePele(evt:Object):void
+			{
+				peleActuel = query2.getRecords()[0];
+				ChambreProxy.loadChambreDispo();
+				ChambreProxy.loadChambreNonDispo();
+				ModuleProxy.loadModuleDispo();
+				CarProxy.loadCarDispo();
+				CarProxy.loadCarDispoWithGare();
+				RemiseProxy.loadRemise();
+				retrieveLogin();
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var loginTxt:String = login.text;
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT u.CodeUser, u.id_secteur, s.section, u.Role, u.visuMode FROM users u, secteur s WHERE u.Email='"+loginTxt+"' AND u.MdP=MD5('"+loginTxt+'vip8r'+mdp.text+"') AND (u.id_secteur=s.id_secteur OR u.id_secteur=0) Group by u.CodeUser");
+			}
+			private function queryEnd(evt:Object):void
+			{
+				users = query.getRecords();
+				if(users.length == 1)
+				{
+					storeLogin();
+					viewstack1.selectedChild = main;
+					role = users[0].Role;
+					visuMode = Boolean(users[0].visuMode);
+					secteurUtilisateur =users[0].id_secteur;
+					if(secteurUtilisateur !=0)
+						secteurNomUtilisateur= users[0].section;
+					else
+						secteurNomUtilisateur= "Tout";
+					
+					switch(role)
+					{
+						case 1://hospitalier
+							categorieUtilisateur = "hospitalier";
+							break;
+						case 2://malade
+							categorieUtilisateur = "malade";	
+							break;
+						case 3://pelerin
+							categorieUtilisateur = "pelerin";
+							break;
+						case 4:
+							categorieUtilisateur = "admin";
+							break;
+						case 5:
+							categorieUtilisateur = "inscription";
+							break;
+					}
+					if(tavNavComplete)
+						showTabForThisRole();
+				}
+				else
+					Alert.show("Nom d'utilisateur ou mot de passe erroné");
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			private var tavNavComplete:Boolean;
+			private function showTabForThisRole(event:Object=null):void
+			{
+				tavNavComplete=true;
+				switch(role)
+				{
+					case 1://hospitalier
+						tabNav.removeAllChildren();
+						tabNav.addChild(this.hospitalierInsc);
+						tabNav.addChild(this.hospitalierTab);
+						tabNav.addChild(this.affectationTab);
+						tabNav.addChild(this.salleTab);
+						tabNav.addChild(this.equipeTab);
+						tabNav.addChild(this.car);
+						tabNav.addChild(this.carRetour);
+						tabNav.addChild(this.paiement);
+						tabNav.addChild(this.hebergementTab);
+						tabNav.addChild(this.consultationTab);
+						
+						
+					break;
+					case 2://malade
+						tabNav.removeAllChildren();
+						tabNav.addChild(this.maladeInsc);
+						tabNav.addChild(this.maladeTab);
+						tabNav.addChild(this.placementTab);
+						tabNav.addChild(this.placementConsultationTab);
+						tabNav.addChild(this.car);
+						tabNav.addChild(this.carRetour);
+						tabNav.addChild(this.consultationMalade);
+					break;
+					case 3://pelerin
+						tabNav.removeAllChildren();
+						tabNav.addChild(this.pelerinInsc);
+						tabNav.addChild(this.pelerinTab);
+						tabNav.addChild(this.car);
+						tabNav.addChild(this.carRetour);
+						tabNav.addChild(this.hebergementTab);
+					break;
+					case 4://admin
+						tabNav.removeAllChildren();
+						tabNav.addChild(this.hospitalierInsc);
+						tabNav.addChild(this.hospitalierTab);
+						tabNav.addChild(this.affectationTab);
+						tabNav.addChild(this.salleTab);
+						tabNav.addChild(this.equipeTab);
+						tabNav.addChild(this.car);
+						tabNav.addChild(this.carRetour);
+						tabNav.addChild(this.paiement);
+						tabNav.addChild(this.hebergementTab);
+						tabNav.addChild(this.consultationTab);
+						tabNav.addChild(this.maladeInsc);
+						tabNav.addChild(this.maladeTab);
+						tabNav.addChild(this.placementTab);
+						tabNav.addChild(this.placementConsultationTab);
+						tabNav.addChild(this.consultationMalade);
+						tabNav.addChild(this.pelerinInsc);
+						tabNav.addChild(this.pelerinTab);
+						tabNav.addChild(this.gestionCar);
+						//tabNav.addChild(this.admin);
+						break;
+					case 5: //inscription hospitalier
+						tabNav.removeAllChildren();
+						tabNav.addChild(this.hospitalierInsc);
+						tabNav.addChild(this.hospitalierTab);
+						tabNav.addChild(this.car);
+						tabNav.addChild(this.carRetour);
+						tabNav.addChild(this.consultationTab);
+						break;
+					case 6: //back office
+						tabNav.removeAllChildren();
+						tabNav.addChild(this.gestionCar);
+						break;
+					default:
+						tabNav.removeAllChildren();
+						break;
+				}
+				if(this.insc)
+					insc.addEventListener(inscriptionHospitalier.INSCRTIPION_CREATED,reloadAfterInscription);
+					
+				
+			}
+			
+			private function reloadAfterInscription(event:Object):void
+			{
+				if(hospitalierTabObj)
+					this.hospitalierTabObj.reload();
+				if(carA)
+					this.carA.provideModules();
+				if(carR)
+					this.carR.provideModules();
+				if(affect)
+					this.affect.provideModules();
+			}
+
+
+
+			protected function button1_keyDownHandler(event:KeyboardEvent):void
+			{
+				// TODO Auto-generated method stub
+			}
+
+
+			protected function upSize(event:MouseEvent):void
+			{
+				var size:Number = StyleManager.getStyleDeclaration("global").getStyle("fontSize");
+				StyleManager.getStyleDeclaration("global").setStyle("fontSize",size+1);
+			}
+
+
+			protected function downSize(event:MouseEvent):void
+			{
+				var size:Number = StyleManager.getStyleDeclaration("global").getStyle("fontSize");
+				StyleManager.getStyleDeclaration("global").setStyle("fontSize",size-1);
+			}
+
+
+			protected function tabNav_changeHandler(event:IndexChangedEvent):void
+			{
+				(event.relatedObject as Canvas).updateCompletePendingFlag =true;
+			}
+			
+			////////////////////////////////store login/////////////////////////////
+			public var mySO:SharedObject;
+			public function storeLogin():void
+			{
+				mySO.data.lastLogin = this.login.text;
+				mySO.flush();
+			}
+			
+			public function retrieveLogin():void
+			{
+				mySO = SharedObject.getLocal("lastLogin");
+				if (mySO.data.lastLogin!=null) 
+					this.login.text 	= mySO.data.lastLogin;
+				else
+					this.login.text 	="";
+			}
+		]]>
+	</mx:Script>
+
+	<mx:ViewStack  id="viewstack1" width="100%" height="100%">
+		<mx:Box id="connexionForm" label="connexionForm" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+			<mx:Form defaultButton="{connexion}">
+				<mx:Image source="assets/Logo.gif"/>
+				<mx:FormItem label="Login">
+					<mx:TextInput id="login"/>
+				</mx:FormItem>
+				<mx:FormItem  label="Mot de passe">
+					<mx:TextInput id="mdp" displayAsPassword="true"/>
+				</mx:FormItem>
+				<mx:Button id="connexion" label="Connexion" width="233" click="button1_clickHandler(event)" height="29"/>
+			</mx:Form>
+		</mx:Box>
+		<mx:Canvas id="main" label="main" width="100%" height="100%" creationPolicy="all">
+			<mx:VBox x="10" y="10" width="100%" height="100%">
+				<mx:HBox horizontalAlign="right" width="100%">
+					<mx:Button label="-" click="downSize(event)"/>
+					<mx:Button label="+" click="upSize(event)"/>
+					<mx:Spacer width="100%"/>
+					<mx:Button label="Déconnexion" click="{viewstack1.selectedChild = connexionForm;}"/>
+				</mx:HBox>
+				<!--<menu:Menu id="menu" width="20%"/>-->
+				<!--<mx:ViewStack  id="viewstack2" width="100%" height="100%" selectedIndex="{this.menu.selected}">
+				</mx:ViewStack>-->
+					<mx:TabNavigator x="0" y="0" width="100%" height="100%" id="tabNav" creationComplete="showTabForThisRole(event)" change="tabNav_changeHandler(event)">
+						<mx:Canvas id="pelerinInsc" label="Inscription Pélerins" width="100%" height="100%">
+							<pelerin:InscriptionPelerin width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="pelerinTab" label="Pélerins" width="100%" height="100%">
+							<pelerin:Pelerin width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="hospitalierInsc" label="Incription Hospitaliers" width="100%" height="100%">
+							<hospitalier:inscriptionHospitalier id="insc" width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="hospitalierTab" label="Hospitaliers" width="100%" height="100%">
+							<hospitalier:hospitalier id="hospitalierTabObj" width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="affectationTab" label="Affectation" width="100%" height="100%">
+							<affectation:Affectation id="affect" width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="hebergementTab" label="Hebergement" width="100%" height="100%">
+							<hebergement:Hotel width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="maladeInsc" label="Incription Malades" width="100%" height="100%">
+							<malade:InscriptionMalade width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="maladeTab" label="Malades" width="100%" height="100%">
+							<malade:Malade width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="salleTab" label="Salle" width="100%" height="100%">
+							<salle:Salle width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="equipeTab" label="Equipe" width="100%" height="100%">
+							<equipe:Equipe width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="placementTab" label="Placement" width="100%" height="100%">
+							<placement:Chambre width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="placementConsultationTab" label="Consultation Placement" width="100%" height="100%">
+							<placementConsultation:consultation width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="car" label="Cars" width="100%" height="100%">
+							<car:Car id="carA" width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="carRetour" label="Cars retour" width="100%" height="100%">
+							<carR:Car id="carR" width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="paiement" label="Paiements" width="100%" height="100%">
+							<paiement:Paiement width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="consultationTab" label="Consultation" width="100%" height="100%">
+							<consultation:consultation width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="consultationMalade" label="Consultation M." width="100%" height="100%">
+							<consultationMalade:consultation width="100%" height="100%"/>
+						</mx:Canvas>
+						<mx:Canvas id="admin" label="Administration" width="100%" height="100%">
+							<admin:AdminMain width="100%" height="100%" />
+						</mx:Canvas>	
+						<mx:Canvas id="gestionCar" label="Admin" width="100%" height="100%">
+							<mx:TabNavigator>
+								<mx:Canvas>
+									<gestionCar:GestionCar width="100%" height="100%" />
+								</mx:Canvas>
+								<mx:Canvas>
+									<ns:GestionSalle width="100%" height="100%"/>
+								</mx:Canvas>
+							</mx:TabNavigator>
+							
+						</mx:Canvas>	
+					</mx:TabNavigator>
+			</mx:VBox>
+		</mx:Canvas>
+	</mx:ViewStack>
+</mx:Application>

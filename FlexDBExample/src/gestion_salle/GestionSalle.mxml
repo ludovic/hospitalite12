@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="onCreateComplete()">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			
+			[Bindable] public var chambres   :ArrayCollection;
+			[Bindable] public var chambresDispo   :ArrayCollection;
+			
+			[Bindable] public var arrets   :ArrayCollection;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			public static var RELOAD_MODULE_GARE:String = "reloadModuleGare";
+			
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query2 = new Query();
+				query2.connect("conn1", db);
+				query3 = new Query();
+				query3.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				query.execute("SELECT * FROM chambre c1 where c1.numero not in (Select c.numero from chambre c, etre_disponible ed where c.numero = ed.numero and ed.id_pele =" + index.peleActuel.id_pele+")");
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				chambres = query.getRecords();
+				datagrid1_changeHandler();
+				
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function datagrid1_changeHandler(event:ListEvent=null):void
+			{
+				query2.addEventListener(Query.QUERY_END, provideChambresDispo);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("Select * from chambre c, etre_disponible ed where c.numero = ed.numero and ed.id_pele =" + index.peleActuel.id_pele )
+			}
+			
+			private function provideChambresDispo(evt:Object):void
+			{
+				chambresDispo = query2.getRecords();
+				
+			}	
+			
+			protected function addChambre(event:MouseEvent):void
+			{
+				query3.addEventListener(Query.QUERY_END,end);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				if(chambreListe.selectedItems.length>0)
+				{
+					
+						var queryString:String = "INSERT INTO etre_disponible  (`numero`, `id_pele`) VALUES ";
+						for(var i:int=0;i<chambreListe.selectedItems.length;i++)
+						{
+							queryString += "('"+chambreListe.selectedItems[i].numero+"','"+index.peleActuel.id_pele+"'),";
+						}
+						
+						queryString = queryString.slice(0,queryString.length-1);
+						query3.execute(queryString, Query.INSERT );
+					
+				}
+				
+			}
+			
+			protected function removeChambre(event:MouseEvent):void
+			{
+				if(chambreDispoListe.selectedItems.length>0)
+				{
+					
+				}
+			}
+			
+			protected function end(event:Object):void
+			{
+				onCreateComplete();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label text="Liste des chambres :"/>
+	<mx:HBox width="100%">
+		<mx:DataGrid id="chambreListe" width="520" allowMultipleSelection="true" 
+					 dataProvider="{chambres}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Numéro" dataField="numero"/>
+				<mx:DataGridColumn headerText="Libelle" dataField="libelle"/>
+				<mx:DataGridColumn headerText="Etage" dataField="etage"/>
+				<mx:DataGridColumn headerText="Ascenseur" dataField="ascenseur"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:VBox>
+			<mx:Button label="=>" click="addChambre(event)"/>
+			<mx:Button label="&lt;=" click="removeChambre(event)"/>
+		</mx:VBox>
+		<mx:DataGrid id="chambreDispoListe" width="520" allowMultipleSelection="true"
+					 dataProvider="{chambresDispo}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Numéro" dataField="numero"/>
+				<mx:DataGridColumn headerText="Libelle" dataField="libelle"/>
+				<mx:DataGridColumn headerText="Etage" dataField="etage"/>
+				<mx:DataGridColumn headerText="Ascenseur" dataField="ascenseur"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:HBox>
+	
+	
+</mx:VBox>

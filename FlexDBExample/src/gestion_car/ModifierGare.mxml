@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="200"  creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.GareProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			private var transportID:int;
+			private var gareID:int;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				gareSel.dataProvider = GareProxy.Gare;
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+			}
+			
+			override public function set data(value:Object):void
+			{
+				gareID = value.id_gare;
+				transportID = value.id_transport;
+				
+				for(var i:int=0;i<gareSel.dataProvider.length;++i)
+				{
+					gareSel.selectedIndex = i;
+					if(gareSel.selectedItem.id_gare == value.id_gare)
+						break;
+				}
+				
+				dateAller.selectedDate = Tools.stringToDate(value.heure_aller);
+				heureAller.value = Tools.stringToDate(value.heure_aller).hours;
+				minuteAller.value = Tools.stringToDate(value.heure_aller).minutes;
+				dateRetour.selectedDate = Tools.stringToDate(value.heure_retour);
+				heureRetour.value= Tools.stringToDate(value.heure_retour).hours;
+				minuteRetour.value= Tools.stringToDate(value.heure_retour).minutes;
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				var heureAllerComplete:Date=dateAller.selectedDate;
+				if(heureAllerComplete)
+				{
+					heureAllerComplete.setHours(this.heureAller.value);
+					heureAllerComplete.setMinutes(this.minuteAller.value);
+				}
+				
+				var heureRetourComplete:Date=dateRetour.selectedDate;
+				if(heureRetourComplete)
+				{
+					heureRetourComplete.setHours(this.heureRetour.value);
+					heureRetourComplete.setMinutes(this.minuteRetour.value);
+				}
+				
+				query.execute("UPDATE  `passer_par` SET  `heure_aller` =  '"+Tools.dateToString(heureAllerComplete)+"', `heure_retour` =  '"+Tools.dateToString(heureRetourComplete)+"' WHERE  `id_transport` ="+transportID+ " AND  `id_gare` ="+gareID+" AND  `id_pele` =" +index.peleActuel.id_pele ,Query.UPDATE);
+				
+				
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(GestionCar.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+		]]>
+	</mx:Script>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Gare : "/>
+		<mx:ComboBox id="gareSel" width="298" labelField="nom" enabled="false"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Heure Aller : "/>
+		<mx:DateField id="dateAller" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+					  firstDayOfWeek="0"
+					  dayNames="['D','L','M','M','J','V','S']" 
+					  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+		<mx:NumericStepper id="heureAller" maximum="23"/>
+		<mx:NumericStepper id="minuteAller" maximum="59"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Heure Retour : "/>
+		<mx:DateField id="dateRetour" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+					  firstDayOfWeek="0"
+					  dayNames="['D','L','M','M','J','V','S']" 
+					  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+		<mx:NumericStepper id="heureRetour" maximum="23"/>
+		<mx:NumericStepper id="minuteRetour" maximum="59"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Modifier" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+</mx:TitleWindow>

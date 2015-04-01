@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="onCreateComplete()">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable] public var transports   :ArrayCollection;
+			[Bindable] public var arrets   :ArrayCollection;
+			
+			public static var RELOAD_MODULE:String = "reloadModule";
+			public static var RELOAD_MODULE_GARE:String = "reloadModuleGare";
+			
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				query.addEventListener(Query.QUERY_END, queryEnd);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+			
+				query.execute("SELECT * FROM transport");
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				transports = query.getRecords();
+				
+			}	
+			
+			private function queryError(evt:Object):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+
+			protected function datagrid1_changeHandler(event:ListEvent=null):void
+			{
+				query2.addEventListener(Query.QUERY_END, provideListeArrets);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport );
+			}
+			
+			private function provideListeArrets(evt:Object):void
+			{
+				arrets = query2.getRecords();
+				
+			}	
+
+			protected function addCar(event:MouseEvent):void
+			{
+				var creationCar:CreationCar = new CreationCar();
+				PopUpManager.addPopUp(creationCar,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(creationCar);
+				creationCar.addEventListener(GestionCar.RELOAD_MODULE,reload); 
+			}
+			
+			protected function reload(event:Object=null):void
+			{
+				if(transportListe.selectedItem.id_transport)
+					datagrid1_changeHandler();
+				query.execute("SELECT * FROM transport");
+			}
+			protected function reloadGare(event:Object=null):void
+			{
+				query2.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport );
+			}
+			
+			protected function addGare(event:MouseEvent):void
+			{
+				if(transportListe.selectedItem)
+				{ 
+					var ajoutGare:AjoutGare = new AjoutGare();
+					PopUpManager.addPopUp(ajoutGare,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(ajoutGare);
+					ajoutGare.data = transportListe.selectedItem.id_transport;
+					ajoutGare.addEventListener(GestionCar.RELOAD_MODULE_GARE,reloadGare); 
+				}
+			}
+			
+			protected function updateGare(event:MouseEvent):void
+			{
+				if(gareListe.selectedItem)
+				{
+					var modifierGare:ModifierGare = new ModifierGare();
+					PopUpManager.addPopUp(modifierGare,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(modifierGare);
+					modifierGare.data = gareListe.selectedItem;
+					modifierGare.addEventListener(GestionCar.RELOAD_MODULE_GARE,reloadGare); 
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Label text="Liste des cars :"/>
+	<mx:HBox width="100%">
+		<mx:DataGrid id="transportListe" width="520" change="datagrid1_changeHandler(event)"
+					 dataProvider="{transports}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="nom_transport"/>
+				<mx:DataGridColumn headerText="Capacité" dataField="Capacite"/>
+				<mx:DataGridColumn headerText="Compagnie" dataField="compagnie"/>
+				<mx:DataGridColumn headerText="Coût" dataField="cout"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:VBox height="100%">
+			<mx:Button label="Nouveau car" click="addCar(event)"/>
+		</mx:VBox>
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Label text="Liste des arrêts pour le car :"/>
+		<mx:Label text="Label"/>
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:DataGrid id="gareListe" width="522" dataProvider="{arrets}">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+				<mx:DataGridColumn headerText="Heure aller" dataField="heure_aller"/>
+				<mx:DataGridColumn headerText="Heure retour" dataField="heure_retour"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:VBox height="100%">
+			<mx:Button width="71" label="Ajouter" click="addGare(event)"/>
+			<mx:Button width="71" label="Enlever"/>
+			<mx:Button label="Modifier" click="updateGare(event)"/>
+		</mx:VBox>
+	</mx:HBox>
+	
+</mx:VBox>

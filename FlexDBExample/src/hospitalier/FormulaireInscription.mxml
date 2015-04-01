@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="942" height="584" creationComplete="onCreateComplete()">
+	
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.Sort;
+			import mx.collections.SortField;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.GareProxy;
+			import proxy.HotelProxy;
+			import proxy.ProfessionSanteProxy;
+			import proxy.SecteurProxy;
+			
+			[Bindable]
+			[Embed(source='assets/warning.png')]
+			private var WARNING:Class;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query5    :IQuery;
+			private var query6    :IQuery;
+			private var query7    :IQuery;
+			private var query8    :IQuery;
+			private var query9    :IQuery;
+			private var query10    :IQuery;
+			private var query11    :IQuery;
+			
+			private var personneID:Number
+			[Bindable]
+			public var secteurProvider:ArrayCollection;
+			[Bindable]
+			public var professionProvider:ArrayCollection;
+			[Bindable]
+			public var affectationProvider:ArrayCollection;
+			[Bindable]
+			public var transportProvider:ArrayCollection;
+			[Bindable]
+			public var hotelProvider:ArrayCollection;
+			[Bindable]
+			public var gareProvider:ArrayCollection;
+			
+			public static var RELOAD:String = "reload";
+			
+			private function onCreateComplete():void
+			{
+				idPersonne = NaN;
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				affectationProvider = AffectationProxy.Affectation;
+				secteurProvider		= SecteurProxy.Secteur;
+				if((index.categorieUtilisateur == "inscription")&&(index.secteurUtilisateur >0))
+					secteur.selectedIndex = index.secteurUtilisateur-1;
+				professionProvider	= ProfessionSanteProxy.Profession;
+				var sortField:SortField = new SortField("Profession");
+				var sort:Sort= new Sort();
+				sort.fields = [sortField];
+				professionProvider.sort = sort;
+				professionProvider.refresh();
+				hotelProvider 		= HotelProxy.HotelHospitalier;
+				gareProvider		= GareProxy.Gare;
+				query5= new Query();
+				query5.connect("conn1", db);
+				query5.addEventListener(Query.QUERY_END, provideTransport);
+				query5.addEventListener(Query.QUERY_ERROR,queryError);
+				query5.execute("Select * from transport" )
+				
+				query8 = new Query();
+				query8.connect("conn1", db);
+				query9 = new Query();
+				query9.connect("conn1", db);
+				query10 = new Query();
+				query10.connect("conn1", db);
+				query11 = new Query();
+				query11.connect("conn1", db);
+				
+				for(var i:int=0;i<affectationProvider.length;++i)
+				{
+					affectationDem.selectedIndex = i;
+					if(affectationDem.selectedItem.Service == "Aucune")
+						break;
+				}
+				for(i=0;i<affectationProvider.length;++i)
+				{
+					affectationComp.selectedIndex = i;
+					if(affectationComp.selectedItem.Service == "Aucune")
+						break;
+				}
+				
+			}
+			
+			private function provideTransport(evt:Object):void
+			{
+				transportProvider = query5.getRecords();
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				this.dispatchEvent(new Event(RELOAD));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryCancel(evt:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function addPersonne(event:MouseEvent):void
+			{
+				if(isNaN(this.idPersonne))
+				{
+					query2.addEventListener(Query.QUERY_END, testPersonneInBase);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("Select *  from personne where Nom='"+Tools.sanitize(nom.text) +"' and Prenom='"+Tools.sanitize(prenom.text)+"' and DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'");
+				}
+				else
+					this.insertIntoHospitalier(null);
+			}
+			
+			private function testPersonneInBase(evt:Object):void
+			{
+				var result:ArrayCollection = query2.getRecords();
+				if(result.length>0)
+					Alert.show("Une personne avec les mêmes nom, prénom et date de naissance existe déjà dans la base de données. Avez-vous pensez à utiliser le bouton de recherche ?" +
+						" Si oui, vérifier que cette personne n'est pas déjà inscrite.","",Alert.OK,this,null,WARNING);
+				else
+					insertIntoPersonne();
+			}
+			
+			private function insertIntoPersonne():void
+			{
+				query.addEventListener(Query.QUERY_END, insertIntoHospitalier);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("INSERT INTO personne (" +
+					" `Titre`, `Nom`, `Prenom`, `Adresse1`," +
+					" `Adresse2`, `Adresse3`, `CodePostal`, `Commune`, `DateNaissance`, `sexe`, `Tel`, `Portable`, `Courriel`, `etre_hospitalier`, `id_secteur`, `id_profession_sante`) " +
+					"	VALUES ('"+(titre.selectedItem as String)+"','"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(prenom.text)+"','"+Tools.sanitize(adresse.text)+"',NULL,NULL,'"+codePostal.text+"','"+Tools.sanitize(commune.text)+"','"+
+					Tools.dateToString(dateNaissance.selectedDate)+"','"+this.sexe.selectedLabel+"','"+telephone.text+"','"+portable.text+"','"+email.text+"',NULL,'"+
+					this.secteur.selectedItem.id_secteur+"','"+this.profession.selectedItem.id_profession_sante+"')", Query.INSERT);
+			}
+			
+			private function insertIntoHospitalier(evt:Object):void
+			{
+				var dateDepartComplete:Date=dateDepart.selectedDate;
+				if(dateDepartComplete)
+					dateDepartComplete.setHours(this.heureDepart.value);
+				
+				var dateArriveeComplete:Date=dateArrivee.selectedDate;
+				if(dateArriveeComplete)
+					dateArriveeComplete.setHours(this.heureArrivee.value);
+				
+				query8.addEventListener(Query.QUERY_END, insertIntoEtreHospitalier);
+				query8.addEventListener(Query.QUERY_ERROR,queryError);
+				query8.execute("INSERT INTO hospitalier ( `nouveau`,`capacite_restrainte`,`divers`,`desiderata`,`nuit1`,`nuit2`,`nuit3`,`complet`,`dateArrivee`,`dateDepart`,`id_affectation`,`couple`,`transport`,`chambreInd`,`forfaitJeune`,`nomHeb`,`id_gare`,`id_hebergement`,`paiementInsc`,`montantInsc`,`incomplet`,`conjoint`,`id_affectation_comp`)"+
+					"	VALUES ('"+ Tools.ouiNon(nouveau.selected) +"','"+Tools.sanitize(capaciteRest.text)+"','"+Tools.sanitize(divers.text)+"','"+Tools.sanitize(desiderata.text)+"','"+Tools.ouiNon(nuit1.selected)+"','"+Tools.ouiNon(nuit2.selected)+"','"+
+					Tools.ouiNon(nuit3.selected)+"','"+Tools.ouiNon(peleComplet.selected)+"','"+Tools.dateToString(dateArriveeComplete)+"','"+Tools.dateToString(dateDepartComplete)+"',"+this.affectationDem.selectedItem.id_affectation+",'"+Tools.ouiNon(this.couple.selected)+"','"+this.modeTransport.selectedValue+"','"+Tools.ouiNon(this.chambreInd.selected)+"','"+Tools.ouiNon(this.forfaitJeune.selected)+"','"+this.nomHeb.text+"','"+this.gare.selectedItem.id_gare+"','"+this.hotel.selectedItem.id_hebergement+"','"+Tools.ouiNon(this.paiementInsc.selected)+"','"+this.montantInsc.text+"','"+Tools.ouiNon(incomplet.selected)+"','"+Tools.sanitize(conjoint.text)+"','"+this.affectationComp.selectedItem.id_affectation+"')", Query.INSERT);
+			}
+			
+			private function insertIntoEtreHospitalier(evt:Object):void
+			{
+				if(isNaN(idPersonne))
+					personneID = query.getLastInsertID();	
+				else
+					personneID = idPersonne;
+				var hospitalierID:Number = query8.getLastInsertID();
+				query9.addEventListener(Query.QUERY_END, insertIntoPrix);
+				query9.addEventListener(Query.QUERY_ERROR,queryError);
+				query9.execute("INSERT INTO etre_hospitalier (`id_personne`,`id_hospitalier`,`id_pele`) VALUES ('"+personneID+"','"+hospitalierID+"','"+index.peleActuel.id_pele+"')", Query.INSERT);
+				
+			}
+			
+			private function insertIntoPrix(evt:Object):void
+			{
+				query10.addEventListener(Query.QUERY_END, insertIntoInscrire);
+				query10.addEventListener(Query.QUERY_ERROR,queryError);
+				query10.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, "+calculPrix()+", '0', "+calculPrix()+") ", Query.INSERT );
+			}
+			
+			private function insertIntoInscrire(evt:Object):void
+			{
+				var prixID:Number = query10.getLastInsertID();
+				query11.addEventListener(Query.QUERY_END, queryEnd);
+				query11.addEventListener(Query.QUERY_ERROR,queryError);
+				query11.execute("INSERT INTO inscrire (`id_pele`,`id_transport`,`id_personne`,`id_gare`,`id_hebergement`,`id_prix`) " +
+					"VALUES ('"+index.peleActuel.id_pele+"',0,'"+personneID+"',0,'"+this.hotel.selectedItem.id_hebergement+"','"+prixID+"')", Query.INSERT);
+			}
+			
+			
+			protected function nameSearch(event:MouseEvent):void
+			{
+				query7= new Query();
+				query7.connect("conn1", db);
+				query7.addEventListener(Query.QUERY_END, provideNameGrid);
+				query7.addEventListener(Query.QUERY_ERROR,queryError);
+				query7.execute("Select * from personne where Nom LIKE '"+nom.text+"%'" +
+					"AND id_personne NOT IN (SELECT p.id_personne FROM etre_hospitalier h, personne p WHERE h.id_personne = p.id_personne " +
+						" AND h.id_pele="+index.peleActuel.id_pele +" )"+
+					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_pelerin pe, personne p WHERE pe.id_personne = p.id_personne " +
+						" AND pe.id_pele="+index.peleActuel.id_pele +" )"+
+					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_malade m, personne p WHERE m.id_personne = p.id_personne " +
+						" AND m.id_pele="+index.peleActuel.id_pele +" )"+
+					" AND valid='XXX' "	);
+				
+			}
+			private function provideNameGrid(evt:Object):void
+			{
+				var listeNom:ListeNom = new ListeNom();
+				listeNom.listeNomProvider = query7.getRecords();
+				PopUpManager.addPopUp(listeNom,this.parentApplication as DisplayObject,true);
+				PopUpManager.centerPopUp(listeNom);
+				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
+			}
+			
+			private var idPersonne:Number;
+			private function setPersonneFields(event:DocEvent):void
+			{
+				var myData:Object = event.body;
+				idPersonne			= myData.id_personne;
+				adresse.text		= myData.Adresse1;
+				codePostal.text		= myData.CodePostal;
+				commune.text		= myData.Commune;
+				email.text			= myData.Courriel;
+				dateNaissance.selectedDate = Tools.stringToDate(myData.DateNaissance);
+				var id_personne:int = myData.id_personne;
+				for(var i:int=0;i<secteur.dataProvider.length;++i)
+				{
+					secteur.selectedIndex = i;
+					if(secteur.selectedItem.id_secteur == myData.id_secteur)
+						break;
+				}
+				
+				for(i=0;i<profession.dataProvider.length;++i)
+				{
+					profession.selectedIndex = i;
+					if(profession.selectedItem.id_profession_sante == myData.id_profession_sante)
+						break;
+				}
+				nom.text 			= myData.Nom;
+				prenom.text			= myData.Prenom;
+				portable.text		= myData.Portable;
+				sexe.selectedItem	= myData.sexe;
+				telephone.text		= myData.Tel;
+				titre.selectedItem 	= myData.Titre;
+				removeBt.visible =true;
+				adresse.enabled		= false;
+				codePostal.enabled	= false;
+				commune.enabled		= false;
+				email.enabled		= false;
+				dateNaissance.enabled	= false;
+				profession.enabled	= false;
+				secteur.enabled		= false;
+				nom.enabled			= false;
+				prenom.enabled		= false;
+				portable.enabled	= false;
+				sexe.enabled		= false;
+				telephone.enabled	= false;
+				titre.enabled		= false;
+				
+			}
+			protected function removeSelectionData(event:MouseEvent):void
+			{
+				idPersonne			= NaN;
+				adresse.text		= "";
+				codePostal.text		= "";
+				commune.text		= "";
+				email.text			= "";
+				dateNaissance.text  = "";
+				profession.selectedIndex = 0;
+				secteur.selectedIndex = 0;
+				nom.text 			= "";
+				prenom.text			= "";
+				portable.text		= "";
+				sexe.selectedIndex = 0;
+				telephone.text		= "";
+				titre.selectedIndex = 0;
+				removeBt.visible 	= false;
+				adresse.enabled		= true;
+				codePostal.enabled	= true;
+				commune.enabled		= true;
+				email.enabled		= true;
+				dateNaissance.enabled	= true;
+				profession.enabled	= true;
+				secteur.enabled		= true;
+				nom.enabled			= true;
+				prenom.enabled		= true;
+				portable.enabled	= true;
+				sexe.enabled		= true;
+				telephone.enabled	= true;
+				titre.enabled		= true;
+			}
+			
+			private function calculPrix():Number
+			{
+				var prixHeb:Number = this.hotel.selectedItem.Prix as Number;
+				var prix:Number = prixHeb;
+				
+				if(this.chambreInd.selected)
+				{
+					if(this.hotel.selectedItem.Libelle == "Helgon")
+						prix += 80;
+					else
+						prix += 60;
+				}
+				
+				if(this.carRb.selected)
+					prix += 65;
+				else
+					prix += 35;//frais généraux
+				
+				
+				
+				if(this.forfaitJeune.selected)
+					prix = 95
+				
+				return prix;
+				
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Form width="100%" height="500" verticalScrollPolicy="on">
+			
+			<mx:FormItem label="Nouveau">
+				<mx:CheckBox id="nouveau"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Titre">
+				<mx:HBox>
+					<mx:ComboBox id="titre" dataProvider="['Mr','Mme','Mlle','Sr','Pr','Dr']"/>
+					<mx:FormItem label="Nom">
+						<mx:TextInput id="nom" restrict="A-Z '\-"/>
+					</mx:FormItem>
+					<mx:Button label="R" click="nameSearch(event)"/>
+					<mx:Button id="removeBt" label="X" click="removeSelectionData(event)" visible="false"/>
+					<mx:FormItem label="Prenom">
+						<mx:TextInput id="prenom" restrict="A-Z '\-"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Date de naissance">
+				<mx:HBox>
+					<mx:DateField id="dateNaissance" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+								  firstDayOfWeek="0"
+								  dayNames="['D','L','M','M','J','V','S']" 
+								  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+					<mx:FormItem label="Sexe">
+						<mx:ComboBox id="sexe" dataProvider="{['M','F']}"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Adresse">
+				<mx:TextInput id="adresse" width="415"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Code Postal">
+				<mx:HBox width="100%">
+					<mx:TextInput id="codePostal" restrict="0-9" maxChars="5"/>
+					<mx:FormItem label="Commune">
+						<mx:TextInput id="commune" width="235" restrict="A-Z '\-"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Telephone">
+				<mx:HBox>
+					<mx:TextInput id="telephone" restrict="0-9" maxChars="10"/>
+					<mx:FormItem label="Portable">
+						<mx:TextInput id="portable" restrict="0-9" maxChars="10"/>
+					</mx:FormItem>
+					<mx:FormItem label="Email">
+						<mx:TextInput id="email"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Secteur">
+				<mx:ComboBox id="secteur" dataProvider="{secteurProvider}" labelField="section"/>
+			</mx:FormItem>
+			<mx:FormItem label="Profession de santé">
+				<mx:ComboBox id="profession" dataProvider="{professionProvider}" labelField="Profession"/>
+			</mx:FormItem>
+			<mx:FormItem label="Pélérinage Complet">
+				<mx:HBox>
+					<mx:CheckBox id="peleComplet" selected="true"/>
+					<mx:HBox enabled="{!peleComplet.selected}">
+						<mx:FormItem label="Du" >
+							<mx:DateField id="dateArrivee" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+										  firstDayOfWeek="0"
+										  dayNames="['D','L','M','M','J','V','S']" 
+										  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+						</mx:FormItem>
+						<mx:NumericStepper id="heureArrivee" maximum="23"/>
+						<mx:FormItem label="Au"  width="126">
+							<mx:DateField id="dateDepart" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+										  firstDayOfWeek="0"
+										  dayNames="['D','L','M','M','J','V','S']" 
+										  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+						</mx:FormItem>
+						<mx:NumericStepper id="heureDepart" maximum="23"/>
+					</mx:HBox>
+				</mx:HBox>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Vient en couple">
+				<mx:HBox>
+					<mx:CheckBox id="couple"/>
+					<mx:FormItem label="Nom du conjoint :">
+						<mx:TextInput id="conjoint"/>
+					</mx:FormItem>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Vient en:">
+				<mx:RadioButtonGroup id="modeTransport" selectedValue="car"/>
+				<mx:HBox>
+					<mx:RadioButton id="carRb" label="car" group="{modeTransport}"/>
+					<mx:RadioButton id="voiture" label="voiture" group="{modeTransport}"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Monte à">
+				<mx:ComboBox id="gare" dataProvider="{gareProvider}" labelField="nom"/>
+			</mx:FormItem>
+			<mx:FormItem label="Hébergement souhaité">
+				<mx:ComboBox id="hotel" dataProvider="{hotelProvider}" labelField="Libelle"/>
+			</mx:FormItem>
+			<mx:FormItem label="Nom de l'hebergement si se loge">
+				<mx:TextInput id="nomHeb" width="428"/>
+			</mx:FormItem>
+			<mx:FormItem label="Chambre individuelle">
+				<mx:CheckBox id="chambreInd"/>
+			</mx:FormItem>
+			<mx:FormItem label="Forfait jeune">
+				<mx:CheckBox id="forfaitJeune"/>
+			</mx:FormItem>
+			<mx:FormItem label="Désiderata">
+				<mx:TextInput id="desiderata" width="425"/>
+			</mx:FormItem>
+			<mx:FormItem label="Affectation demandée">
+				<mx:ComboBox id="affectationDem" dataProvider="{affectationProvider}" labelField="Service"/>
+			</mx:FormItem>
+			<mx:FormItem label="Affectation complémentaire (Facultative)">
+				<mx:ComboBox id="affectationComp" dataProvider="{affectationProvider}" labelField="Service"/>
+			</mx:FormItem>
+			<mx:FormItem label="Capacité restreinte">
+				<mx:TextInput id="capaciteRest" width="427"/>
+			</mx:FormItem>
+			<mx:FormItem label="Nuit">
+				<mx:HBox>
+					<mx:CheckBox id="nuit1" label="Nuit 1" labelPlacement="left"/>
+					<mx:Spacer width="20"/>
+					<mx:CheckBox id="nuit2" label="Nuit 2" labelPlacement="left"/>
+					<mx:Spacer width="20"/>
+					<mx:CheckBox id="nuit3" label="Nuit 3" labelPlacement="left"/>
+				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Divers">
+				<mx:TextArea id="divers" width="425" height="60"/>
+			</mx:FormItem>
+			<mx:FormItem label="Paiement à l'inscription">
+				<mx:HBox>
+					<mx:CheckBox id="paiementInsc"/>
+					<mx:FormItem label="Montant">
+						<mx:TextInput id="montantInsc" restrict="0-9\."/>
+					</mx:FormItem>
+				</mx:HBox>
+				
+			</mx:FormItem>
+			<mx:FormItem label="Fiche incomplète">
+				<mx:CheckBox id="incomplet"/>
+			</mx:FormItem>	
+		</mx:Form>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="Ajouter" click="addPersonne(event)" />
+			<mx:Button label="annuler" click="queryCancel(event)"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:TitleWindow>

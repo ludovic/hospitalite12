@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			public var idPersonne:int;
+			override public function set data(value:Object):void
+			{
+				titre.text = "";
+				nom.text = "";
+				prenom.text = "";
+				adresse.text = "";
+				codep.text = "";
+				ville.text = "";
+				secteur.text = "";
+				
+				transport.text = "";
+				nomHeb.text ="";
+				nomGare.text =  "";
+				heureAller.text = "";
+				
+				transportR.text = "";
+				nomGareR.text =  "";
+				heureRetour.text = "";
+				
+				total.text = "";
+				totalP.text = "";
+				solde.text = "";
+				remiseLbl.text ="";
+				
+				salleNom.text = "";
+				module.text = "";
+				responsable.text = "";
+				fonction.text = "";
+				
+				var info:Object = value.info;
+				var transHeb:Object = value.transHeb;
+				var transRetour:Object = value.transRetour;
+				var affectations:ArrayCollection = value.affectations;
+				var equipes:ArrayCollection = value.equipes;
+				var soldes:Object = value.soldes;
+				var remise:Object = value.remise;
+				var salleN:Object = value.salle;
+				var fonctionN:Object = value.fonction;
+				
+				idPersonne = info.id_personne;
+				titre.text = info.Titre;
+				nom.text = info.Nom;
+				prenom.text = info.Prenom;
+				adresse.text = info.Adresse1;
+				codep.text = info.CodePostal;
+				ville.text = info.Commune;
+				secteur.text = info.section;
+				if(transHeb)
+				{
+					transport.text = transHeb.nom_transport;
+					nomHeb.text = transHeb.Libelle;
+					nomGare.text =  transHeb.nom;
+					heureAller.text = transHeb.heure_aller;
+				}
+				
+				if(transRetour)
+				{
+					transportR.text = transRetour.nom_transport;
+					nomGareR.text =  transRetour.nom;
+					heureRetour.text = transRetour.heure_retour;
+				}
+				affectationVB.removeAllChildren();
+				var affectationLabel:Label = new Label();
+				affectationLabel.setStyle("fontWeight","bold");
+				affectationLabel.text = "Affectation(s) : ";
+				affectationVB.addChild(affectationLabel);
+				
+				for(var i:int=0;i<affectations.length;++i)
+				{
+					affectationLabel = new Label();
+					affectationLabel.text = affectations[i].Service;
+					affectationVB.addChild(affectationLabel);
+				}
+				
+				equipeVB.removeAllChildren();
+				var equipeLabel:Label = new Label();
+				equipeLabel.setStyle("fontWeight","bold");
+				equipeLabel.text = "Equipe(s) : ";
+				equipeVB.addChild(equipeLabel);
+				
+				for( i=0;i<equipes.length;++i)
+				{
+					equipeLabel = new Label();
+					equipeLabel.text = equipes[i].libelle;
+					equipeVB.addChild(equipeLabel);
+				}
+				
+				if(soldes)
+				{
+					total.text = soldes.Total;
+					totalP.text = soldes.TotalPaye;
+					solde.text =  soldes.solde;
+				}
+				if(remise)
+					remiseLbl.text = remise.libelle
+				if(salleN)
+				{
+					salleNom.text = salleN.libelle as String;
+					module.text = salleN.module;
+					responsable.text = salleN.Prenom + " "+ salleN.Nom;
+				}
+				if(fonctionN)
+				{
+					fonction.text = fonctionN.fonction as String;
+					module.text = fonctionN.module;
+					responsable.text = fonctionN.Prenom + " "+ fonctionN.Nom;
+				}
+			}
+			
+			protected function pdfConsigne(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/consigne.php?pele=" +index.peleActuel.id_pele+"&id="+idPersonne;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Button label="Générer la Consigne" click="pdfConsigne(event)" />
+		<mx:VBox id="info" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Titre : " fontWeight="bold"/><mx:Label id="titre"/>
+				<mx:Label text="Nom : " fontWeight="bold"/><mx:Label id="nom"/>
+				<mx:Label text="Prénom : " fontWeight="bold"/><mx:Label id="prenom"/>
+			</mx:HBox>
+			<mx:Label text="Adresse : " fontWeight="bold"/><mx:Label id="adresse"/>
+			<mx:HBox>
+				<mx:Label text="Code Postal : " fontWeight="bold"/><mx:Label id="codep"/>
+				<mx:Label text="Ville : " fontWeight="bold"/><mx:Label id="ville"/>
+				<mx:Label text="Secteur : " fontWeight="bold"/><mx:Label id="secteur"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="affectationVB" label="Affectation" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:Label text="Affectation(s) : " fontWeight="bold"/>
+		</mx:VBox>
+		<mx:VBox id="affectationP" label="Précisions pour Salle" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:Label text="Précisions pour Salle : " fontWeight="bold"/>
+			
+			<mx:HBox><mx:Label text="Salle : " fontWeight="bold"/><mx:Label id="salleNom"/></mx:HBox>
+			<mx:HBox><mx:Label text="Fonction : " fontWeight="bold"/><mx:Label id="fonction"/></mx:HBox>
+			<mx:HBox><mx:Label text="Module : " fontWeight="bold"/><mx:Label id="module"/></mx:HBox>
+			<mx:HBox><mx:Label text="Responsable du module : " fontWeight="bold"/><mx:Label id="responsable"/></mx:HBox>
+			
+			
+		</mx:VBox>
+		<mx:VBox id="equipeVB" label="Equipe" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:Label text="Equipe(s) : " fontWeight="bold"/>
+		</mx:VBox>
+		<mx:VBox id="Transport" label="Transport" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:HBox>
+				<mx:Label text="Transport aller : " fontWeight="bold"/><mx:Label id="transport"/>
+				<mx:Label text="Gare aller : " fontWeight="bold"/><mx:Label id="nomGare"/>
+				<mx:Label text="Heure départ : " fontWeight="bold"/><mx:Label id="heureAller"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="Transport retour : " fontWeight="bold"/><mx:Label id="transportR"/>
+				<mx:Label text="Gare retour: " fontWeight="bold"/><mx:Label id="nomGareR"/>
+				<mx:Label text="Heure retour: " fontWeight="bold"/><mx:Label id="heureRetour"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="Logement" label="Logement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:Label text="Logement : " fontWeight="bold"/><mx:Label id="nomHeb"/>
+		</mx:VBox>
+		<mx:VBox id="paiment" label="Paiement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Total : " fontWeight="bold"/><mx:Label id="total"/>
+				<mx:Label text="Payé : " fontWeight="bold"/><mx:Label id="totalP"/>
+				<mx:Label text="Solde : " fontWeight="bold"/><mx:Label id="solde"/>
+				<mx:Label text="Remise : " fontWeight="bold"/><mx:Label id="remiseLbl"/>
+			</mx:HBox>
+		</mx:VBox>
+	</mx:VBox>
+</mx:Canvas>

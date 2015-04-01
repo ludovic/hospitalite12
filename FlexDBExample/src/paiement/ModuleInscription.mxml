@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="50%" height="100%"  xmlns:extension="paiement.extension.*">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.RemiseProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var provider:ArrayCollection;
+			public var type:String;
+			
+			public function generateModuleProvider(chambreId:int=0):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(type == "hospitalier")
+					/*query.execute("select * from inscrire i," +
+						" personne p, etre_hospitalier eh, prix pr, hospitalier h" +
+						" where i.id_pele=" + index.peleActuel.id_pele+
+						" and i.id_prix = pr.id_prix" +
+						" and i.id_pele = eh.id_pele" +
+						" and eh.id_hospitalier = h.id_hospitalier" +
+						" and i.id_personne = p.id_personne" +
+						" and p.id_personne=eh.id_personne");*/
+				
+					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, h.annuler" +
+						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h, etre_paye e_p, paiement pa, remise r" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = eh.id_pele" +
+						" AND eh.id_hospitalier = h.id_hospitalier" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = eh.id_personne" +
+						" and pr.id_prix = e_p.id_prix" +
+						" and e_p.id_paiement = pa.id_paiement" +
+						" and pa.id_remise = r.id_remise" +
+						" UNION "+
+						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle, h.annuler" +
+						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = eh.id_pele" +
+						" AND eh.id_hospitalier = h.id_hospitalier" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = eh.id_personne" +
+						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" );
+				
+				else
+					/*query.execute("select * from inscrire i," +
+						" personne p, etre_malade em, prix pr, malade m" +
+						" where i.id_pele=" + index.peleActuel.id_pele+
+						" and i.id_pele = em.id_pele" +
+						" and i.id_prix = pr.id_prix" +
+						" and em.id_malade = m.id_malade" +
+						" and i.id_personne = p.id_personne" +
+						" and p.id_personne=em.id_personne");*/
+					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, m.annuler" +
+						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m, etre_paye e_p, paiement pa, remise r" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = em.id_pele" +
+						" AND em.id_malade = m.id_malade" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = em.id_personne" +
+						" and pr.id_prix = e_p.id_prix" +
+						" and e_p.id_paiement = pa.id_paiement" +
+						" and pa.id_remise = r.id_remise" +
+						" UNION "+
+						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle, m.annuler" +
+						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m" +
+						" WHERE i.id_pele =" + index.peleActuel.id_pele+
+						" AND i.id_prix = pr.id_prix" +
+						" AND i.id_pele = em.id_pele" +
+						" AND em.id_malade = m.id_malade" +
+						" AND i.id_personne = p.id_personne" +
+						" AND p.id_personne = em.id_personne" +
+						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" );
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				provider.sort = SortUtil.nomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function affecterA(event:MouseEvent):void
+			{
+				 if(listInscrit.selectedItem)
+				{
+					var formulairePaiement:FormulairePaiement = new FormulairePaiement();
+					formulairePaiement.type = this.type;
+					PopUpManager.addPopUp(formulairePaiement,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulairePaiement);
+					formulairePaiement.setFormulaire(listInscrit.selectedItem);
+					formulairePaiement.addEventListener(Paiement.RELOAD_MODULE,refresh);
+				} 
+			}
+			
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Paiement.RELOAD_MODULE));
+			}
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						provider.filterFunction = searchModel;
+						provider.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				if(item['Nom']!=null)
+				{
+					if(String(item['Nom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				if(item['Prenom']!=null)
+				{
+					if(String(item['Prenom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				
+				return isMatch;    
+			}
+			
+			private function selectCancelColor(datagrid:DataGrid, rowIndex:int, color:uint):uint
+			{
+				var rColor:uint;
+				var item:Object =  datagrid.dataProvider.getItemAt(rowIndex);
+				var value:String = item["annuler"];
+				if (value == "oui") 
+				{ rColor = 0xEE0000; }
+				else rColor =color;
+				
+				return rColor;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="title" text="{titleText}"/>
+	<mx:HBox width="100%">
+	<mx:Button label="Créer paiement pour" click="affecterA(event)"/>
+	<mx:Canvas>
+		<mx:Image source="@Embed('/assets/search.png')" />
+		<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+					  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+					  />
+	</mx:Canvas>
+	</mx:HBox>
+	<mx:HBox height="100%">
+		<extension:RowColorDataGrid id="listInscrit" dataProvider="{provider}" height="100%" rowColorFunction="selectCancelColor">
+			<extension:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
+				<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
+				<mx:DataGridColumn headerText="Total" dataField="Total"/>
+				<mx:DataGridColumn headerText="Total payé" dataField="TotalPaye"/>
+				<mx:DataGridColumn headerText="Solde" dataField="solde"/>
+				<mx:DataGridColumn headerText="Remise" dataField="libelle"/>
+			</extension:columns>
+		</extension:RowColorDataGrid>
+	</mx:HBox>
+</mx:VBox>

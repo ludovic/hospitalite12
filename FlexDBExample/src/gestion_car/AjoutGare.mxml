@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="200"  creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.GareProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			private var transportID:int;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				gareSel.dataProvider = GareProxy.Gare;
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+			}
+			
+			override public function set data(value:Object):void
+			{
+				transportID = value as int;
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				var heureAllerComplete:Date=dateAller.selectedDate;
+				if(heureAllerComplete)
+				{
+					heureAllerComplete.setHours(this.heureAller.value);
+					heureAllerComplete.setMinutes(this.minuteAller.value);
+				}
+				
+				var heureRetourComplete:Date=dateRetour.selectedDate;
+				if(heureRetourComplete)
+				{
+					heureRetourComplete.setHours(this.heureRetour.value);
+					heureRetourComplete.setMinutes(this.minuteRetour.value);
+				}
+				 
+				query.execute("INSERT INTO passer_par ( `id_transport` ,`id_gare`,`id_pele`,`heure_aller`,`heure_retour`) VALUES ("+transportID+","+gareSel.selectedItem.id_gare+","+index.peleActuel.id_pele+", '"+Tools.dateToString(heureAllerComplete)+"', '"+Tools.dateToString(heureRetourComplete)+"') ", Query.INSERT );
+				
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(GestionCar.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+		]]>
+	</mx:Script>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Gare : "/>
+		<mx:ComboBox id="gareSel" width="298" labelField="nom"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Heure Aller : "/>
+		<mx:DateField id="dateAller" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+					  firstDayOfWeek="0"
+					  dayNames="['D','L','M','M','J','V','S']" 
+					  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+		<mx:NumericStepper id="heureAller" maximum="23"/>
+		<mx:NumericStepper id="minuteAller" maximum="59"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Label text="Heure Retour : "/>
+		<mx:DateField id="dateRetour" yearNavigationEnabled="true" editable="true" formatString="DD/MM/YYYY" 
+					  firstDayOfWeek="0"
+					  dayNames="['D','L','M','M','J','V','S']" 
+					  monthNames="['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']"/>
+		<mx:NumericStepper id="heureRetour" maximum="23"/>
+		<mx:NumericStepper id="minuteRetour" maximum="59"/>
+	</mx:HBox>	
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+</mx:TitleWindow>

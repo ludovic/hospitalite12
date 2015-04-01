@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="432" height="200" label="{this.titleText}">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var capacite:int;
+			
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var equipeId:Number;
+			
+			
+			
+			public function generateModuleProvider(myEquipe:Object):void
+			{
+				this.equipeId= myEquipe.id_equipe;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("SELECT p.nom, p.prenom, e.id_affectation,h.id_hospitalier" +
+					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh, `equipe` e,`faire_parti` fp " +
+					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = fp.id_hospitalier " +
+					" AND fp.id_equipe = "+equipeId +
+					" AND e.id_equipe = fp.id_equipe "+
+					" AND h.id_hospitalier = eh.id_hospitalier " +
+					" AND p.id_personne = eh.id_personne" +
+					" AND h.annuler='non' " +
+					" GROUP BY p.id_personne ");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function enlever(event:Object=null):void
+			{
+				if(listHospi.selectedItem)
+				{
+				 	query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,refresh);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("DELETE FROM faire_parti " +
+						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_equipe = '"+equipeId+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.DELETE);
+				 }
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Equipe.RELOAD_MODULE));
+			}
+			private function refreshHard(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Equipe.RELOAD_MODULE_HARD));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{ 
+					var formulaireEquipe:FormulaireEquipe = new FormulaireEquipe();
+					PopUpManager.addPopUp(formulaireEquipe,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireEquipe);
+					formulaireEquipe.setFormulaire(listHospi.selectedItem,listHospi.selectedItem.id_affectation,equipeId);
+					formulaireEquipe.addEventListener(Equipe.RELOAD_MODULE,refresh); 
+				}
+			} 
+			
+			protected function supprimer(event:MouseEvent):void
+			{
+				if(provider.length == 0)
+				{
+					query3= new Query();
+					query3.connect("conn1", db);
+					query3.addEventListener(Query.QUERY_END,refreshHard);
+					query3.addEventListener(Query.QUERY_ERROR,queryError);
+					query3.execute("DELETE FROM equipe " +
+						" WHERE id_equipe = '"+equipeId+"'",Query.DELETE);
+				}				
+				else
+					Alert.show("Cette équipe n'est pas vide. Veuillez enlever toutes les personnes de l'équipe avant de la supprimer.");
+			}
+			
+			protected function pdfEquipe(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/equipe.php?pele=" +index.peleActuel.id_pele+"&id="+equipeId;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox>
+		<mx:HBox>
+			<mx:Label text="{this.titleText}"/>
+		</mx:HBox>
+		<mx:HBox height="100%">
+			<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+					<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:VBox height="100%">
+				<mx:Button label="Enlever" click="enlever(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Supprimer équipe" click="supprimer(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Générer" click="pdfEquipe(event)" />
+			</mx:VBox>
+		</mx:HBox>
+	</mx:VBox>
+	
+</mx:Canvas>

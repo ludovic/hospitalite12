@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			private var idPersonne:int;
+			override public function set data(value:Object):void
+			{
+				titre.text = "";
+				nom.text = "";
+				prenom.text = "";
+				adresse.text = "";
+				codep.text = "";
+				ville.text = "";
+				secteur.text = "";
+				chambre.text = "";
+				lit.text = "";
+				etage.text ="";
+				ascenseur.text = "";
+				
+			
+				
+				transport.text = "";
+				nomGare.text =  "";
+				heureAller.text = "";
+				
+				transportR.text = "";
+				nomGareR.text =  "";
+				heureRetour.text = "";
+				
+				total.text = "";
+				totalP.text = "";
+				solde.text = "";
+				
+				
+				var info:Object = value.info;
+				var transHeb:Object = value.transHeb;
+				var transRetour:Object = value.transRetour;
+				
+				var soldes:Object = value.soldes;
+				
+				idPersonne = info.id_personne;
+				titre.text = info.Titre;
+				nom.text = info.Nom;
+				prenom.text = info.Prenom;
+				adresse.text = info.Adresse1;
+				codep.text = info.CodePostal;
+				ville.text = info.Commune;
+				secteur.text = info.section;
+				chambre.text = info.libelle;
+				lit.text = info.lits;
+				etage.text = info.etage;
+				ascenseur.text = info.ascenseur;
+				
+				taille.value = info.taille; 
+				poids.value = info.poids;
+				hospitalierCB.selected = info.pers_prev_hosp;
+				familleCB.selected = info.pers_prev_fam;
+				tuteurCB.selected =	info.pers_prev_tut;
+				personneCB.selected = info.pers_prev_pers_conf;
+				nom_prenom.text = info.pers_prev_nom;
+				tel.text = info.pers_prev_tel;
+				voyageAssisCB.selected = info.pos_voy_assis;
+				voyageCoucheCB.selected = info.pos_voy_couche;
+				voyageFauteuilRCB.selected = info.pos_voy_assis_ft;
+				peutMonterMarcheCB.selected = info.monte_marches_car;
+				deplaceSeulCB.selected = info.deplace_seul;
+				aideCB.selected = info.deplace_aide;
+				cannesCB.selected = info.deplace_canne;
+				deambulateurCB.selected = info.deplace_deambulateur;
+				fauteuilRCB.selected = info.deplace_fauteuil;
+				brancardCB.selected = info.deplace_brancard;
+				escalierCB.selected = info.deplace_escalier;
+				protheses.text = info.protheses;
+				visionCB.selected = info.deficit_vision;
+				auditionCB.selected = info.deficit_audition;
+				paroleCB.selected = info.deficit_parole;
+				desorientationCB.selected = info.deficit_desorientation;
+				fugueCB.selected = info.deficit_fugue;
+				regimeNormalCB.selected = info.reg_normal;
+				diabetiqueCB.selected = info.reg_diab;
+				sansSelCB.selected = info.reg_ss_sel;
+				mixeCB.selected = info.reg_mix;
+				troubleDeglutionCB.selected = info.reg_pb_deglutition;
+				eauGelifieeCB.selected = info.reg_eau_gef;
+				mangeChambreCB.selected = info.reg_chambre;
+				injectionCB.selected = info.soin_inf_inj;
+				injectionType.text = info.soin_inf_inj_type;
+				injectionHorraire.text = info.soin_inf_inj_horraire;
+				pansementCB.selected = info.soin_inf_pansement;
+				pansementType.text = info.soin_inf_pansement_type;
+				autreSoin.text = info.autre_soin_spec;
+				priseMedicamentControleeCB.selected = info.autre_soin_prise_med;
+				oxygeneCB.selected = info.autre_soin_oxygene;
+				extracteurCB.selected = info.extracteur;
+				debitOxygene.text =	info.autre_soin_oxygene_debit;
+				toilettesAideTotaleCB.selected =info.toilette_aide_total;
+				toilettesAidePartielleCB.selected =	info.toilette_aide_partiel;
+				toiletteLitCB.selected = info.toilette_aide_lit;
+				coucherAideCB.selected = info.coucher_aide;
+				coucherBarriereCB.selected = info.coucher_barriere_lit;
+				coucherPotenceCB.selected = info.coucher_potence;
+				matelasAntiEscCB.selected = info.matelas_anti_esc;
+				souleveMaladeCB.selected = info.souleve_malade;
+				incontinenceChangeCB.selected = info.incont_bes_change;
+				incontinenceJourCB.selected = info.incont_jour;
+				incontinenceNuitCB.selected	= info.incont_nuit;
+				sondeUrinaireCB.selected = info.incont_sond_uri;
+				etuiPenienCB.selected =	info.incont_etui_pen;
+				pochesPourStomieCB.selected = info.incont_poche_stom;
+				typeStomie.text = info.incont_poche_stom_type;
+				divers.text = info.divers;
+				paiementInsc.selected = (info.paiementInsc == "oui")?true:false;
+				montantInsc.text = info.montantInsc;
+				codification.text = info.codification;
+				medecin_traitant.text = info.medecin_traitant;
+				tel_medecin.text = info.tel_medecin;
+				tel_retour.text = info.tel_retour;
+				voyageElectriqueCB.selected = info.pos_voy_electrique;
+				escarreCB.selected = info.coussin_esc;
+				hacheCB.selected = info.reg_hache;
+				parenteraleCB.selected = info.parenterale;
+				ppcCB.selected = info.ppc;
+				dialyseCB.selected = info.dialyse;
+				litMedicaliseCB.selected = info.lit_medicalise;
+				aideRepasCB.selected = info.reg_aide_repas;
+				
+				if(transHeb)
+				{
+					transport.text = transHeb.nom_transport;
+					nomGare.text =  transHeb.nom;
+					heureAller.text = transHeb.heure_aller;
+				}
+				
+				if(transRetour)
+				{
+					transportR.text = transRetour.nom_transport;
+					nomGareR.text =  transRetour.nom;
+					heureRetour.text = transRetour.heure_retour;
+				}
+				
+				
+				if(soldes)
+				{
+					total.text = soldes.Total;
+					totalP.text = soldes.TotalPaye;
+					solde.text =  soldes.solde;
+				}
+			}
+			protected function genererLettre(event:MouseEvent):void
+			{
+				var url:String = " http://logiciel.bouges.fr/pdf/lettre_malades.php?pele=" +index.peleActuel.id_pele + "&id=" +idPersonne;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Button label="Générer cette lettre" right="0" click="genererLettre(event)" visible="true" includeInLayout="true"/>
+		<mx:VBox id="info" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Titre : " fontWeight="bold"/><mx:Label id="titre"/>
+				<mx:Label text="Nom : " fontWeight="bold"/><mx:Label id="nom"/>
+				<mx:Label text="Prénom : " fontWeight="bold"/><mx:Label id="prenom"/>
+			</mx:HBox>
+			<mx:Label text="Adresse : " fontWeight="bold"/><mx:Label id="adresse"/>
+			<mx:HBox>
+				<mx:Label text="Code Postal : " fontWeight="bold"/><mx:Label id="codep"/>
+				<mx:Label text="Ville : " fontWeight="bold"/><mx:Label id="ville"/>
+				<mx:Label text="Secteur : " fontWeight="bold"/><mx:Label id="secteur"/>
+			</mx:HBox>
+		</mx:VBox>
+		
+		<mx:VBox id="Transport" label="Transport" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:HBox>
+				<mx:Label text="Transport aller : " fontWeight="bold"/><mx:Label id="transport"/>
+				<mx:Label text="Gare aller : " fontWeight="bold"/><mx:Label id="nomGare"/>
+				<mx:Label text="Heure départ : " fontWeight="bold"/><mx:Label id="heureAller"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="Transport retour : " fontWeight="bold"/><mx:Label id="transportR"/>
+				<mx:Label text="Gare retour: " fontWeight="bold"/><mx:Label id="nomGareR"/>
+				<mx:Label text="Heure retour: " fontWeight="bold"/><mx:Label id="heureRetour"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="Logement" label="Logement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Chambre : " fontWeight="bold"/><mx:Label id="chambre"/>
+				<mx:Label text="Etage : " fontWeight="bold"/><mx:Label id="etage"/>
+				<mx:Label text="Ascenseur : " fontWeight="bold"/><mx:Label id="ascenseur"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="Nombre de Lits : " fontWeight="bold"/><mx:Label id="lit"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="paiment" label="Paiement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Total : " fontWeight="bold"/><mx:Label id="total"/>
+				<mx:Label text="Payé : " fontWeight="bold"/><mx:Label id="totalP"/>
+				<mx:Label text="Solde : " fontWeight="bold"/><mx:Label id="solde"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox label="Infos Malade" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+		<mx:FormItem label="Poids">
+			<mx:HBox>
+				<mx:NumericStepper id="poids" maximum="300"/>
+				<mx:Label text="Taille" />
+				<mx:NumericStepper id="taille" maximum="300"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Médecin traitant">
+			<mx:VBox>
+				<mx:HBox>
+					<mx:HBox>
+						<mx:TextInput id="medecin_traitant" />
+					</mx:HBox>
+					<mx:HBox>
+						<mx:Label text="Tél/Port"/>
+						<mx:TextInput id="tel_medecin"/>
+					</mx:HBox>
+				</mx:HBox>
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Personne à prevenir">
+			<mx:VBox>
+				<mx:HBox>
+					<mx:CheckBox label="Hospitalier" id="hospitalierCB"/>
+					<mx:CheckBox label="Famille" id="familleCB"/>
+					<mx:CheckBox label="Tuteur" id="tuteurCB"/>
+					<mx:CheckBox label="Personne de confiance" id="personneCB"/>
+				</mx:HBox>
+				<mx:HBox>
+					<mx:HBox>
+						<mx:Label text="Nom et Prénom"/>
+						<mx:TextInput id="nom_prenom" />
+					</mx:HBox>
+					<mx:HBox>
+						<mx:Label text="Tél/Port"/>
+						<mx:TextInput id="tel"/>
+					</mx:HBox>
+					<mx:HBox>
+						<mx:Label text="Tel de la personne à contacter pour le retour :"/>
+						<mx:TextInput id="tel_retour"/>
+					</mx:HBox>
+				</mx:HBox>
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Position pour le voyage">
+			<mx:HBox>
+				<mx:CheckBox label="Assis" id="voyageAssisCB"/>
+				<mx:CheckBox label="Couché" id="voyageCoucheCB"/>
+				<mx:CheckBox label="Assis dans son fauteuil roulant" id="voyageFauteuilRCB"/>
+				<mx:CheckBox label="Electrique" id="voyageElectriqueCB"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Peut monter les marches">
+			<mx:CheckBox id="peutMonterMarcheCB"/>
+		</mx:FormItem>
+		<mx:FormItem label="Locomotion">
+			<mx:HBox>
+				<mx:CheckBox label="Déplacement seul" id="deplaceSeulCB"/>
+				<mx:CheckBox label="Avec aide" id="aideCB"/>
+				<mx:CheckBox label="Avec cannes" id="cannesCB"/>
+				<mx:CheckBox label="Avec déambulateur" id="deambulateurCB"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:CheckBox label="En fauteuil roulant" id="fauteuilRCB"/>
+				<mx:CheckBox label="Sur brancard" id="brancardCB"/>
+				<mx:CheckBox label="Utilise les escaliers" id="escalierCB"/>
+				<mx:CheckBox label="Coussin Anti-escarre" id="escarreCB"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Prothèses">
+			<mx:TextInput id="protheses"/>
+		</mx:FormItem>
+		<mx:FormItem label="Déficit neurosensoriel">
+			<mx:HBox>
+				<mx:CheckBox label="Vision" id="visionCB"/>
+				<mx:CheckBox label="Audition" id="auditionCB"/>
+				<mx:CheckBox label="Parole" id="paroleCB"/>
+				<mx:CheckBox label="Désorientation" id="desorientationCB"/>
+				<mx:CheckBox label="Risque de fugue" id="fugueCB"/>	
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Régime alimentaire">
+			<mx:HBox>
+				<mx:CheckBox label="Normal" id="regimeNormalCB"/>
+				<mx:CheckBox label="Diabétique" id="diabetiqueCB"/>
+				<mx:CheckBox label="Sans sel" id="sansSelCB"/>
+				<mx:CheckBox label="Mixé" id="mixeCB"/>
+				<mx:CheckBox label="Haché" id="hacheCB"/>
+				<mx:CheckBox label="Troubles de la déglutition" id="troubleDeglutionCB"/>	
+				<mx:CheckBox label="Eau gélifiée" id="eauGelifieeCB"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:CheckBox label="Aide au repas" id="aideRepasCB"/>
+				<mx:CheckBox label="Mange en chambre" id="mangeChambreCB"/>
+				<mx:CheckBox label="Nutrition parentérale" id="parenteraleCB"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Soin infirmiers">
+			<mx:HBox>
+				<mx:CheckBox label="Injection" id="injectionCB"/>
+				<mx:Label text="Type"/>
+				<mx:TextInput id="injectionType" />
+				<mx:Label text="Horaire"/>
+				<mx:TextInput id="injectionHorraire"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:CheckBox label="Pansement" id="pansementCB"/>
+				<mx:Label text="Type"/>
+				<mx:TextInput id="pansementType" />
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Autre soins spécifiques">
+			<mx:HBox><mx:TextInput id="autreSoin"/><mx:Label text="Codification"/><mx:TextInput id="codification" maxChars="5"/></mx:HBox>
+			<mx:HBox>
+				<mx:CheckBox label="Prise de médicament contrôlée par l'infirmière" id="priseMedicamentControleeCB"/>
+				<mx:CheckBox label="Oxygène" id="oxygeneCB"/>
+				<mx:Label text="Debit par 24h"/>
+				<mx:TextInput id="debitOxygene"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:CheckBox label="Extracteur" id="extracteurCB"/>
+				<mx:CheckBox label="PPC" id="ppcCB"/>
+				<mx:CheckBox label="Dialyse" id="dialyseCB"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Toilettes">
+			<mx:HBox>
+				<mx:CheckBox label="Aide totale" id="toilettesAideTotaleCB"/>
+				<mx:CheckBox label="Aide partielle" id="toilettesAidePartielleCB"/>
+				<mx:CheckBox label="Toilette au lit" id="toiletteLitCB"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Coucher">
+			<mx:HBox>
+				<mx:CheckBox label="Aide" id="coucherAideCB"/>
+				<mx:CheckBox label="Barrière au lit" id="coucherBarriereCB"/>
+				<mx:CheckBox label="Potence" id="coucherPotenceCB"/>
+				<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
+				<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
+				<mx:CheckBox label="Lit médicalisé" id="litMedicaliseCB"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Incontinence">
+			<mx:HBox>
+				<mx:CheckBox label="Besoins de change" id="incontinenceChangeCB"/>
+				<mx:CheckBox label="Jour" id="incontinenceJourCB"/>
+				<mx:CheckBox label="Nuit" id="incontinenceNuitCB"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:CheckBox label="Sonde urinaire" id="sondeUrinaireCB"/>
+				<mx:CheckBox label="Etui pénien" id="etuiPenienCB"/>
+				<mx:CheckBox label="Poches pour stomie" id="pochesPourStomieCB"/>
+				<mx:Label text="Type"/>
+				<mx:TextInput id="typeStomie"/>
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Paiement à l'inscription">
+			<mx:HBox>
+				<mx:CheckBox id="paiementInsc"/>
+				<mx:FormItem label="Montant">
+					<mx:TextInput id="montantInsc" restrict="0-9\."/>
+				</mx:FormItem>
+			</mx:HBox>
+			
+		</mx:FormItem>
+		<mx:FormItem label="Divers">
+			<mx:TextArea id="divers" width="425" height="60"/>
+		</mx:FormItem>
+		</mx:VBox>
+	</mx:VBox>
+</mx:Canvas>

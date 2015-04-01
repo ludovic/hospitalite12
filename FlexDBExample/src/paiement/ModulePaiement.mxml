@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="210" label="{this.titleText}">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.DataGridDataExporter;
+			import common.helper.SortUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.Text;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query3    :IQuery;
+			private var query4    :IQuery;
+			private var query5    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var remiseId:Number;
+			
+			public var type:String;
+			
+			
+			public function generateModuleProvider(remiseId:int):void
+			{
+				this.remiseId=remiseId;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("select * from paiement pa," +
+					" personne p, inscrire i, prix pr, etre_paye ep " +
+					" where pa.id_remise="+remiseId +
+					" and pa.id_paiement = ep.id_paiement"+
+					" and ep.id_prix = pr.id_prix" +
+					" and i.id_prix = pr.id_prix" +
+					" and p.id_personne=i.id_personne");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				provider.sort = SortUtil.nomPrenomSort();
+				provider.refresh();
+				recalculTotal();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function enlever(event:Object=null):void
+			{
+				if(listMalade.selectedItem)
+				{
+					query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,enleverFromPaiement);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("DELETE FROM etre_paye WHERE id_paiement="+listMalade.selectedItem.id_paiement,Query.DELETE);
+					
+				}
+			}
+			
+			private function enleverFromPaiement(event:Object=null):void
+			{
+				query4= new Query();
+				query4.connect("conn1", db);
+				query4.addEventListener(Query.QUERY_END,getPrix);
+				query4.addEventListener(Query.QUERY_ERROR,queryError);
+				query4.execute("DELETE FROM paiement WHERE id_paiement="+listMalade.selectedItem.id_paiement,Query.DELETE);
+			}
+			private function getPrix(event:Object=null):void
+			{
+				var objectDeleted:Object = listMalade.selectedItem;
+				query5= new Query();
+				query5.connect("conn1", db);
+				query5.addEventListener(Query.QUERY_END,modiferPrix);
+				query5.addEventListener(Query.QUERY_ERROR,queryError);
+				query5.execute("SELECT * FROM prix WHERE  id_prix = '"+objectDeleted.id_prix+"'",Query.SELECT);
+			}
+			private function modiferPrix(event:Object=null):void
+			{
+				var objectDeleted:Object = listMalade.selectedItem;
+				var paiementDeleted:Object = listMalade.selectedItem;
+				var prix:Object = query5.getRecords()[0];
+				query3= new Query();
+				query3.connect("conn1", db);
+				query3.addEventListener(Query.QUERY_END,refresh);
+				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				var newSolde:Number = Number(prix.solde)+ Number(paiementDeleted.montant);
+				var newTotalPaye:Number = Number(prix.TotalPaye)- Number(paiementDeleted.montant);
+				query3.execute("UPDATE prix " +
+					"SET TotalPaye ='"+newTotalPaye+"', solde ='"+newSolde+"'"+
+					" WHERE id_prix = '"+objectDeleted.id_prix+"'",Query.UPDATE);
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Paiement.RELOAD_MODULE));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if(listMalade.selectedItem)
+				{ 
+					var deplacerPaiement:DeplacerPaiement = new DeplacerPaiement();
+					deplacerPaiement.type = this.type;
+					PopUpManager.addPopUp(deplacerPaiement,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(deplacerPaiement);
+					deplacerPaiement.setFormulaire(listMalade.selectedItem);
+					deplacerPaiement.addEventListener(Paiement.RELOAD_MODULE,refresh);  
+				}
+			} 
+			
+
+			protected function recalculTotal():void
+			{
+				var totalValue:Number = 0;
+				for(var i:int=0;i<provider.length;i++)
+				{
+					totalValue += provider[i]['montant'];
+				}
+				this.total.text = "Total : "+totalValue;
+			}
+			
+			protected function exportDatagrid(event:MouseEvent):void
+			{
+				var csvText:String = DataGridDataExporter.exportCSV(listMalade);
+				var fileSave:FileReference= new FileReference();
+				fileSave.save(csvText,"export_remise.csv");
+			}
+
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="200">
+		<mx:HBox width="{listMalade.width}">
+			<mx:Label text="{this.titleText}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Label text="{provider.length+' paiements'}"/>
+		</mx:HBox>
+		<mx:HBox height="100%" width="100%">
+			<mx:DataGrid id="listMalade" dataProvider="{provider}" height="100%" width="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="Nom"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="Prenom"/>
+					<mx:DataGridColumn headerText="Payeur" dataField="payeur"/>
+					<mx:DataGridColumn headerText="Type de paiement" dataField="type_paiement"/>
+					<mx:DataGridColumn headerText="Montant" dataField="montant"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:HBox>
+		<mx:Label id="total" text=""/>
+		<mx:HBox height="20">
+			<mx:Button label="Exporter" click="exportDatagrid(event)"/>
+			<mx:Button label="Enlever" click="enlever(event)" width="120"/>
+			<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120"/>
+		</mx:HBox>
+	</mx:VBox>
+	
+</mx:Canvas>

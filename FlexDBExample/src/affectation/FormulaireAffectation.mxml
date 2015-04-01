@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="186" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var hospitalierID:int;
+			private var hospitalierIDList:Array;
+			private var affectationOld:Number;
+			
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				this.affectationList.dataProvider = AffectationProxy.Affectation;
+			}
+			
+			public function setFormulaire(item:Object,affectationOld:Number=NaN):void
+			{
+				hospitalierIDList = new Array;
+				if(item is Array)
+				{
+					var hospitalierList:Array =item as Array;
+					myLabel.text = "";
+					for(var i:int=0;i<hospitalierList.length;i++)
+					{
+						myLabel.text += hospitalierList[i].prenom + " "+hospitalierList[i].nom +"\n";
+						hospitalierIDList.push(hospitalierList[i].id_hospitalier);
+					}
+				}
+				else
+				{
+					myLabel.text = item.prenom + " "+item.nom;
+					hospitalierID = item.id_hospitalier;
+				}
+				this.affectationOld = affectationOld;
+			}
+			
+			protected function valider(event:MouseEvent):void
+			{
+				query.addEventListener(Query.QUERY_END,end);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(isNaN(affectationOld))
+				{
+					if(hospitalierIDList.length>0)
+					{
+						var queryString:String = "INSERT INTO obtenir (`id_hospitalier`, `id_affectation`) VALUES ";
+						for(var i:int=0;i<hospitalierIDList.length;i++)
+						{
+							queryString += "("+hospitalierIDList[i]+", "+affectationList.selectedItem.id_affectation+"),";
+						}
+						
+						queryString = queryString.slice(0,queryString.length-1);
+						query.execute(queryString, Query.INSERT );
+					}
+					else
+						query.execute("INSERT INTO obtenir (`id_hospitalier`, `id_affectation`) VALUES ("+hospitalierID+", "+affectationList.selectedItem.id_affectation+") ", Query.INSERT );
+				}
+				else
+				{
+					query.execute("UPDATE obtenir " +
+						"SET id_hospitalier ='"+hospitalierID+"', id_affectation ='"+affectationList.selectedItem.id_affectation+"'"+
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_affectation = '"+affectationOld+"'",Query.UPDATE);
+				}
+			}
+			
+			protected function close(event:Object):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			protected function end(event:Object):void
+			{
+				this.dispatchEvent(new DocEvent(Affectation.RELOAD_MODULE));
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+
+		]]>
+	</mx:Script>
+	<mx:Label width="100%" height="19" text="Affecter :"/>
+	<mx:TextArea id="myLabel" width="100%"/>
+	<mx:HBox width="100%">
+		<mx:Label text="à"/>
+		<mx:ComboBox id="affectationList" labelField="Service"></mx:ComboBox>
+	</mx:HBox>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Valider" click="valider(event)"/>
+		<mx:Button label="Annuler" click="close(event)"/>
+	</mx:HBox>
+	
+</mx:TitleWindow>

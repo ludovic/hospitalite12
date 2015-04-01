@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="698" height="392" creationComplete="onCreateComplete()">
+	
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			import proxy.AffectationProxy;
+			import proxy.GareProxy;
+			import proxy.HotelProxy;
+			import proxy.ProfessionSanteProxy;
+			import proxy.SecteurProxy;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			private var query5    :IQuery;
+			
+			private var pelerinID:Number
+			private var personneID:Number
+			[Bindable]
+			public var secteurProvider:ArrayCollection;
+			[Bindable]
+			public var professionProvider:ArrayCollection;
+			[Bindable]
+			public var affectationProvider:ArrayCollection;
+			[Bindable]
+			public var transportProvider:ArrayCollection;
+			[Bindable]
+			public var hotelProvider:ArrayCollection;
+			[Bindable]
+			public var gareProvider:ArrayCollection;
+			
+			public static var RELOAD:String = "reload";
+			
+			private function onCreateComplete():void
+			{
+				db = Database.getInstance();
+				query = new Query();
+				query.connect("conn1", db);
+				
+				query2 = new Query();
+				query2.connect("conn1", db);
+				
+				affectationProvider = AffectationProxy.Affectation;
+				secteurProvider		= SecteurProxy.Secteur;
+				professionProvider	= ProfessionSanteProxy.Profession;
+				hotelProvider 		= HotelProxy.HotelPelerin;
+				gareProvider		= GareProxy.Gare;
+				query5= new Query();
+				query5.connect("conn1", db);
+				query5.addEventListener(Query.QUERY_END, provideTransport);
+				query5.addEventListener(Query.QUERY_ERROR,queryError);
+				query5.execute("Select * from transport" )
+				
+				
+			}
+			
+			public function setFormulaire(item:Object):void
+			{
+				var myObject:Object = item;
+				pelerinID = item.id_pelerin;
+				personneID = item.id_personne;
+				nouveau.selected = (item.nouveau == "oui")?true:false;
+				couple.selected = (item.couple == "oui")?true:false;
+				conjoint.text = item.conjoint;
+				for(var i:int=0;i<gareProvider.length;++i)
+				{
+					gare.selectedIndex = i;
+					if(gare.selectedItem.id_gare == item.id_gare)
+						break;
+				}
+				for(i=0;i<hotelProvider.length;++i)
+				{
+					hotel.selectedIndex = i;
+					if(hotel.selectedItem.id_hebergement == item.id_hebergement)
+						break;
+				}
+				for(i=0;i<modeHebergement.dataProvider.length;++i)
+				{
+					modeHebergement.selectedIndex = i;
+					if(modeHebergement.selectedItem == item.modeHebergement)
+						break;
+				}
+				for(i=0;i<styleChambre.dataProvider.length;++i)
+				{
+					styleChambre.selectedIndex = i;
+					if(styleChambre.selectedItem == item.styleChambre)
+						break;
+				}
+				
+				desiderata.text = item.desiderata;
+				divers.text = item.divers;
+				paiementInsc.selected = (item.paiementInsc == "oui")?true:false;
+				montantInsc.text = item.montantInsc;
+				incomplet.selected = (item.incomplet== "oui")?true:false;
+			}
+			
+			private function provideTransport(evt:Object):void
+			{
+				transportProvider = query5.getRecords();
+			}
+			
+			private function queryEnd(evt:Object):void
+			{
+				this.dispatchEvent(new Event(RELOAD));
+				PopUpManager.removePopUp(this);
+			}	
+			
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			
+			protected function modifHospitalier(event:MouseEvent):void
+			{			
+				query.addEventListener(Query.QUERY_END, modIns);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				
+				query.execute("UPDATE pelerin " +
+					"SET nouveau ='"+ Tools.ouiNon(nouveau.selected) +"', desiderata ='"+Tools.sanitize(desiderata.text)+"', divers = '"+Tools.sanitize(divers.text)+
+					"',  couple='"+Tools.ouiNon(this.couple.selected)+
+					"', conjoint='"+Tools.sanitize(conjoint.text)+
+					"', id_gare='"+this.gare.selectedItem.id_gare+
+					"', id_hebergement='"+this.hotel.selectedItem.id_hebergement+
+					"', paiementInsc='"+Tools.ouiNon(this.paiementInsc.selected)+
+					"', montantInsc='"+this.montantInsc.text+
+					"', modeHebergement='"+this.modeHebergement.selectedLabel+
+					"', styleChambre='"+this.styleChambre.selectedLabel+
+					"', incomplet='"+Tools.ouiNon(this.incomplet.selected)+"'" +
+					"WHERE id_pelerin= '"+this.pelerinID+"'",Query.UPDATE);
+			}
+			
+			private function modIns(evt:Object):void
+			{
+				query2.addEventListener(Query.QUERY_END, queryEnd);
+				query2.addEventListener(Query.QUERY_ERROR,queryError);
+				query2.execute("UPDATE inscrire " +
+					"SET  id_hebergement="+this.hotel.selectedItem.id_hebergement+" WHERE id_pele="+index.peleActuel.id_pele +" and id_personne="+personneID ,Query.UPDATE);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:Form width="100%" height="100%">
+			
+			<mx:FormItem label="Nouveau">
+				<mx:CheckBox id="nouveau"/>
+			</mx:FormItem>
+			<mx:FormItem label="Monte à">
+				<mx:ComboBox id="gare" dataProvider="{gareProvider}" labelField="nom"/>
+			</mx:FormItem>
+			<mx:FormItem label="Mode hebergement">
+				<mx:ComboBox id="modeHebergement" dataProvider="['Paroisse','Secretariat','Personnel']"/>
+			</mx:FormItem>
+			<mx:FormItem label="Style chambre">
+				<mx:ComboBox id="styleChambre" dataProvider="['Simple','Double','Twin','Triple','Conjoint','Quadruple']"/>
+			</mx:FormItem>
+			<mx:FormItem label="Vient en couple">
+				<mx:CheckBox id="couple"/>
+				<mx:FormItem label="Nom du conjoint :">
+					<mx:TextInput id="conjoint"/>
+				</mx:FormItem>
+			</mx:FormItem>
+			<mx:FormItem label="Hébergement souhaité">
+				<mx:ComboBox id="hotel" dataProvider="{hotelProvider}" labelField="Libelle"/>
+			</mx:FormItem>
+			<mx:FormItem label="Désiderata">
+				<mx:TextInput id="desiderata" width="425"/>
+			</mx:FormItem>
+			<mx:FormItem label="Divers">
+				<mx:TextArea id="divers" width="425" height="60"/>
+			</mx:FormItem>
+			<mx:FormItem label="Paiement à l'inscription">
+				<mx:HBox>
+					<mx:CheckBox id="paiementInsc"/>
+					<mx:FormItem label="Montant">
+						<mx:TextInput id="montantInsc" restrict="0-9\."/>
+					</mx:FormItem>
+				</mx:HBox>
+				
+			</mx:FormItem>
+			<mx:FormItem label="Fiche incomplète">
+				<mx:CheckBox id="incomplet"/>
+			</mx:FormItem>
+		</mx:Form>
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="Modifier" click="modifHospitalier(event)" enabled="{!index.visuMode}"/>
+			<mx:Button label="annuler" click="queryEnd(event)"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:TitleWindow>

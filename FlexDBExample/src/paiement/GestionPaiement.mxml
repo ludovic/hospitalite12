@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Button x="647" y="34" label="Exporter Liste des paiements"/>
+	<mx:TabNavigator x="123" y="78" width="556" height="459">
+		<mx:Canvas label="Malades" width="100%" height="100%">
+			<mx:DataGrid x="11" y="36">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="col1"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="col2"/>
+					<mx:DataGridColumn headerText="Colonne 3" dataField="col3"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="10" text="Remise : 1"/>
+			<mx:Label x="157" y="10" text="Nombre de paiements : 50/50"/>
+			<mx:Button x="358" y="37" label="Ajouter"/>
+			<mx:Button x="358" y="67" label="Enlever"/>
+			<mx:DataGrid x="10" y="245">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="col1"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="col2"/>
+					<mx:DataGridColumn headerText="Colonne 3" dataField="col3"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="219" text="Remise : 2"/>
+			<mx:Label x="157" y="219" text="Nombre de paiements : 45/50"/>
+			<mx:Button x="357" y="246" label="Ajouter"/>
+			<mx:Button x="357" y="276" label="Enlever"/>
+			<mx:Button x="358" y="97" label="Deplacer vers"/>
+			<mx:Button x="357" y="306" label="Deplacer vers"/>
+			<mx:Button x="358" y="127" label="Rendre"/>
+			<mx:Button x="357" y="336" label="Rendre"/>
+		</mx:Canvas>
+		<mx:Canvas label="Hospitaliers" width="100%" height="100%">
+			<mx:DataGrid x="11" y="36">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="col1"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="col2"/>
+					<mx:DataGridColumn headerText="Colonne 3" dataField="col3"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="10" text="Remise : 1"/>
+			<mx:Label x="157" y="10" text="Nombre de paiements : 50/50"/>
+			<mx:Button x="358" y="37" label="Ajouter"/>
+			<mx:Button x="358" y="67" label="Enlever"/>
+			<mx:DataGrid x="10" y="245">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="col1"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="col2"/>
+					<mx:DataGridColumn headerText="Colonne 3" dataField="col3"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Label x="10" y="219" text="Remise : 2"/>
+			<mx:Label x="157" y="219" text="Nombre de paiements : 45/50"/>
+			<mx:Button x="357" y="246" label="Ajouter"/>
+			<mx:Button x="357" y="276" label="Enlever"/>
+			<mx:Button x="358" y="97" label="Deplacer vers"/>
+			<mx:Button x="357" y="306" label="Deplacer vers"/>
+			<mx:Button x="358" y="127" label="Rendre"/>
+			<mx:Button x="357" y="336" label="Rendre"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	
+</mx:Canvas>

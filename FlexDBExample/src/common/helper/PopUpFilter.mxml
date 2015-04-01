@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:PopUpButton xmlns:mx="http://www.adobe.com/2006/mxml">
+<mx:Script>
+	<![CDATA[
+		import mx.collections.ArrayCollection;
+		import mx.containers.HBox;
+		import mx.controls.DataGrid;
+		import mx.controls.Label;
+		import mx.controls.TextInput;
+		import mx.controls.dataGridClasses.DataGridColumn;
+		import mx.events.DropdownEvent;
+		import mx.events.FlexEvent;
+		public var dataGrid:DataGrid;
+		private var inputList:Object = new Object();
+
+		protected function popupbutton1_creationCompleteHandler(event:Event):void
+		{
+			var columnArray:Array = dataGrid.columns;
+			for(var i:int=0;i< columnArray.length;++i)
+			{
+				var column:DataGridColumn = columnArray[i];
+				var item:HBox = new HBox();
+				var label:Label = new Label();
+				label.text = column.headerText;
+				var input:TextInput = new TextInput();
+				inputList[column.dataField]=input;
+				item.addChild(label);
+				item.addChild(input);
+				tileBox.addChild(item);
+			}
+		}
+		
+		private function searchModel(item:Object):Boolean
+		{
+			var isMatch:Boolean = true
+			
+			for(var prop:String in item)
+			{
+				if((item[prop]!=null)&&(inputList.hasOwnProperty(prop)))
+				{
+					if(inputList[prop].text != "")
+						if(String(item[prop]).toLowerCase().search(inputList[prop].text.toLowerCase()) != -1)
+						{
+							isMatch = true
+						}
+						else
+							return false;
+				}
+			}
+			return isMatch;    
+		}
+
+		protected function filtrer(event:MouseEvent=null):void
+		{ 
+			var provider:ArrayCollection = (dataGrid.dataProvider as ArrayCollection);
+			provider.filterFunction = searchModel;
+			provider.refresh();
+			dataGrid.dataProvider = provider;
+			this.close();
+		}
+		
+		protected function clearText(event:MouseEvent):void
+		{ 
+			for(var textInput:String in inputList)
+			{
+				(inputList[textInput] as TextInput).text = "";
+			}
+			this.filtrer();
+		}
+
+	]]>
+</mx:Script>
+<mx:popUp>
+	<mx:VBox backgroundColor="white">
+	<mx:Tile id="tileBox" paddingLeft="5" paddingTop="5" paddingRight="5" paddingBottom="5" width="800" creationComplete="popupbutton1_creationCompleteHandler(event)" maxHeight="400">
+		
+	</mx:Tile>
+	<mx:HBox>
+		<mx:Button label="Filtrer" click="filtrer(event)"/>
+		<mx:Button label="Réinitialiser" click="clearText(event)"/>
+	</mx:HBox>
+	</mx:VBox>
+</mx:popUp>	
+</mx:PopUpButton>

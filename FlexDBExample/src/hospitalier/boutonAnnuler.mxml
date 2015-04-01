@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	
+	<mx:Script>
+		<![CDATA[
+			protected function lblData_clickHandler(event:MouseEvent):void
+			{
+				var l:int=0;
+			}
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Button  id="lblData" top="0" left="0" right="0" bottom="0" label="X" click="lblData_clickHandler(event)"/>
+</mx:Canvas>

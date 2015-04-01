@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" updateComplete="refresh(event)">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			
+			public static var role:Object = "Hospitalier";
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var provider:ArrayCollection;
+			
+			
+			
+			public function generateModuleProvider(chambreId:Object=0,type:String=""):void
+			{
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				if(index.categorieUtilisateur == "admin")
+				{
+					if(roleSelecteur.selectedLabel=="Hospitalier")
+						ModuleSansHotel.role="Hospitalier";
+					else
+						ModuleSansHotel.role="Pélerin";
+				}
+					
+				if((index.categorieUtilisateur == "hospitalier")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Hospitalier")))
+				{
+					query.execute("select nom, prenom,DateNaissance,af.id_personne, he.Libelle,desiderata,chambreInd,couple,conjoint " +
+						"from `inscrire` ins, " +
+						"(SELECT p.nom, p.prenom, p.id_personne, p.DateNaissance,h.id_hospitalier,h.id_hebergement,h.desiderata,h.chambreInd,h.couple,h.conjoint" +
+						" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh" +
+						" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+						" AND h.id_hospitalier = eh.id_hospitalier " +
+						" AND h.annuler='non' " +
+						" AND p.id_personne = eh.id_personne" +
+						" GROUP BY p.id_personne) af, `hebergement` he" +
+						" where ins.id_personne=af.id_personne" +
+						" AND ins.id_hebergement_retenu =0" +
+						" AND ins.id_pele ="+ index.peleActuel.id_pele+
+						" AND af.id_hebergement = he.id_hebergement" 
+					);
+				}
+				else if((index.categorieUtilisateur == "pelerin")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Pélerin")))
+				{
+					query.execute("select nom, prenom,DateNaissance, af.id_personne, he.Libelle,'' as desiderata,'' as chambreInd, '' as couple,'' as conjoint  " +
+						"from `inscrire` ins, " +
+						"(SELECT p.nom, p.prenom, p.id_personne,p.DateNaissance, pel.id_pelerin,pel.id_hebergement" +
+						" FROM `personne` p, `pelerin` pel, `etre_pelerin` ep" +
+						" WHERE ep.id_pele ="+ index.peleActuel.id_pele+
+						" AND pel.id_pelerin = ep.id_pelerin " +
+						" AND pel.annuler='non' " +
+						" AND p.id_personne = ep.id_personne" +
+						" GROUP BY p.id_personne) af, `hebergement` he" +
+						" where ins.id_personne=af.id_personne" +
+						" AND ins.id_hebergement_retenu =0" +
+						" AND ins.id_pele ="+ index.peleActuel.id_pele+
+						" AND af.id_hebergement = he.id_hebergement" 
+					);
+				}
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
+				for(var i:int=0;i<provider.length;++i)
+				{
+					var myObject:Object = provider[i]
+					myObject.age = Tools.age(Tools.stringToDate(myObject.DateNaissance) , Tools.stringToDate(index.peleActuel.Debut));
+				}
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show(query.getError());
+			}
+			
+			protected function affecterA(event:MouseEvent):void
+			{
+				if((listHospi.selectedItems)&&(listHospi.selectedItems.length>0))
+				{
+					var formulaireHotel:FormulaireHotel = new FormulaireHotel();
+					PopUpManager.addPopUp(formulaireHotel,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireHotel);
+					formulaireHotel.setFormulaire(listHospi.selectedItems);
+					formulaireHotel.addEventListener(Hotel.RELOAD_MODULE,refresh);
+				}
+			}
+			
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Hotel.RELOAD_MODULE));
+			}
+			
+			private var searchTimer:Timer;
+			
+			public function filter():void
+			{
+				if(!searchTimer)
+				{
+					searchTimer = new Timer(500,1);
+					searchTimer.addEventListener(TimerEvent.TIMER_COMPLETE,function(evt:Event):void{
+						provider.filterFunction = searchModel;
+						provider.refresh();	
+					});
+				}	
+				else
+					searchTimer.reset();
+				
+				searchTimer.start();
+			}
+			
+			private function searchModel(item:Object):Boolean
+			{
+				var isMatch:Boolean = false
+				
+				if(item['nom']!=null)
+				{
+					if(String(item['nom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				if(item['prenom']!=null)
+				{
+					if(String(item['prenom']).toLowerCase().search(searchInput.text.toLowerCase()) != -1)
+					{
+						isMatch = true
+					}
+				}
+				
+				return isMatch;    
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="title" text="{titleText}"/>
+	<mx:VBox height="100%" width="100%">
+		<mx:HBox width="100%">
+			<mx:Button label="Affecter à" click="affecterA(event)" enabled="{!index.visuMode}"/>
+			<mx:Canvas>
+				<mx:Image source="@Embed('/assets/search.png')" />
+				<mx:TextInput id="searchInput" left="20" borderStyle="none" backgroundAlpha="0" width="110" focusThickness="0" change="{this.filter()}"
+							  borderSkin="@Embed('/assets/blank.png')" textAlign="left"
+							  />
+			</mx:Canvas>
+			<mx:Spacer width="100%"/>
+			<mx:ComboBox id="roleSelecteur" dataProvider="{new ArrayCollection(['Hospitalier','Pélerin'])}" visible="{(index.categorieUtilisateur == 'admin')}" change="generateModuleProvider(event)"/>
+		</mx:HBox>
+		<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%" width="100%" allowMultipleSelection="true">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+				<mx:DataGridColumn headerText="Age" dataField="age"/><mx:DataGridColumn headerText="Hotel Demandé" dataField="Libelle"/>
+				<mx:DataGridColumn headerText="En Couple" dataField="couple" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				<mx:DataGridColumn headerText="Nom Conjoint" dataField="conjoint" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				<mx:DataGridColumn headerText="Ch. Ind." dataField="chambreInd" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				<mx:DataGridColumn headerText="Desiderata" dataField="desiderata" visible="{(index.categorieUtilisateur != 'pelerin')}"/>
+				 
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:VBox>
+</mx:VBox>
