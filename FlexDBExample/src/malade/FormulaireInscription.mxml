@@ -3,15 +3,17 @@
 
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
-			import hospitalier.ListeNom;
+			import flash.net.navigateToURL;
 			
 			import mx.charts.renderers.DiamondItemRenderer;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
+			
+			import common.events.DocEvent;
+			import common.helper.Tools;
+			
+			import hospitalier.ListeNom;
 			
 			import phi.db.Database;
 			import phi.db.Query;
@@ -207,7 +209,7 @@
 					" `deplace_fauteuil`, `deplace_brancard`, `deplace_escalier`, `protheses`, `deficit_vision`, `deficit_audition`, `deficit_parole`, `deficit_desorientation`," +
 					" `deficit_fugue`, `reg_normal`, `reg_diab`, `reg_ss_sel`, `reg_mix`, `reg_pb_deglutition`, `reg_eau_gef`, `reg_chambre`, `soin_inf_inj`, `soin_inf_inj_type`, " +
 					"`soin_inf_inj_horraire`, `soin_inf_pansement`, `soin_inf_pansement_type`, `autre_soin_spec`, `autre_soin_prise_med`, `autre_soin_oxygene`, `extracteur`, " +
-					"`autre_soin_oxygene_debit`, `toilette_aide_total`, `toilette_aide_partiel`, `toilette_aide_lit`, `coucher_aide`, `coucher_barriere_lit`, `coucher_potence`, `matelas_anti_esc`, `souleve_malade`, " +
+					"`autre_soin_oxygene_debit`, `toilette_aide_total`, `toilette_aide_partiel_avec`, `toilette_aide_partiel_sans`, `toilette_aide_lit`, `coucher_aide`, `coucher_barriere_lit`, `coucher_potence`, `matelas_anti_esc`, `souleve_malade`, " +
 					"`incont_bes_change`, `incont_jour`, `incont_nuit`, `incont_sond_uri`, `incont_etui_pen`, `incont_poche_stom`, `incont_poche_stom_type`,`incomplet`,`codification`,`paiementInsc`,`montantInsc`,`divers`, `medecin_traitant`, " +
 					"`tel_medecin`, `tel_retour`, `pos_voy_electrique`, `coussin_esc`, `reg_hache`, `parenterale`, `ppc`, `dialyse`, `lit_medicalise`,`reg_aide_repas`)" +
 					" VALUES ('"+taille.value+"', '"+poids.value+"', '"+Number(hospitalierCB.selected)+"', '"+Number(familleCB.selected)+"', '"+Number(tuteurCB.selected)+"', '"+Number(personneCB.selected)+"', '"+Tools.sanitize(nom_prenom.text)+"', '"+Tools.sanitize(tel.text)+"'," +
@@ -216,7 +218,7 @@
 					" '"+Number(fugueCB.selected)+"', '"+Number(regimeNormalCB.selected)+"', '"+Number(diabetiqueCB.selected)+"', '"+Number(sansSelCB.selected)+"'," +
 					" '"+Number(mixeCB.selected)+"', '"+Number(troubleDeglutionCB.selected)+"', '"+Number(eauGelifieeCB.selected)+"', '"+Number(mangeChambreCB.selected)+"', '"+Number(injectionCB.selected)+"', '"+Tools.sanitize(injectionType.text)+"'," +
 					" '"+Tools.sanitize(injectionHorraire.text)+"', '"+Number(pansementCB.selected)+"', '"+Tools.sanitize(pansementType.text)+"', '"+Tools.sanitize(autreSoin.text)+"', '"+Number(priseMedicamentControleeCB.selected)+"', '"+Number(oxygeneCB.selected)+"', '" +Number(extracteurCB.selected)+"', " +
-					" '"+Tools.sanitize(debitOxygene.text)+"', '"+Number(toilettesAideTotaleCB.selected)+"', '"+Number(toilettesAidePartielleCB.selected)+"', '"+Number(toiletteLitCB.selected)+"', '"+Number(coucherAideCB.selected)+"', '"+Number(coucherBarriereCB.selected)+"', '"+Number(coucherPotenceCB.selected)+"', '"+Number(matelasAntiEscCB.selected)+"', '"+Number(souleveMaladeCB.selected)+"', " +
+					" '"+Tools.sanitize(debitOxygene.text)+"', '"+Number(toilettesAideTotaleCB.selected)+"', '"+Number(toilettesAidePartielleAvecCB.selected)+"', '"+Number(toilettesAidePartielleSansCB.selected)+"', '"+Number(toiletteLitCB.selected)+"', '"+Number(coucherAideCB.selected)+"', '"+Number(coucherBarriereCB.selected)+"', '"+Number(coucherPotenceCB.selected)+"', '"+Number(matelasAntiEscCB.selected)+"', '"+Number(souleveMaladeCB.selected)+"', " +
 					" '"+Number(incontinenceChangeCB.selected)+"', '"+Number(incontinenceJourCB.selected)+"', '"+Number(incontinenceNuitCB.selected)+"'," +
 					" '"+Number(sondeUrinaireCB.selected)+"', '"+Number(etuiPenienCB.selected)+"', '"+Number(pochesPourStomieCB.selected)+"'," +
 					" '"+Tools.sanitize(typeStomie.text)+"','"+Tools.ouiNon(incomplet.selected)+"', '"+Tools.sanitize(codification.text)+"'," +
@@ -261,6 +263,7 @@
 				this.dispatchEvent(new Event(RELOAD));
 				PopUpManager.removePopUp(this);
 			}
+			
 		]]>
 	</mx:Script>
 	<mx:VBox width="100%">
@@ -445,7 +448,8 @@
 			<mx:FormItem label="Toilettes">
 				<mx:HBox>
 					<mx:CheckBox label="Aide totale" id="toilettesAideTotaleCB"/>
-					<mx:CheckBox label="Aide partielle" id="toilettesAidePartielleCB"/>
+					<mx:CheckBox label="Aide partielle avec toilette intime" id="toilettesAidePartielleAvecCB"/>
+					<mx:CheckBox label="Aide partielle sans toilette intime" id="toilettesAidePartielleSansCB"/>
 					<mx:CheckBox label="Toilette au lit" id="toiletteLitCB"/>
 				</mx:HBox>
 			</mx:FormItem>

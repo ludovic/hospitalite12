@@ -57,7 +57,7 @@
 					" lastUpdate, libelle, liea, lits, matelas_anti_esc, montantInsc, monte_marches_car, Nom, num,	ch.numero, ordre, paiementInsc, pers_prev_fam,	"+
 				" pers_prev_hosp, pers_prev_nom, pers_prev_pers_conf, pers_prev_tel, pers_prev_tut, poids, Portable, pos_voy_assis,	pos_voy_assis_ft, pos_voy_couche, Prenom, protheses, reg_chambre, "+	
 				" reg_diab, reg_eau_gef, reg_mix, reg_normal, reg_pb_deglutition, reg_ss_sel, section, sexe, soin_inf_inj, soin_inf_inj_horraire, soin_inf_inj_type, soin_inf_pansement, soin_inf_pansement_type, "+
-				 "souleve_malade,	taille,	Tel, Titre, toilette_aide_lit, toilette_aide_partiel, toilette_aide_total, valid, "+
+				 "souleve_malade,	taille,	Tel, Titre, toilette_aide_lit, toilette_aide_partiel_avec, toilette_aide_partiel_sans, toilette_aide_total, valid, "+
 				 "medecin_traitant, tel_medecin, tel_retour, pos_voy_electrique, coussin_esc, reg_hache, parenterale, ppc, dialyse, lit_medicalise, reg_aide_repas "+
 			 "FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
 					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND s.id_secteur = p.id_secteur AND m.annuler='non' AND em.id_pele="+index.peleActuel.id_pele);

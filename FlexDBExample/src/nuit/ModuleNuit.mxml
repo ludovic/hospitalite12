@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" label="{this.titleText}">
+	<mx:Script>
+		<![CDATA[
+			import common.events.DocEvent;
+			import common.helper.SortUtil;
+			import common.helper.Tools;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			import phi.db.Database;
+			import phi.db.Query;
+			import phi.interfaces.IDatabase;
+			import phi.interfaces.IQuery;
+			
+			private var db       :IDatabase;
+			private var query    :IQuery;
+			private var query2    :IQuery;
+			
+			[Bindable]
+			public var titleText:String;
+			[Bindable]
+			public var provider:ArrayCollection;
+			private var nuit:Number;
+			
+			
+			
+			public function generateModuleProvider(nuit:int):void
+			{
+				this.nuit=nuit;
+				db = Database.getInstance();
+				query= new Query();
+				query.connect("conn1", db);
+				query.addEventListener(Query.QUERY_END, provideModule);
+				query.addEventListener(Query.QUERY_ERROR,queryError);
+				query.execute("select nom, prenom,DateNaissance, nuit1, nuit2, nuit3, chambreInd, aff.service, aff2.service as service2, id_hospitalier,af.Profession " +
+					"from `affectation` aff, `affectation` aff2, " +
+					"(SELECT p.nom, p.prenom,p.DateNaissance, h.nuit1, h.nuit2, h.nuit3, h.chambreInd, h.id_affectation, h.id_affectation_comp, h.id_hospitalier, ps.Profession" +
+					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh, `obtenir_nuit` o, `affectation` a, `profession_sante` ps " +
+					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
+					" AND eh.id_hospitalier = o.id_hospitalier " +
+					" AND o.nuit = "+nuit +
+					" AND h.id_hospitalier = eh.id_hospitalier " +
+					" AND p.id_personne = eh.id_personne" +
+					" AND p.id_profession_sante = ps.id_profession_sante" +
+					" AND h.annuler='non' " +
+					" GROUP BY p.id_personne) af " +
+					"where aff.id_affectation=af.id_affectation "+
+					"and aff2.id_affectation=af.id_affectation_comp");
+			}
+			
+			private function provideModule(evt:Object):void
+			{
+				provider = query.getRecords();
+				for(var i:int=0;i<provider.length;++i)
+				{
+					var myObject:Object = provider[i]
+					myObject.age = Tools.age(Tools.stringToDate(myObject.DateNaissance) , Tools.stringToDate(index.peleActuel.Debut));
+				}
+				provider.sort = SortUtil.minNomPrenomSort();
+				provider.refresh();
+			}
+			private function queryError(evt:Event):void
+			{
+				Alert.show((evt.target as Query).getError());
+			}
+			protected function affecterAussiA(event:Object=null):void
+			{
+				if(listHospi.selectedItem)
+				{
+					var formulaireAffectation:FormulaireAffectation = new FormulaireAffectation();
+					PopUpManager.addPopUp(formulaireAffectation,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireAffectation);
+					formulaireAffectation.setFormulaire(listHospi.selectedItem);
+					formulaireAffectation.addEventListener(Nuit.RELOAD_MODULE,refresh);
+				}
+			}
+			
+			protected function enlever(event:Object=null):void
+			{
+				if(listHospi.selectedItem)
+				{
+					query2= new Query();
+					query2.connect("conn1", db);
+					query2.addEventListener(Query.QUERY_END,refresh);
+					query2.addEventListener(Query.QUERY_ERROR,queryError);
+					query2.execute("DELETE FROM obtenir_nuit " +
+						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND nuit = '"+nuit+"'",Query.DELETE);
+				}
+			}
+			private function refresh(evt:Event):void
+			{
+				this.dispatchEvent( new DocEvent(Nuit.RELOAD_MODULE));
+			}
+			
+			protected function deplacerVers(event:MouseEvent):void
+			{
+				if(listHospi.selectedItem)
+				{
+					var formulaireAffectation:FormulaireAffectation = new FormulaireAffectation();
+					PopUpManager.addPopUp(formulaireAffectation,this.parentApplication as DisplayObject,true);
+					PopUpManager.centerPopUp(formulaireAffectation);
+					formulaireAffectation.setFormulaire(listHospi.selectedItem,nuit);
+					formulaireAffectation.addEventListener(Nuit.RELOAD_MODULE,refresh);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:VBox height="100%" width="100%">
+		<mx:HBox>
+			<mx:Label text="{this.titleText}"/>
+		</mx:HBox>
+		<mx:HBox height="100%" width="100%">
+			<mx:DataGrid id="listHospi" dataProvider="{provider}" height="100%" width="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Nom" dataField="nom"/>
+					<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
+					<mx:DataGridColumn headerText="Nuit 1" dataField="nuit1"/>
+					<mx:DataGridColumn headerText="Nuit 2" dataField="nuit2"/>
+					<mx:DataGridColumn headerText="Nuit 3" dataField="nuit3"/>
+					<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
+					<mx:DataGridColumn headerText="Aff. Fac. Dem." dataField="service2"/>
+					<mx:DataGridColumn headerText="Age" dataField="age" width="50"/>
+					<mx:DataGridColumn headerText="Profession S." dataField="Profession"/>
+					<mx:DataGridColumn headerText="Chambre P." dataField="chambreInd"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:VBox height="100%">
+				<mx:Button label="Affecter aussi à" click="affecterAussiA(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Enlever" click="enlever(event)" width="120" enabled="{!index.visuMode}"/>
+				<mx:Button label="Deplacer vers" click="deplacerVers(event)" width="120" enabled="{!index.visuMode}"/>
+			</mx:VBox>
+		</mx:HBox>
+	</mx:VBox>
+</mx:Canvas>

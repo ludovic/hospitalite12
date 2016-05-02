@@ -2,10 +2,8 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="onCreateComplete()" xmlns:helper="common.helper.*">
 	<mx:Script>
 		<![CDATA[
-			import common.helper.DataGridDataExporter;
-			import common.helper.SortUtil;
-			
 			import flash.net.FileReference;
+			import flash.net.navigateToURL;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -13,6 +11,9 @@
 			import mx.events.CloseEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
+			
+			import common.helper.DataGridDataExporter;
+			import common.helper.SortUtil;
 			
 			import phi.db.Database;
 			import phi.db.Query;
@@ -146,6 +147,13 @@
 						break;
 				}
 			}
+			
+			protected function pdfFiches(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/malades.php?pele=" +index.peleActuel.id_pele;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
+			}
 		]]>
 	</mx:Script>
 	<mx:VBox width="100%" height="90%">
@@ -162,6 +170,8 @@
 			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
 			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
 			<mx:Spacer width="100%"/>
+			
+			<mx:Button label="Générer fiches" click="pdfFiches(event)" />
 			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="true" includeInLayout="true"/>
 		</mx:HBox>
 		<mx:DataGrid id="dataGrid" width="100%" height="100%"  dataProvider="{users}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
@@ -173,6 +183,8 @@
 				<mx:DataGridColumn dataField="incomplet" headerText="Fiche incomplète"/>
 				<mx:DataGridColumn dataField="codification" headerText="Codification"/>
 				<mx:DataGridColumn dataField="section" headerText="Secteur"/>
+				<mx:DataGridColumn dataField="cree_le" headerText="crée le"/>
+				
 				
 				<mx:DataGridColumn dataField="pers_prev_hosp" headerText="pers_prev_hosp" visible="false"/>
 				<mx:DataGridColumn dataField="pers_prev_fam" headerText="pers_prev_fam" visible="false"/>
@@ -215,7 +227,8 @@
 				<mx:DataGridColumn dataField="autre_soin_oxygene_debit" headerText="autre_soin_oxygene_debit" visible="false"/>
 				<mx:DataGridColumn dataField="extracteur" headerText="extracteur" visible="false"/>
 				<mx:DataGridColumn dataField="toilette_aide_total" headerText="toilette_aide_total" visible="false"/>
-				<mx:DataGridColumn dataField="toilette_aide_partiel" headerText="toilette_aide_partiel" visible="false"/>
+				<mx:DataGridColumn dataField="toilette_aide_partiel_avec" headerText="toilette_aide_partiel avec T.I." visible="false"/>
+				<mx:DataGridColumn dataField="toilette_aide_partiel_sans" headerText="toilette_aide_partiel sans T.I." visible="false"/>
 				<mx:DataGridColumn dataField="toilette_aide_lit" headerText="toilette_aide_lit" visible="false"/>
 				<mx:DataGridColumn dataField="coucher_aide" headerText="coucher_aide" visible="false"/>
 				<mx:DataGridColumn dataField="coucher_barriere_lit" headerText="coucher_barriere_lit" visible="false"/>

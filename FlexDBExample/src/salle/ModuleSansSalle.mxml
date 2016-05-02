@@ -32,10 +32,10 @@
 				query.connect("conn1", db);
 				query.addEventListener(Query.QUERY_END, provideModule);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("select nom, prenom, DateNaissance, aff.service, id_hospitalier, nouveau, incomplet, nuit1, nuit2, nuit3 " +
+				query.execute("select nom, prenom, DateNaissance, aff.service, id_hospitalier, nouveau, incomplet, nuit1, nuit2, nuit3, Profession " +
 					"from `affectation` aff, " +
-					"(SELECT p.nom, p.prenom,p.DateNaissance, h.id_affectation, h.id_hospitalier, h.nouveau, h.incomplet, h.nuit1, h.nuit2, h.nuit3" +
-					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh,  `affectation` a, `obtenir` ob " +
+					"(SELECT p.nom, p.prenom,p.DateNaissance, h.id_affectation, h.id_hospitalier, h.nouveau, h.incomplet, h.nuit1, h.nuit2, h.nuit3, ps.Profession" +
+					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh,  `affectation` a, `obtenir` ob, `profession_sante` ps " +
 					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 					" AND h.annuler='non' " +
 					" AND eh.id_hospitalier NOT IN (" +
@@ -43,9 +43,10 @@
 					")" +
 					" AND h.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne" +
+					" AND ps.id_profession_sante=p.id_profession_sante" +
 					" AND ob.id_hospitalier = h.id_hospitalier" +
 					" AND ob.id_affectation = a.id_affectation" +
-					" AND a.service = 'Salles'"+
+					" AND (a.service = 'Salles' OR a.service = 'Infirmier')"+
 					" GROUP BY p.id_personne) af " +
 					"where aff.id_affectation=af.id_affectation");
 				
@@ -170,6 +171,7 @@
 				<mx:DataGridColumn headerText="Prenom" dataField="prenom"/>
 				<mx:DataGridColumn headerText="Age" dataField="age" width="50"/>
 				<mx:DataGridColumn headerText="Service Demandé" dataField="service"/>
+				<mx:DataGridColumn headerText="Profession" dataField="Profession"/>
 				<mx:DataGridColumn headerText="Nouveau" dataField="nouveau"/>
 				<mx:DataGridColumn headerText="Pélé incomplet" dataField="incomplet"/>
 				<mx:DataGridColumn headerText="Nuit" dataField="nuit"/>

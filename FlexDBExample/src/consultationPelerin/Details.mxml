@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			public var idPersonne:int;
+			override public function set data(value:Object):void
+			{
+				titre.text = "";
+				nom.text = "";
+				prenom.text = "";
+				adresse.text = "";
+				codep.text = "";
+				ville.text = "";
+				secteur.text = "";
+				
+				transport.text = "";
+				nomHeb.text ="";
+				nomGare.text =  "";
+				heureAller.text = "";
+				
+				transportR.text = "";
+				nomGareR.text =  "";
+				heureRetour.text = "";
+				
+				var info:Object = value.info;
+				var transHeb:Object = value.transHeb;
+				var transRetour:Object = value.transRetour;
+				
+				idPersonne = info.id_personne;
+				titre.text = info.Titre;
+				nom.text = info.Nom;
+				prenom.text = info.Prenom;
+				adresse.text = info.Adresse1;
+				codep.text = info.CodePostal;
+				ville.text = info.Commune;
+				secteur.text = info.section;
+				if(transHeb)
+				{
+					transport.text = transHeb.nom_transport;
+					nomHeb.text = transHeb.Libelle;
+					nomGare.text =  transHeb.nom;
+					heureAller.text = transHeb.heure_aller;
+				}
+				
+				if(transRetour)
+				{
+					transportR.text = transRetour.nom_transport;
+					nomGareR.text =  transRetour.nom;
+					heureRetour.text = transRetour.heure_retour;
+				}
+
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%">
+		<mx:VBox id="info" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:HBox>
+				<mx:Label text="Titre : " fontWeight="bold"/><mx:Label id="titre"/>
+				<mx:Label text="Nom : " fontWeight="bold"/><mx:Label id="nom"/>
+				<mx:Label text="Prénom : " fontWeight="bold"/><mx:Label id="prenom"/>
+			</mx:HBox>
+			<mx:Label text="Adresse : " fontWeight="bold"/><mx:Label id="adresse"/>
+			<mx:HBox>
+				<mx:Label text="Code Postal : " fontWeight="bold"/><mx:Label id="codep"/>
+				<mx:Label text="Ville : " fontWeight="bold"/><mx:Label id="ville"/>
+				<mx:Label text="Secteur : " fontWeight="bold"/><mx:Label id="secteur"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="Transport" label="Transport" borderStyle="solid" borderColor="0" borderThickness="1"  width="100%">
+			<mx:HBox>
+				<mx:Label text="Transport aller : " fontWeight="bold"/><mx:Label id="transport"/>
+				<mx:Label text="Gare aller : " fontWeight="bold"/><mx:Label id="nomGare"/>
+				<mx:Label text="Heure départ : " fontWeight="bold"/><mx:Label id="heureAller"/>
+			</mx:HBox>
+			<mx:HBox>
+				<mx:Label text="Transport retour : " fontWeight="bold"/><mx:Label id="transportR"/>
+				<mx:Label text="Gare retour: " fontWeight="bold"/><mx:Label id="nomGareR"/>
+				<mx:Label text="Heure retour: " fontWeight="bold"/><mx:Label id="heureRetour"/>
+			</mx:HBox>
+		</mx:VBox>
+		<mx:VBox id="Logement" label="Logement" borderStyle="solid" borderColor="0" borderThickness="1" width="100%">
+			<mx:Label text="Logement : " fontWeight="bold"/><mx:Label id="nomHeb"/>
+		</mx:VBox>
+	</mx:VBox>
+</mx:Canvas>

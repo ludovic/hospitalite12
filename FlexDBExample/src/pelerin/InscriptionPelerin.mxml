@@ -31,10 +31,10 @@
 				
 				query.addEventListener(Query.QUERY_END, queryEnd);
 				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, " +
-					" DateNaissance, desiderata, divers, etre_hospitalier, id_gare, pl.id_hebergement, he.Libelle, id_pele, pl.id_pelerin, p.id_personne, id_profession_sante, id_secteur, incomplet, modeHebergement, " +
+				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, section, " +
+					" DateNaissance, desiderata, divers, id_gare, pl.id_hebergement, he.Libelle, id_pele, pl.id_pelerin, p.id_personne, id_profession_sante, s.id_secteur, incomplet, modeHebergement, " +
 					"montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " +
-					" FROM etre_pelerin ep, personne p, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND pl.id_pelerin = ep.id_pelerin AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+					" FROM etre_pelerin ep, personne p, secteur s, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND pl.id_pelerin = ep.id_pelerin AND s.id_secteur=p.id_secteur AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private function queryEnd(evt:Object):void
@@ -115,10 +115,10 @@
 			
 			protected function reload(event:Object=null):void
 			{
-				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, " +
-					" DateNaissance, desiderata, divers, etre_hospitalier, id_gare, pel.id_hebergement, he.Libelle, id_pele, pel.id_pelerin, p.id_personne, id_profession_sante, id_secteur, incomplet, modeHebergement, " +
+				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, section, " +
+					" DateNaissance, desiderata, divers, id_gare, pel.id_hebergement, he.Libelle, id_pele, pel.id_pelerin, p.id_personne, id_profession_sante, s.id_secteur, incomplet, modeHebergement, " +
 					" montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " + 
-					" FROM etre_pelerin ep, personne p, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+					" FROM etre_pelerin ep, personne p, secteur s, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND annuler='non' AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
 			}
 			
 			private var pelerinAnnuler:Number
@@ -160,13 +160,14 @@
 			<helper:PopUpFilter label="Filtrer" dataGrid="{this.dataGrid}"/>
 			<helper:ColumnSelector dataGrid="{this.dataGrid}"/>
 			<mx:Spacer width="100%"/>
-			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="false" includeInLayout="false"/>
+			<mx:Button label="Exporter" click="exportDatagrid(event)" visible="true" includeInLayout="true"/>
 		</mx:HBox>
 		<mx:DataGrid id="dataGrid" width="100%" height="100%" dataProvider="{this.pelerinList}" selectable="true" itemClick="dataGrid_itemClickHandler(event)">
 			<mx:columns>
 				<mx:DataGridColumn dataField="nouveau" headerText="Nouveau"/>
 				<mx:DataGridColumn dataField="Nom" headerText="Nom"/>
 				<mx:DataGridColumn dataField="Prenom" headerText="Prenom"/>
+				<mx:DataGridColumn dataField="section" headerText="Secteur"/>
 				<mx:DataGridColumn dataField="Libelle" headerText="Herbergement Dem."/>
 				<mx:DataGridColumn dataField="desiderata" headerText="Desiderata"/>
 				<mx:DataGridColumn dataField="divers" headerText="Divers"/>

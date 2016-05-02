@@ -95,7 +95,8 @@
 				extracteurCB.selected = info.extracteur;
 				debitOxygene.text =	info.autre_soin_oxygene_debit;
 				toilettesAideTotaleCB.selected =info.toilette_aide_total;
-				toilettesAidePartielleCB.selected =	info.toilette_aide_partiel;
+				toilettesAidePartielleAvecCB.selected =	info.toilette_aide_partiel_avec;
+				toilettesAidePartielleSansCB.selected =	info.toilette_aide_partiel_sans;
 				toiletteLitCB.selected = info.toilette_aide_lit;
 				coucherAideCB.selected = info.coucher_aide;
 				coucherBarriereCB.selected = info.coucher_barriere_lit;
@@ -329,7 +330,8 @@
 		<mx:FormItem label="Toilettes">
 			<mx:HBox>
 				<mx:CheckBox label="Aide totale" id="toilettesAideTotaleCB"/>
-				<mx:CheckBox label="Aide partielle" id="toilettesAidePartielleCB"/>
+				<mx:CheckBox label="Aide partielle avec toilette intime" id="toilettesAidePartielleAvecCB"/>
+				<mx:CheckBox label="Aide partielle sans toilette intime" id="toilettesAidePartielleSansCB"/>
 				<mx:CheckBox label="Toilette au lit" id="toiletteLitCB"/>
 			</mx:HBox>
 		</mx:FormItem>

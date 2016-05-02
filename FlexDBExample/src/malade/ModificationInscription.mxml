@@ -3,12 +3,14 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
+			import flash.net.navigateToURL;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
+			
+			import common.events.DocEvent;
+			import common.helper.Tools;
 			
 			import phi.db.Database;
 			import phi.db.Query;
@@ -20,7 +22,8 @@
 			private var db       :IDatabase;
 			private var query    :IQuery;
 			
-			private var maladeID:Number
+			private var maladeID:Number;
+			private var personneID:Number;
 			
 			public static var RELOAD:String = "reload";
 			
@@ -38,6 +41,7 @@
 			{
 				var myObject:Object = item;
 				
+				personneID = item.id_personne
 				this.titre.selectedItem	= item.Titre;
 				this.nom.text 			= item.Nom;
 				this.prenom.text 		= item.Prenom;
@@ -100,7 +104,8 @@
 				extracteurCB.selected = item.extracteur;
 				debitOxygene.text =	item.autre_soin_oxygene_debit;
 				toilettesAideTotaleCB.selected =item.toilette_aide_total;
-				toilettesAidePartielleCB.selected =	item.toilette_aide_partiel;
+				toilettesAidePartielleAvecCB.selected =	item.toilette_aide_partiel_avec;
+				toilettesAidePartielleSansCB.selected =	item.toilette_aide_partiel_sans;
 				toiletteLitCB.selected = item.toilette_aide_lit;
 				coucherAideCB.selected = item.coucher_aide;
 				coucherBarriereCB.selected = item.coucher_barriere_lit;
@@ -193,7 +198,8 @@
 							" autre_soin_oxygene_debit = '"+Tools.sanitize(debitOxygene.text)+"',"+
 							" extracteur = '"+Number(extracteurCB.selected)+"',"+
 							" toilette_aide_total = "+Number(toilettesAideTotaleCB.selected)+","+
-							" toilette_aide_partiel = "+Number(toilettesAidePartielleCB.selected)+","+
+							" toilette_aide_partiel_avec = "+Number(toilettesAidePartielleAvecCB.selected)+","+
+							" toilette_aide_partiel_sans = "+Number(toilettesAidePartielleSansCB.selected)+","+
 							" toilette_aide_lit = "+Number(toiletteLitCB.selected)+","+
 							" coucher_aide = "+Number(coucherAideCB.selected)+","+
 							" coucher_barriere_lit = "+Number(coucherBarriereCB.selected)+","+
@@ -224,6 +230,13 @@
 							" lit_medicalise='"+ Number(litMedicaliseCB.selected)+"', " +
 							" reg_aide_repas='" + Number(aideRepasCB.selected)+ "' " +
 							" WHERE id_malade ="+maladeID ,Query.UPDATE);
+			}
+			
+			protected function pdfFiche(event:MouseEvent):void
+			{
+				var url:String = "http://logiciel.bouges.fr/pdf/malades.php?pele=" + index.peleActuel.id_pele + "&id=" + personneID;
+				var urlRequest:URLRequest = new URLRequest(url);
+				navigateToURL(urlRequest,"_blank");
 			}
 			
 		]]>
@@ -406,7 +419,8 @@
 			<mx:FormItem label="Toilettes">
 				<mx:HBox>
 					<mx:CheckBox label="Aide totale" id="toilettesAideTotaleCB"/>
-					<mx:CheckBox label="Aide partielle" id="toilettesAidePartielleCB"/>
+					<mx:CheckBox label="Aide partielle avec toilette intime" id="toilettesAidePartielleAvecCB"/>
+					<mx:CheckBox label="Aide partielle sans toilette intime" id="toilettesAidePartielleSansCB"/>
 					<mx:CheckBox label="Toilette au lit" id="toiletteLitCB"/>
 				</mx:HBox>
 			</mx:FormItem>
@@ -454,6 +468,7 @@
 		<mx:HBox width="100%" horizontalAlign="center">
 			<mx:Button label="Modifier" click="modifHospitalier(event)" enabled="{!index.visuMode}"/>
 			<mx:Button label="annuler" click="queryEnd(event)"/>
+			<mx:Button label="Générer fiche" click="pdfFiche(event)" />
 		</mx:HBox>
 	</mx:VBox>
 </mx:TitleWindow>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<actionScriptProperties mainApplicationPath="index.mxml" projectUUID="18ee6a6f-b83a-4bd5-9a31-11480d380e40" version="6">
-  <compiler additionalCompilerArguments="-locale en_US  -services services-config.xml" autoRSLOrdering="false" copyDependentFiles="true" flexSDK="Flex 3.6" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderLocation="G:/EasyPHP5.2.10/www/FlexDBExample-debug" outputFolderPath="bin-debug" sourceFolderPath="src" strict="true" targetPlayerVersion="10.0.0" useApolloConfig="false" useDebugRSLSwfs="true" verifyDigests="true" warn="true">
+<actionScriptProperties analytics="false" mainApplicationPath="index.mxml" projectUUID="18ee6a6f-b83a-4bd5-9a31-11480d380e40" version="11">
+  <compiler additionalCompilerArguments="-locale en_US  -services services-config.xml" autoRSLOrdering="false" copyDependentFiles="true" flexSDK="Flex 3.6A" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="G:/EasyPHP5.2.10/www/FlexDBExample-debug" removeUnusedRSL="true" rootURL="" sourceFolderPath="src" strict="true" targetPlayerVersion="10.0.0" useApolloConfig="false" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
     <compilerSourcePath/>
     <libraryPath defaultLinkType="0">
       <libraryPathEntry kind="4" path="">
@@ -17,5 +17,7 @@
     <application path="hospitalier/hospitalier.mxml"/>
   </applications>
   <modules/>
+  <workers/>
   <buildCSSFiles/>
+  <flashCatalyst validateFlashCatalystCompatibility="false"/>
 </actionScriptProperties>
