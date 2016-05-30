@@ -124,6 +124,7 @@
 				ppcCB.selected = info.ppc;
 				dialyseCB.selected = info.dialyse;
 				litMedicaliseCB.selected = info.lit_medicalise;
+				verticalisateurCB.selected = info.verticalisateur;
 				aideRepasCB.selected = info.reg_aide_repas;
 				
 				if(transHeb)
@@ -343,6 +344,7 @@
 				<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
 				<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
 				<mx:CheckBox label="Lit médicalisé" id="litMedicaliseCB"/>
+				<mx:CheckBox label="Verticalisateur" id="verticalisateurCB"/>
 			</mx:HBox>
 		</mx:FormItem>
 		<mx:FormItem label="Incontinence">

@@ -252,6 +252,7 @@
 				<mx:DataGridColumn dataField="ppc" headerText="ppc" visible="false"/>
 				<mx:DataGridColumn dataField="dialyse" headerText="dialyse" visible="false"/>
 				<mx:DataGridColumn dataField="lit_medicalise" headerText="lit_medicalise" visible="false"/>
+				<mx:DataGridColumn dataField="verticalisateur" headerText="verticalisateur" visible="false"/>
 				<mx:DataGridColumn dataField="reg_aide_repas" headerText="reg_aide_repas" visible="false"/>
 				<mx:DataGridColumn dataField="divers" headerText="divers" visible="false"/>
 				<mx:DataGridColumn dataField="incomplet" headerText="incomplet" visible="false"/>

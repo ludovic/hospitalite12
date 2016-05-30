@@ -134,6 +134,7 @@
 				ppcCB.selected = item.ppc;
 				dialyseCB.selected = item.dialyse;
 				litMedicaliseCB.selected = item.lit_medicalise;
+				verticalisateurCB.selected = item.verticalisateur;
 				aideRepasCB.selected = item.reg_aide_repas;
 			}
 			
@@ -228,6 +229,7 @@
 							" ppc='" + Number(ppcCB.selected)+ "'," +
 							" dialyse='" + Number(dialyseCB.selected)+ "'," +
 							" lit_medicalise='"+ Number(litMedicaliseCB.selected)+"', " +
+							" verticalisateur='"+ Number(verticalisateurCB.selected)+"', " +
 							" reg_aide_repas='" + Number(aideRepasCB.selected)+ "' " +
 							" WHERE id_malade ="+maladeID ,Query.UPDATE);
 			}
@@ -432,6 +434,7 @@
 					<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
 					<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
 					<mx:CheckBox label="Lit médicalisé" id="litMedicaliseCB"/>
+					<mx:CheckBox label="Verticalisateur" id="verticalisateurCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Incontinence">

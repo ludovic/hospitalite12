@@ -211,7 +211,7 @@
 					"`soin_inf_inj_horraire`, `soin_inf_pansement`, `soin_inf_pansement_type`, `autre_soin_spec`, `autre_soin_prise_med`, `autre_soin_oxygene`, `extracteur`, " +
 					"`autre_soin_oxygene_debit`, `toilette_aide_total`, `toilette_aide_partiel_avec`, `toilette_aide_partiel_sans`, `toilette_aide_lit`, `coucher_aide`, `coucher_barriere_lit`, `coucher_potence`, `matelas_anti_esc`, `souleve_malade`, " +
 					"`incont_bes_change`, `incont_jour`, `incont_nuit`, `incont_sond_uri`, `incont_etui_pen`, `incont_poche_stom`, `incont_poche_stom_type`,`incomplet`,`codification`,`paiementInsc`,`montantInsc`,`divers`, `medecin_traitant`, " +
-					"`tel_medecin`, `tel_retour`, `pos_voy_electrique`, `coussin_esc`, `reg_hache`, `parenterale`, `ppc`, `dialyse`, `lit_medicalise`,`reg_aide_repas`)" +
+					"`tel_medecin`, `tel_retour`, `pos_voy_electrique`, `coussin_esc`, `reg_hache`, `parenterale`, `ppc`, `dialyse`, `lit_medicalise`, `verticalisateur`,`reg_aide_repas`)" +
 					" VALUES ('"+taille.value+"', '"+poids.value+"', '"+Number(hospitalierCB.selected)+"', '"+Number(familleCB.selected)+"', '"+Number(tuteurCB.selected)+"', '"+Number(personneCB.selected)+"', '"+Tools.sanitize(nom_prenom.text)+"', '"+Tools.sanitize(tel.text)+"'," +
 					" '"+Number(voyageAssisCB.selected)+"', '"+Number(voyageCoucheCB.selected)+"', '"+Number(voyageFauteuilRCB.selected)+"', '"+Number(peutMonterMarcheCB.selected)+"', '"+Number(deplaceSeulCB.selected)+"', '"+Number(aideCB.selected)+"', '"+Number(cannesCB.selected)+"', '"+Number(deambulateurCB.selected)+"', " +
 					" '"+Number(fauteuilRCB.selected)+"', '"+Number(brancardCB.selected)+"', '"+Number(escalierCB.selected)+"', '"+Tools.sanitize(protheses.text)+"', '"+Number(visionCB.selected)+"', '"+Number(auditionCB.selected)+"', '"+Number(paroleCB.selected)+"', '"+Number(desorientationCB.selected)+"', " +
@@ -224,7 +224,7 @@
 					" '"+Tools.sanitize(typeStomie.text)+"','"+Tools.ouiNon(incomplet.selected)+"', '"+Tools.sanitize(codification.text)+"'," +
 					" '"+Tools.ouiNon(this.paiementInsc.selected)+"','"+this.montantInsc.text+"','"+Tools.sanitize(divers.text)+"'," +
 					" '"+Tools.sanitize(medecin_traitant.text)+"', '"+Tools.sanitize(tel_medecin.text)+"', '"+ Tools.sanitize(tel_retour.text)+"',"+
-					" '"+Number(voyageElectriqueCB.selected)+"', '"+Number(escarreCB.selected)+"', '" + Number(hacheCB.selected)+ "', '" + Number(parenteraleCB.selected)+ "', '" + Number(ppcCB.selected)+ "', '" + Number(dialyseCB.selected)+ "', '"+ Number(litMedicaliseCB.selected)+"', '"+ Number(aideRepasCB.selected) +"')", Query.INSERT);
+					" '"+Number(voyageElectriqueCB.selected)+"', '"+Number(escarreCB.selected)+"', '" + Number(hacheCB.selected)+ "', '" + Number(parenteraleCB.selected)+ "', '" + Number(ppcCB.selected)+ "', '" + Number(dialyseCB.selected)+ "', '"+ Number(litMedicaliseCB.selected)+"', '"+ Number(verticalisateurCB.selected)+"', '"+ Number(aideRepasCB.selected) +"')", Query.INSERT);
 					
 					
 			}
@@ -461,6 +461,7 @@
 					<mx:CheckBox label="Matelas Anti-Escare" id="matelasAntiEscCB"/>
 					<mx:CheckBox label="Soulève Malade" id="souleveMaladeCB"/>
 					<mx:CheckBox label="Lit médicalisé" id="litMedicaliseCB"/>
+					<mx:CheckBox label="Verticalisateur" id="verticalisateurCB"/>
 				</mx:HBox>
 			</mx:FormItem>
 			<mx:FormItem label="Incontinence">
