@@ -17,6 +17,7 @@
 			import phi.interfaces.IDatabase;
 			import phi.interfaces.IQuery;
 			
+			import proxy.GareProxy;
 			import proxy.SecteurProxy;
 			
 			private var db       :IDatabase;
@@ -24,6 +25,8 @@
 			
 			private var maladeID:Number;
 			private var personneID:Number;
+			[Bindable]
+			public var gareProvider:ArrayCollection;
 			
 			public static var RELOAD:String = "reload";
 			
@@ -34,6 +37,7 @@
 				query.connect("conn1", db);
 				
 				this.secteur.dataProvider = SecteurProxy.Secteur;
+				gareProvider		= GareProxy.Gare;
 				
 			}
 			
@@ -57,6 +61,12 @@
 				{
 					secteur.selectedIndex = i;
 					if(secteur.selectedItem.section == item.section)
+						break;
+				}
+				for(var i:int=0;i<gareProvider.length;++i)
+				{
+					gare.selectedIndex = i;
+					if(gare.selectedItem.id_gare == item.id_gare)
 						break;
 				}
 				
@@ -231,6 +241,7 @@
 							" lit_medicalise='"+ Number(litMedicaliseCB.selected)+"', " +
 							" verticalisateur='"+ Number(verticalisateurCB.selected)+"', " +
 							" reg_aide_repas='" + Number(aideRepasCB.selected)+ "' " +
+							" id_gare='"+this.gare.selectedItem.id_gare+ "' " +
 							" WHERE id_malade ="+maladeID ,Query.UPDATE);
 			}
 			
@@ -313,6 +324,9 @@
 						<mx:NumericStepper id="taille" maximum="300"/>
 						</mx:HBox>
 					</mx:FormItem>
+			<mx:FormItem label="Lieu d’embarquement">
+				<mx:ComboBox id="gare" dataProvider="{gareProvider}" labelField="nom"/>
+			</mx:FormItem>
 			<mx:FormItem label="Personne à prevenir">
 				<mx:VBox>
 					<mx:HBox>
