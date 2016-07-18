@@ -240,7 +240,7 @@
 							" dialyse='" + Number(dialyseCB.selected)+ "'," +
 							" lit_medicalise='"+ Number(litMedicaliseCB.selected)+"', " +
 							" verticalisateur='"+ Number(verticalisateurCB.selected)+"', " +
-							" reg_aide_repas='" + Number(aideRepasCB.selected)+ "' " +
+							" reg_aide_repas='" + Number(aideRepasCB.selected)+ "', " +
 							" id_gare='"+this.gare.selectedItem.id_gare+ "' " +
 							" WHERE id_malade ="+maladeID ,Query.UPDATE);
 			}

@@ -251,7 +251,7 @@
 			{
 				query10.addEventListener(Query.QUERY_END, insertIntoInscrire);
 				query10.addEventListener(Query.QUERY_ERROR,queryError);
-				query10.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, '193', '0', '193') ", Query.INSERT );
+				query10.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, '195', '0', '195') ", Query.INSERT );
 			}
 			
 			private function insertIntoInscrire(evt:Object):void
