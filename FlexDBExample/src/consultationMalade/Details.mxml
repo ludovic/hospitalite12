@@ -87,6 +87,7 @@
 				injectionCB.selected = info.soin_inf_inj;
 				injectionType.text = info.soin_inf_inj_type;
 				injectionHorraire.text = info.soin_inf_inj_horraire;
+				insulineCB.selected = info.soin_inf_insuline;
 				pansementCB.selected = info.soin_inf_pansement;
 				pansementType.text = info.soin_inf_pansement_type;
 				autreSoin.text = info.autre_soin_spec;
@@ -308,6 +309,7 @@
 				<mx:Label text="Horaire"/>
 				<mx:TextInput id="injectionHorraire"/>
 			</mx:HBox>
+			<mx:CheckBox label="Insuline" id="insulineCB"/>
 			<mx:HBox>
 				<mx:CheckBox label="Pansement" id="pansementCB"/>
 				<mx:Label text="Type"/>
