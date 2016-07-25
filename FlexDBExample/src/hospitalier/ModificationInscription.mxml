@@ -202,7 +202,7 @@
 				if(this.chambreInd.selected)
 				{
 					if(this.hotel.selectedItem.Libelle == "Helgon")
-						prix += 78;
+						prix += 80;
 					else
 						prix += 60;
 				}
