@@ -111,6 +111,7 @@
 				etuiPenienCB.selected =	info.incont_etui_pen;
 				pochesPourStomieCB.selected = info.incont_poche_stom;
 				typeStomie.text = info.incont_poche_stom_type;
+				casParticulierCB.selected = info.cas_particulier;
 				divers.text = info.divers;
 				paiementInsc.selected = (info.paiementInsc == "oui")?true:false;
 				montantInsc.text = info.montantInsc;
@@ -362,6 +363,9 @@
 				<mx:Label text="Type"/>
 				<mx:TextInput id="typeStomie"/>
 			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="Autres">
+			<mx:CheckBox label="Cas particulier" id="casParticulierCB"/>
 		</mx:FormItem>
 		<mx:FormItem label="Paiement à l'inscription">
 			<mx:HBox>

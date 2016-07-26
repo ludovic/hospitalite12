@@ -130,6 +130,7 @@
 				etuiPenienCB.selected =	item.incont_etui_pen;
 				pochesPourStomieCB.selected = item.incont_poche_stom;
 				typeStomie.text = item.incont_poche_stom_type;
+				casParticulierCB.selected = item.cas_particulier;
 				divers.text = item.divers;
 				incomplet.selected = (item.incomplet== "oui")?true:false;
 				paiementInsc.selected = (item.paiementInsc == "oui")?true:false;
@@ -228,6 +229,7 @@
 							" incont_poche_stom_type = '"+Tools.sanitize(typeStomie.text)+"',"+
 							" incomplet='"+Tools.ouiNon(this.incomplet.selected)+"',"+
 							" codification='"+Tools.sanitize(this.codification.text)+"',"+
+							" cas_particulier='"+Number(casParticulierCB.selected)+"',"+
 							" paiementInsc='"+Tools.ouiNon(this.paiementInsc.selected)+"'," +
 							" divers = '"+Tools.sanitize(divers.text)+"'," +
 							" montantInsc='"+this.montantInsc.text+"',"+
@@ -467,6 +469,9 @@
 					<mx:Label text="Type"/>
 					<mx:TextInput id="typeStomie"/>
 				</mx:HBox>
+			</mx:FormItem>
+			<mx:FormItem label="Autres">
+				<mx:CheckBox label="Cas particulier" id="casParticulierCB"/>
 			</mx:FormItem>
 			<mx:FormItem label="Paiement à l'inscription">
 				<mx:HBox>

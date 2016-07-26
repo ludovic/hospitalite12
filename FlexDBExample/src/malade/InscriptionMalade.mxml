@@ -219,6 +219,7 @@
 				<mx:DataGridColumn dataField="soin_inf_inj" headerText="soin_inf_inj" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_inj_type" headerText="soin_inf_inj_type" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_inj_horraire" headerText="soin_inf_inj_horraire" visible="false"/>
+				<mx:DataGridColumn dataField="soin_inf_insuline" headerText="soin_inf_insuline" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_pansement" headerText="soin_inf_pansement" visible="false"/>
 				<mx:DataGridColumn dataField="soin_inf_pansement_type" headerText="soin_inf_pansement_type" visible="false"/>
 				<mx:DataGridColumn dataField="autre_soin_spec" headerText="autre_soin_spec" visible="false"/>
@@ -254,6 +255,7 @@
 				<mx:DataGridColumn dataField="lit_medicalise" headerText="lit_medicalise" visible="false"/>
 				<mx:DataGridColumn dataField="verticalisateur" headerText="verticalisateur" visible="false"/>
 				<mx:DataGridColumn dataField="reg_aide_repas" headerText="reg_aide_repas" visible="false"/>
+				<mx:DataGridColumn dataField="cas_particulier" headerText="cas_particulier" visible="false"/>
 				<mx:DataGridColumn dataField="divers" headerText="divers" visible="false"/>
 				<mx:DataGridColumn dataField="incomplet" headerText="incomplet" visible="false"/>
 				<mx:DataGridColumn dataField="paiementInsc" headerText="paiementInsc" visible="false"/>
