@@ -43,7 +43,7 @@
 						" and i.id_personne = p.id_personne" +
 						" and p.id_personne=eh.id_personne");*/
 				
-					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, h.annuler" +
+					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, h.annuler, i.id_prix" +
 						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h, etre_paye e_p, paiement pa, remise r" +
 						" WHERE i.id_pele =" + index.peleActuel.id_pele+
 						" AND i.id_prix = pr.id_prix" +
@@ -55,7 +55,7 @@
 						" and e_p.id_paiement = pa.id_paiement" +
 						" and pa.id_remise = r.id_remise" +
 						" UNION "+
-						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle, h.annuler" +
+						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle, h.annuler, i.id_prix" +
 						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h" +
 						" WHERE i.id_pele =" + index.peleActuel.id_pele+
 						" AND i.id_prix = pr.id_prix" +
@@ -74,7 +74,7 @@
 						" and em.id_malade = m.id_malade" +
 						" and i.id_personne = p.id_personne" +
 						" and p.id_personne=em.id_personne");*/
-					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, m.annuler" +
+					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, m.annuler, i.id_prix" +
 						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m, etre_paye e_p, paiement pa, remise r" +
 						" WHERE i.id_pele =" + index.peleActuel.id_pele+
 						" AND i.id_prix = pr.id_prix" +
@@ -86,7 +86,7 @@
 						" and e_p.id_paiement = pa.id_paiement" +
 						" and pa.id_remise = r.id_remise" +
 						" UNION "+
-						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle, m.annuler" +
+						" SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, 'aucune' as libelle, m.annuler, i.id_prix" +
 						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m" +
 						" WHERE i.id_pele =" + index.peleActuel.id_pele+
 						" AND i.id_prix = pr.id_prix" +
