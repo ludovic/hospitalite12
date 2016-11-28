@@ -7,15 +7,11 @@
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
+		
 			[Bindable] public var transports   :ArrayCollection;
 			[Bindable] public var arrets   :ArrayCollection;
 			
@@ -25,40 +21,28 @@
 			
 			private function onCreateComplete():void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				query2 = new Query();
-				query2.connect("conn1", db);
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-			
-				query.execute("SELECT * FROM transport");
+				QueryHelper.execute("SELECT * FROM transport",queryEnd, queryError);
 			}
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				transports = query.getRecords();
+				transports = new ArrayCollection(evt.result.data);
 				
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 
 			protected function datagrid1_changeHandler(event:ListEvent=null):void
 			{
-				query2.addEventListener(Query.QUERY_END, provideListeArrets);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport );
+				QueryHelper.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport, provideListeArrets, queryError);
 			}
 			
-			private function provideListeArrets(evt:Object):void
+			private function provideListeArrets(evt:SQLEvent):void
 			{
-				arrets = query2.getRecords();
-				
+				arrets = new ArrayCollection(evt.result.data);
 			}	
 
 			protected function addCar(event:MouseEvent):void
@@ -73,11 +57,11 @@
 			{
 				if(transportListe.selectedItem.id_transport)
 					datagrid1_changeHandler();
-				query.execute("SELECT * FROM transport");
+				QueryHelper.execute("SELECT * FROM transport", queryEnd, queryError);
 			}
 			protected function reloadGare(event:Object=null):void
 			{
-				query2.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport );
+				QueryHelper.execute("SELECT * FROM passer_par pp ,gare g where g.id_gare=pp.id_gare and pp.id_pele="+index.peleActuel.id_pele+" and pp.id_transport="+transportListe.selectedItem.id_transport, provideListeArrets, queryError);
 			}
 			
 			protected function addGare(event:MouseEvent):void

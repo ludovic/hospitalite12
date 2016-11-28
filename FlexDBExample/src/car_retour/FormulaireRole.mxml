@@ -1,40 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="140" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="140">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
-			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
-			import mx.events.FlexEvent;
-			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
 			
-			import proxy.AffectationProxy;
-			import proxy.CarProxy;
-			import proxy.ChambreProxy;
+			import phi.framework.sql.SQLErrorEvent;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
 			private var hospitalierID:int;
 			private var carOld:Number;
 			private var item:Object;
-			
-			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				query2 = new Query();
-				query2.connect("conn1", db);
-			}
 			
 			public function setFormulaire(item:Object,carOld:Number=NaN):void
 			{
@@ -44,55 +22,48 @@
 			}
 			
 			protected function valider(event:MouseEvent):void
-			{
-				query.addEventListener(Query.QUERY_END,insertRole);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
+			{	
 				if(item.personne_role != "")
 				{
 					switch (item.personne_role ){
 						case'responsable':
-							query.execute("DELETE FROM avoir_responsable  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+							QueryHelper.execute("DELETE FROM avoir_responsable  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", insertRole, queryError);
 							break;
 						case'ide':
-							query.execute("DELETE FROM ide  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+							QueryHelper.execute("DELETE FROM ide  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", insertRole, queryError);
 							break;
 						case'bagages':
-							query.execute("DELETE FROM bagages  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+							QueryHelper.execute("DELETE FROM bagages  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", insertRole, queryError);
 							break;
 						case'intendance':
-							query.execute("DELETE FROM intendance  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+							QueryHelper.execute("DELETE FROM intendance  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", insertRole, queryError);
 							break;
 						case'animation':
-							query.execute("DELETE FROM animation  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+							QueryHelper.execute("DELETE FROM animation  WHERE id_transport="+carOld+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", insertRole, queryError);
 							break;
 					}
-					
 				}
 				else
 					insertRole();
-				
 			}
 			
 			private function insertRole(event:Object=null):void
 			{
-				query2.addEventListener(Query.QUERY_END,end);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
 				switch (roleList.selectedLabel){
 					case'Responsable':
-						query2.execute("INSERT INTO avoir_responsable (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO avoir_responsable (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", end, queryError);
 						break;
 					case'IDE':
-						query2.execute("INSERT INTO ide (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO ide (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", end, queryError);
 						break;
 					case'Bagages':
-						query2.execute("INSERT INTO bagages (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO bagages (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", end, queryError);
 						break;
 					case'Intendance':
-						query2.execute("INSERT INTO intendance (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO intendance (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", end, queryError);
 						break;
 					case'Animation':
-						query2.execute("INSERT INTO animation (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO animation (`id_transport`, `id_personne`,`id_pele`,`direction`) VALUES ("+carOld+","+hospitalierID+","+index.peleActuel.id_pele+", 'retour') ", end, queryError);
 						break;
 				}
 			}
@@ -107,9 +78,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

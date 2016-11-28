@@ -1,41 +1,30 @@
 package proxy
 {
-	import flash.events.Event;
-	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
 	
-	import phi.interfaces.IQuery;
+	import common.helper.QueryHelper;
+	
+	import phi.framework.sql.SQLErrorEvent;
+	import phi.framework.sql.SQLEvent;
 	
 	public class HotelProxy
 	{
-		import phi.db.Database;
-		import phi.db.Query;
-		import phi.interfaces.IDatabase;
-		import phi.interfaces.IQuery;
-		
-		private  static var db       :IDatabase;
 		private static var _hotel:ArrayCollection 			 = new ArrayCollection;
 		private static var _hotelPelerin:ArrayCollection	 = new ArrayCollection;
 		private static var _hotelHospitalier:ArrayCollection = new ArrayCollection;
-		private static var query    :IQuery;
 		
 		public static function loadHotel():void
 		{
-			db = Database.getInstance();
-			query= new Query();
-			query.connect("conn1", db);
-			query.addEventListener(Query.QUERY_END, provideHotel);
-			query.addEventListener(Query.QUERY_ERROR,queryError);
-			query.execute("Select * from hebergement order by Libelle" )
+			QueryHelper.execute("Select * from hebergement order by Libelle",provideHotel, queryError);
 		}
 		
-		private static function provideHotel(evt:Object):void
+		private static function provideHotel(evt:SQLEvent):void
 		{
 			_hotelPelerin	 	= new ArrayCollection;
 			_hotelHospitalier   = new ArrayCollection;
 			
-			_hotel = query.getRecords();
+			_hotel = new ArrayCollection(evt.result.data);
 			for(var i:int=0;i<_hotel.length;++i)
 			{
 				if(_hotel[i].type == "pelerin")
@@ -44,9 +33,9 @@ package proxy
 					_hotelHospitalier.addItem(_hotel[i]);
 			}
 		}
-		private static function queryError(evt:Event):void
+		private static function queryError(evt:SQLErrorEvent):void
 		{
-			Alert.show(query.getError());
+			Alert.show(evt.error);
 		}
 		
 		public static function get Hotel():ArrayCollection

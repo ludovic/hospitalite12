@@ -1,16 +1,16 @@
 package proxy
 {
-	import flash.events.Event;
-	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
 	
+	import common.helper.QueryHelper;
+	
+	import phi.framework.sql.SQLErrorEvent;
+	import phi.framework.sql.SQLEvent;
 	import phi.interfaces.IQuery;
 	
 	public class RemiseProxy
 	{
-		import phi.db.Database;
-		import phi.db.Query;
 		import phi.interfaces.IDatabase;
 		import phi.interfaces.IQuery;
 		
@@ -20,27 +20,21 @@ package proxy
 
 		private static var query   :IQuery;
 		
-		
-		private static function queryError(evt:Event):void
+		private static function queryError(evt:SQLErrorEvent):void
 		{
-			Alert.show(query.getError());
+			Alert.show(evt.error);
 		}
 		
 		public static function loadRemise():void
 		{
-			db = Database.getInstance();
-			query= new Query();
-			query.connect("conn1", db);
-			query.addEventListener(Query.QUERY_END, provideModuleDispo);
-			query.addEventListener(Query.QUERY_ERROR,queryError);
-			query.execute("Select * from remise where id_pele =" + index.peleActuel.id_pele )
+			QueryHelper.execute("Select * from remise where id_pele =" + index.peleActuel.id_pele, provideModuleDispo, queryError)
 		}
 		
-		private static function provideModuleDispo(evt:Object):void
+		private static function provideModuleDispo(evt:SQLEvent):void
 		{
 			_remiseHospitalier = new ArrayCollection();
 			_remiseMalade = new ArrayCollection();
-			var result:ArrayCollection = query.getRecords();
+			var result:ArrayCollection = new ArrayCollection(evt.result.data);
 			for(var i:int=0;i<result.length;i++)
 			{
 				if(result[i].type == "hospitalier")

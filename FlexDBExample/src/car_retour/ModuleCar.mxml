@@ -2,23 +2,16 @@
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="570" height="200" label="{this.titleText}">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
-			private var query4    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable]
 			public var titleText:String;
@@ -30,16 +23,11 @@
 			private var carId:Number;
 			
 			
-			
+			private var liste:ArrayCollection;
 			public function generateModuleProvider(carId:int):void
 			{
 				this.carId=carId;
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, getRole);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("(select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+				QueryHelper.execute("(select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('hospitalier') 'personne_type'"+
 					"	FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, `hospitalier` h "+
@@ -76,16 +64,13 @@
 					"	AND pe.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = ep.id_personne) s "+
-					" where g.id_gare = s.id_gare_retour)");
+					" where g.id_gare = s.id_gare_retour)", getRole, queryError);
 			}
 			
-			private function getRole(evt:Object):void
+			private function getRole(evt:SQLEvent):void
 			{
-				query3= new Query();
-				query3.connect("conn1", db);
-				query3.addEventListener(Query.QUERY_END, provideModule);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
-				query3.execute("(SELECT p.id_personne, ('responsable') 'personne_role'" +
+				liste = new ArrayCollection(evt.result.data);
+				QueryHelper.execute("(SELECT p.id_personne, ('responsable') 'personne_role'" +
 					" FROM `personne` p, `avoir_responsable` ar" +
 					" WHERE ar.id_pele ="+ index.peleActuel.id_pele+
 					" AND ar.id_transport = "+carId +
@@ -118,12 +103,11 @@
 					" WHERE it.id_pele ="+ index.peleActuel.id_pele+
 					" AND it.id_transport = "+carId +
 					" AND p.id_personne = it.id_personne " +
-					" AND it.direction = 'retour')");
+					" AND it.direction = 'retour')", provideModule, queryError);
 			}
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				var role:ArrayCollection = query3.getRecords();
-				var liste:ArrayCollection = query.getRecords();
+				var role:ArrayCollection = new ArrayCollection(evt.result.data);
 				var newProvider:ArrayCollection = new ArrayCollection();
 				for(var i:int=0;i<liste.length;i++)
 				{
@@ -144,25 +128,21 @@
 				provider.sort = SortUtil.minNomPrenomSort();
 				provider.refresh();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function enlever(event:Object=null):void
 			{
 				if((listHospi.selectedItem))//&&(listHospi.selectedItem.personne_type == index.categorieUtilisateur))
 				{
-				 	query2= new Query();
-					query2.connect("conn1", db);
-					query2.addEventListener(Query.QUERY_END,refresh);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					query2.execute("UPDATE inscrire " +
+					QueryHelper.execute("UPDATE inscrire " +
 						"SET id_transport_retour = 0, id_gare_retour = 0 "+
-						" WHERE id_personne = "+listHospi.selectedItem.id_personne +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+						" WHERE id_personne = "+listHospi.selectedItem.id_personne +" and id_pele = "+ index.peleActuel.id_pele , refresh, queryError);
 				 }
 			}
-			private function refresh(evt:Event):void
+			private function refresh(evt:Object):void
 			{
 				this.dispatchEvent( new DocEvent(Car.RELOAD_MODULE));
 			}
@@ -195,28 +175,24 @@
 			{
 				if(listHospi.selectedItem)
 				{
-					query4= new Query();
-					query4.connect("conn1", db);
-					query4.addEventListener(Query.QUERY_END,refresh);
-					query4.addEventListener(Query.QUERY_ERROR,queryError);
 					var hospitalierID:Number = listHospi.selectedItem.id_personne;
 					if(listHospi.selectedItem.personne_role != "")
 					{
 						switch (listHospi.selectedItem.personne_role ){
 							case'responsable':
-								query4.execute("DELETE FROM avoir_responsable  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								QueryHelper.execute("DELETE FROM avoir_responsable  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", refresh, queryError);
 								break;
 							case'ide':
-								query4.execute("DELETE FROM ide  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								QueryHelper.execute("DELETE FROM ide  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", refresh, queryError);
 								break;
 							case'bagages':
-								query4.execute("DELETE FROM bagages  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								QueryHelper.execute("DELETE FROM bagages  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", refresh, queryError);
 								break;
 							case'intendance':
-								query4.execute("DELETE FROM intendance  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								QueryHelper.execute("DELETE FROM intendance  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", refresh, queryError);
 								break;
 							case'animation':
-								query4.execute("DELETE FROM animation  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", Query.DELETE );
+								QueryHelper.execute("DELETE FROM animation  WHERE id_transport="+carId+" AND id_personne="+hospitalierID+" AND id_pele="+index.peleActuel.id_pele+" AND direction = 'retour' ", refresh, queryError);
 								break;
 						}
 						

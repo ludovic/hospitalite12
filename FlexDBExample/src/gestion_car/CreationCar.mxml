@@ -1,38 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="200"  creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="200">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			public static var RELOAD_MODULE:String = "reloadModule";
 			
-			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-			}
-			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(nom.text != "")
 				{ 
-					query.execute("INSERT INTO transport ( `nom_transport` ,`Capacite`,`compagnie`,`cout`) VALUES ('"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(capacite.text)+"','"+Tools.sanitize(compagnie.text)+"', '"+Tools.sanitize(cout.text)+"') ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO transport ( `nom_transport` ,`Capacite`,`compagnie`,`cout`) VALUES ('"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(capacite.text)+"','"+Tools.sanitize(compagnie.text)+"', '"+Tools.sanitize(cout.text)+"') ", end, queryError);
 				}
 			}
 			
@@ -40,15 +27,15 @@
 			{
 				PopUpManager.removePopUp(this);
 			}
-			protected function end(event:Object):void
+			protected function end(event:SQLEvent):void
 			{
 				this.dispatchEvent(new DocEvent(GestionCar.RELOAD_MODULE));
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

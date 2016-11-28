@@ -13,10 +13,15 @@
 			import mx.events.IndexChangedEvent;
 			import mx.utils.Base64Encoder;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
+			
+			import phi.framework.sql.ISQLAdapter;
+			import phi.framework.sql.MySQLAdapter;
+			import phi.framework.sql.SQLConnection;
+			import phi.framework.sql.SQLConnectionManager;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
+			import phi.framework.sql.SQLResult;
 			
 			import proxy.AffectationProxy;
 			import proxy.CarProxy;
@@ -29,9 +34,6 @@
 			import proxy.SecteurProxy;
 			/** */
 			
-			public var db       :IDatabase;
-			public var query    :IQuery;
-			public var query2   :IQuery;
 			public var users   	:ArrayCollection;
 			[Bindable]
 			public var role		:Number =0;
@@ -54,17 +56,11 @@
 			 */
 			private function onCreateComplete():void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				    /*  db.connect("conn1", "root", "", "127.0.0.1", "baseha", true);    */  
-						
-			 	db.connect("conn1", "dbo356768667", "+JsLiC2503+", "db3046.1and1.fr", "db356768667", true);      
-				query.connect("conn1", db);
-				query2= new Query();
-				query2.connect("conn1", db);
-				query2.addEventListener(Query.QUERY_END, retrievePele);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT * FROM pele WHERE id_pele =(SELECT MAX(id_pele) FROM pele)");
+				var sqlAdapter :ISQLAdapter = new MySQLAdapter("db3046.1and1.fr", "db356768667"); // The username and password will be in the php service.
+				var sqlConn :SQLConnection = new SQLConnection( sqlAdapter );
+				SQLConnectionManager.getInstance().saveConnection( "conn1", sqlConn, true );
+				
+				QueryHelper.execute("SELECT * FROM pele WHERE id_pele =(SELECT MAX(id_pele) FROM pele)",retrievePele, queryError);
 				
 				AffectationProxy.loadAffectation();
 				GareProxy.loadGare();
@@ -74,9 +70,10 @@
 				HotelProxy.loadHotel();
 				
 			}
-			protected function retrievePele(evt:Object):void
+			protected function retrievePele(event:SQLEvent):void
 			{
-				peleActuel = query2.getRecords()[0];
+				var result :SQLResult = event.result;
+				peleActuel = result.data[0];
 				ChambreProxy.loadChambreDispo();
 				ChambreProxy.loadChambreNonDispo();
 				ModuleProxy.loadModuleDispo();
@@ -89,13 +86,12 @@
 			protected function button1_clickHandler(event:MouseEvent):void
 			{
 				var loginTxt:String = login.text;
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT u.CodeUser, u.id_secteur, s.section, u.Role, u.visuMode FROM users u, secteur s WHERE u.Email='"+loginTxt+"' AND u.MdP=MD5('"+loginTxt+'vip8r'+mdp.text+"') AND (u.id_secteur=s.id_secteur OR u.id_secteur=0) Group by u.CodeUser");
+				var queryText:String = "SELECT u.CodeUser, u.id_secteur, s.section, u.Role, u.visuMode FROM users u, secteur s WHERE u.Email='"+loginTxt+"' AND u.MdP=MD5('"+loginTxt+'vip8r'+mdp.text+"') AND (u.id_secteur=s.id_secteur OR u.id_secteur=0) Group by u.CodeUser";
+				QueryHelper.execute(queryText, queryEnd, queryError);
 			}
-			private function queryEnd(evt:Object):void
+			private function queryEnd(event:SQLEvent):void
 			{
-				users = query.getRecords();
+				users = new ArrayCollection(event.result.data);
 				if(users.length == 1)
 				{
 					storeLogin();
@@ -133,9 +129,9 @@
 					Alert.show("Nom d'utilisateur ou mot de passe erroné");
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(event:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(event.error);
 			}
 			
 			private var tavNavComplete:Boolean;

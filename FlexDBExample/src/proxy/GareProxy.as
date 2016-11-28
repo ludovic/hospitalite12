@@ -1,16 +1,16 @@
 package proxy
 {
-	import flash.events.Event;
-	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
 	
+	import common.helper.QueryHelper;
+	
+	import phi.framework.sql.SQLErrorEvent;
+	import phi.framework.sql.SQLEvent;
 	import phi.interfaces.IQuery;
 	
 	public class GareProxy
 	{
-		import phi.db.Database;
-		import phi.db.Query;
 		import phi.interfaces.IDatabase;
 		import phi.interfaces.IQuery;
 		
@@ -20,21 +20,16 @@ package proxy
 		
 		public static function loadGare():void
 		{
-			db = Database.getInstance();
-			query= new Query();
-			query.connect("conn1", db);
-			query.addEventListener(Query.QUERY_END, provideGare);
-			query.addEventListener(Query.QUERY_ERROR,queryError);
-			query.execute("Select * from gare" )
+			QueryHelper.execute("Select * from gare",provideGare, queryError);
 		}
 		
-		private static function provideGare(evt:Object):void
+		private static function provideGare(event:SQLEvent):void
 		{
-			_gare = query.getRecords();
+			_gare = new ArrayCollection(event.result.data);
 		}
-		private static function queryError(evt:Event):void
+		private static function queryError(event:SQLErrorEvent):void
 		{
-			Alert.show(query.getError());
+			Alert.show(event.error);
 		}
 		
 		public static function get Gare():ArrayCollection

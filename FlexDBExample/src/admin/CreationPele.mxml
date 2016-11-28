@@ -1,43 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="322" height="196" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="322" height="196">
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
-			import common.events.DocEvent;
+			
+			import common.helper.QueryHelper;
 			import common.helper.Tools;
 			
-			import mx.collections.ArrayCollection;
-			import mx.controls.Alert;
-			import mx.events.FlexEvent;
-			import mx.managers.PopUpManager;
-			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			
-			
-			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-			}
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			protected function creer(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("INSERT INTO pele (`id_pele`, `libelle_pele`,`debut`,`fin` ) VALUES (null, '"+Tools.sanitize(libelle.text)+"','"+Tools.dateToString(this.dateDebut.selectedDate)+"','"+Tools.dateToString(this.dateFin.selectedDate)+"') ", Query.INSERT );
+				QueryHelper.execute("INSERT INTO pele (`id_pele`, `libelle_pele`,`debut`,`fin` ) VALUES (null, '"+Tools.sanitize(libelle.text)+"','"+Tools.dateToString(this.dateDebut.selectedDate)+"','"+Tools.dateToString(this.dateFin.selectedDate)+"') ", end, queryError);
 			}
 			
-			protected function end(event:Object):void
+			protected function end(event:SQLEvent):void
 			{
 				PopUpManager.removePopUp(this);
 			}
@@ -47,9 +27,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 		]]>
 	</mx:Script>

@@ -2,20 +2,17 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
+			
 			
 			[Bindable]
 			public var titleText:String;
@@ -26,15 +23,9 @@
 			
 			public function generateModuleProvider(chambreId:Object=0):void
 			{
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
 				if((index.categorieUtilisateur == "hospitalier")||(index.categorieUtilisateur == "inscription")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Hospitalier")))
 				{
-					query.execute("select ins.nom,ins.prenom,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.id_personne,h.id_gare,s.section" +
+					QueryHelper.execute("select ins.nom,ins.prenom,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.id_personne,h.id_gare,s.section" +
 						" FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, hospitalier h, secteur s" +
 						" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 						" AND i.id_pele ="+ index.peleActuel.id_pele+
@@ -45,11 +36,11 @@
 						" AND h.id_hospitalier = eh.id_hospitalier" +
 						" AND h.annuler='non' " +
 						" AND p.id_secteur = s.id_secteur" +
-						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
+						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ",provideModule, queryError);
 				}
 				else if((index.categorieUtilisateur == "malade")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Malade")))
 				{
-					query.execute("select ins.nom,ins.prenom,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.id_personne,m.id_gare,s.section" +
+					QueryHelper.execute("select ins.nom,ins.prenom,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.id_personne,m.id_gare,s.section" +
 						" FROM `personne` p, `etre_malade` em, `inscrire` i, malade m, secteur s" +
 						" WHERE em.id_pele ="+ index.peleActuel.id_pele+
 						" AND i.id_pele ="+ index.peleActuel.id_pele+
@@ -59,11 +50,11 @@
 						" AND m.id_malade = em.id_malade" +
 						" AND m.annuler='non' " +
 						" AND p.id_secteur = s.id_secteur" +
-						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
+						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ",provideModule, queryError);
 				}
 				else if((index.categorieUtilisateur == "pelerin")||((index.categorieUtilisateur == "admin")&& (roleSelecteur.selectedLabel=="Pélerin")))
 				{
-					query.execute("select ins.nom,ins.prenom,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.id_personne,pel.id_gare,s.section" +
+					QueryHelper.execute("select ins.nom,ins.prenom,ins.id_personne,g.nom as gare,ins.section from gare g, (SELECT p.nom, p.prenom,p.id_personne,pel.id_gare,s.section" +
 						" FROM `personne` p, `etre_pelerin` ep, `inscrire` i, pelerin pel, secteur s" +
 						" WHERE ep.id_pele ="+ index.peleActuel.id_pele+
 						" AND i.id_pele ="+ index.peleActuel.id_pele+
@@ -73,19 +64,19 @@
 						" AND pel.id_pelerin = ep.id_pelerin" +
 						" AND p.id_secteur = s.id_secteur" +
 						" AND pel.annuler='non' " +
-						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ");
+						" GROUP BY p.id_personne) ins where ins.id_gare = g.id_gare ",provideModule, queryError);
 				}
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data);
 				provider.sort = SortUtil.minNomPrenomSort();
 				provider.refresh();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function affecterA(event:MouseEvent):void

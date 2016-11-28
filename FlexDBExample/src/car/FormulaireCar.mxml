@@ -2,26 +2,20 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="350" height="286" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
 			
-			import proxy.AffectationProxy;
+			import phi.framework.sql.SQLErrorEvent;
+			
 			import proxy.CarProxy;
-			import proxy.ChambreProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var hospitalierID:int;
 			private var hospitalierIDList:Array;
 			private var carOld:Number;
@@ -32,11 +26,7 @@
 			private var gareListProvider:ArrayCollection;
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
+			{	
 				carProvider = CarProxy.CarDispo;
 				 this.carList.dataProvider = carProvider;
 				 
@@ -67,10 +57,7 @@
 			}
 			
 			protected function valider(event:MouseEvent):void
-			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
+			{	
 				if(hospitalierIDList.length>0)
 				{
 					if(!retourIdentique.selected)
@@ -93,21 +80,21 @@
 					
 					queryString = queryString.slice(0,queryString.length-1);
 					queryString += ")"
-					query.execute(queryString, Query.UPDATE );
+					QueryHelper.execute(queryString, end, queryError);
 				}
 				else
 				{
 					if(!retourIdentique.selected)
 					{
-						query.execute("UPDATE inscrire " +
+						QueryHelper.execute("UPDATE inscrire " +
 							"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"'"+
-							" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+							" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele, end, queryError);
 					}
 					else
 					{
-						query.execute("UPDATE inscrire " +
+						QueryHelper.execute("UPDATE inscrire " +
 							"SET id_transport ='"+carList.selectedItem.id_transport+"', id_gare ='"+gareList.selectedItem.id_gare+"',"+ " id_transport_retour ='"+carList.selectedItem.id_transport+"', id_gare_retour ='"+gareList.selectedItem.id_gare+"'"+
-							" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+							" WHERE id_personne = "+hospitalierID +" and id_pele = "+ index.peleActuel.id_pele, end, queryError);
 					}
 				}
 				
@@ -123,9 +110,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 

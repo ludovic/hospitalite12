@@ -3,20 +3,17 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
+			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.ChambreProxy;
 			
-			private  static var db       :IDatabase;
-			private static var query    :IQuery;
 
 			protected function button1_clickHandler(event:MouseEvent):void
 			{
@@ -25,7 +22,6 @@
 
 			protected function titlewindow1_creationCompleteHandler(event:FlexEvent):void
 			{
-				db = Database.getInstance();
 				salleDispo.dataProvider = ChambreProxy.ChambreDispo;
 				salleNonDispo.dataProvider = ChambreProxy.ChambreNonDispo;
 			}
@@ -43,21 +39,17 @@
 						requete += "("+salles[i].numero +","+ index.peleActuel.id_pele+")"
 				}
 				
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, rendreDispoSuccess);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute(requete, Query.INSERT)
+				QueryHelper.execute(requete, rendreDispoSuccess, queryError);
 
 			}
 			
-			private static function rendreDispoSuccess(evt:Event):void
+			private static function rendreDispoSuccess(evt:SQLEvent):void
 			{
 				
 			}
-			private static function queryError(evt:Event):void
+			private static function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function rendreNonDispo(event:MouseEvent):void
@@ -72,12 +64,7 @@
 						requete += "("+salles[i].numero +","+ index.peleActuel.id_pele+")"
 				}
 				
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, rendreDispoSuccess);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute(requete, Query.INSERT)
-				
+				QueryHelper.execute(requete, rendreDispoSuccess, queryError);
 			}
 
 			protected function button2_clickHandler(event:MouseEvent):void

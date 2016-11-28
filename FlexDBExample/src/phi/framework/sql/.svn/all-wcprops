@@ -1,0 +1,89 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/63/trunk/src/phi/framework/sql
+END
+SQLResult.as
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLResult.as
+END
+SQLConnection.as
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/69/trunk/src/phi/framework/sql/SQLConnection.as
+END
+SQLHelper.as
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLHelper.as
+END
+SQLEvent.as
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLEvent.as
+END
+SQLType.as
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLType.as
+END
+SQLAbstractAdapter.as
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLAbstractAdapter.as
+END
+SQLAbstractService.as
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLAbstractService.as
+END
+SQLStatement.as
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/67/trunk/src/phi/framework/sql/SQLStatement.as
+END
+SQLDefaultService.as
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLDefaultService.as
+END
+MySQLAdapter.as
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/MySQLAdapter.as
+END
+ISQLAdapter.as
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/ISQLAdapter.as
+END
+ISQLService.as
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/ISQLService.as
+END
+SQLConnectionManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLConnectionManager.as
+END
+SQLErrorEvent.as
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/63/trunk/src/phi/framework/sql/SQLErrorEvent.as
+END

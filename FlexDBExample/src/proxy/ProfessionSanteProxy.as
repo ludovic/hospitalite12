@@ -1,12 +1,12 @@
 package proxy
 {
-	import flash.events.Event;
-	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
 	
-	import phi.db.Database;
-	import phi.db.Query;
+	import common.helper.QueryHelper;
+	
+	import phi.framework.sql.SQLErrorEvent;
+	import phi.framework.sql.SQLEvent;
 	import phi.interfaces.IDatabase;
 	import phi.interfaces.IQuery;
 	
@@ -18,21 +18,16 @@ package proxy
 		
 		public static function load():void
 		{
-			db = Database.getInstance();
-			query= new Query();
-			query.connect("conn1", db);
-			query.addEventListener(Query.QUERY_END, provide);
-			query.addEventListener(Query.QUERY_ERROR,queryError);
-			query.execute("Select id_profession_sante,Profession from profession_sante" );
+			QueryHelper.execute("Select id_profession_sante,Profession from profession_sante",provide, queryError);
 		}
 		
-		private static function provide(evt:Object):void
+		private static function provide(evt:SQLEvent):void
 		{
-			_profession = query.getRecords();
+			_profession = new ArrayCollection(evt.result.data);
 		}
-		private static function queryError(evt:Event):void
+		private static function queryError(evt:SQLErrorEvent):void
 		{
-			Alert.show(query.getError());
+			Alert.show(evt.error);
 		}
 		
 		public static function get Profession():ArrayCollection

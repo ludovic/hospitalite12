@@ -2,22 +2,18 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="186" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.AffectationProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var hospitalierID:int;
 			private var hospitalierIDList:Array;
 			private var affectationOld:Number;
@@ -25,10 +21,6 @@
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
 				this.affectationList.dataProvider = AffectationProxy.Affectation;
 			}
 			
@@ -55,8 +47,6 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(isNaN(affectationOld))
 				{
 					if(hospitalierIDList.length>0)
@@ -68,16 +58,16 @@
 						}
 						
 						queryString = queryString.slice(0,queryString.length-1);
-						query.execute(queryString, Query.INSERT );
+						QueryHelper.execute(queryString, end, queryError);
 					}
 					else
-						query.execute("INSERT INTO obtenir (`id_hospitalier`, `id_affectation`) VALUES ("+hospitalierID+", "+affectationList.selectedItem.id_affectation+") ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO obtenir (`id_hospitalier`, `id_affectation`) VALUES ("+hospitalierID+", "+affectationList.selectedItem.id_affectation+") ",end, queryError);
 				}
 				else
 				{
-					query.execute("UPDATE obtenir " +
+					QueryHelper.execute("UPDATE obtenir " +
 						"SET id_hospitalier ='"+hospitalierID+"', id_affectation ='"+affectationList.selectedItem.id_affectation+"'"+
-						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_affectation = '"+affectationOld+"'",Query.UPDATE);
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_affectation = '"+affectationOld+"'", end, queryError);
 				}
 			}
 			
@@ -85,15 +75,15 @@
 			{
 				PopUpManager.removePopUp(this);
 			}
-			protected function end(event:Object):void
+			protected function end(event:SQLEvent):void
 			{
 				this.dispatchEvent(new DocEvent(Affectation.RELOAD_MODULE));
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 
 		]]>

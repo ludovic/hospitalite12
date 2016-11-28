@@ -14,8 +14,11 @@
 	</services>
 	<channels>
 		<channel-definition id="my-amfphp" class="mx.messaging.channels.AMFChannel">
-			<!--<endpoint uri="http://127.0.0.1/amfphp/gateway.php" class="flex.messaging.endpoints.AMFEndpoint"/>-->
-			<endpoint uri="http://logiciel.bouges.fr/amfphp/gateway.php" class="flex.messaging.endpoints.AMFEndpoint"/>
+			<!--<endpoint uri="http://127.0.0.1/amfphp/gateway.php" class="flex.messaging.endpoints.AMFEndpoint"/>
+			<endpoint uri="http://localhost/Amfphp/index.php" class="flex.messaging.endpoints.AMFEndpoint"/>
+			<endpoint uri="http://logiciel2.bouges.fr/amfphp/gateway.php" class="flex.messaging.endpoints.AMFEndpoint"/>
+			-->
+			<endpoint uri="http://logiciel2.bouges.fr/Amfphp/index.php" class="flex.messaging.endpoints.AMFEndpoint"/>
 		</channel-definition>
 	</channels>
 </services-config>

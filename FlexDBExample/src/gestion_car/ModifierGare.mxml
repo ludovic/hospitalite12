@@ -2,22 +2,19 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="200"  creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
+			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.GareProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			
 			private var transportID:int;
 			private var gareID:int;
@@ -25,9 +22,6 @@
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
 				gareSel.dataProvider = GareProxy.Gare;
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
 			}
 			
 			override public function set data(value:Object):void
@@ -52,9 +46,6 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
 				var heureAllerComplete:Date=dateAller.selectedDate;
 				if(heureAllerComplete)
 				{
@@ -69,7 +60,7 @@
 					heureRetourComplete.setMinutes(this.minuteRetour.value);
 				}
 				
-				query.execute("UPDATE  `passer_par` SET  `heure_aller` =  '"+Tools.dateToString(heureAllerComplete)+"', `heure_retour` =  '"+Tools.dateToString(heureRetourComplete)+"' WHERE  `id_transport` ="+transportID+ " AND  `id_gare` ="+gareID+" AND  `id_pele` =" +index.peleActuel.id_pele ,Query.UPDATE);
+				QueryHelper.execute("UPDATE  `passer_par` SET  `heure_aller` =  '"+Tools.dateToString(heureAllerComplete)+"', `heure_retour` =  '"+Tools.dateToString(heureRetourComplete)+"' WHERE  `id_transport` ="+transportID+ " AND  `id_gare` ="+gareID+" AND  `id_pele` =" +index.peleActuel.id_pele, end, queryError);
 				
 				
 			}
@@ -78,15 +69,15 @@
 			{
 				PopUpManager.removePopUp(this);
 			}
-			protected function end(event:Object):void
+			protected function end(event:SQLEvent):void
 			{
 				this.dispatchEvent(new DocEvent(GestionCar.RELOAD_MODULE));
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>
