@@ -2,13 +2,6 @@
 <mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" xmlns:consultation="consultation.*" creationComplete="canvas1_creationCompleteHandler(event)" >
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.DataGridDataExporter;
-			import common.helper.ProgressPopUp;
-			import common.helper.SortUtil;
-			
-			import flash.utils.flash_proxy;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.IFlexDisplayObject;
@@ -16,49 +9,29 @@
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.DataGridDataExporter;
+			import common.helper.ProgressPopUp;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
-			private var query4    :IQuery;
-			private var query5    :IQuery;
-			private var query6    :IQuery;
-			private var query7    :IQuery;
-			private var query8    :IQuery;
-			private var query9    :IQuery;
-			private var query10   :IQuery;
-			private var query11   :IQuery;
-			private var query12   :IQuery;
-			private var query13   :IQuery;
-			private var query14   :IQuery;
-			private var query15   :IQuery;
-			private var query16   :IQuery;
-			private var query17   :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
+			
 			
 			private var personneData:Object;
 			
 			protected function canvas1_creationCompleteHandler(event:Object):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideNameGrid);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				query.execute("SELECT p.id_personne, p.Titre, p.Nom, p.Prenom, p.Adresse1, p.CodePostal, p.Commune, s.section, ho.id_hospitalier FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
+			{	
+				QueryHelper.execute("SELECT p.id_personne, p.Titre, p.Nom, p.Prenom, p.Adresse1, p.CodePostal, p.Commune, s.section, ho.id_hospitalier FROM etre_hospitalier h, personne p, hospitalier ho, secteur s WHERE h.id_personne = p.id_personne " +
 					" AND h.id_hospitalier = ho.id_hospitalier " +
 					" AND ho.annuler='non' " +
-					" AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+					" AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele, provideNameGrid, queryError);
 			}
 			
-			private function provideNameGrid(evt:Object):void
+			private function provideNameGrid(evt:SQLEvent):void
 			{
-				var provider:ArrayCollection = query.getRecords();
+				var provider:ArrayCollection = new ArrayCollection(evt.result.data); 
 				 provider.sort = SortUtil.nomPrenomSort();
 				 provider.refresh();
 				listeNom.listeNomProvider = provider;
@@ -66,9 +39,9 @@
 				listeNom.addEventListener(ListeNom.REFRESH,canvas1_creationCompleteHandler);
 			}
 
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			//////////////////////////////////////////////consultation////////////////////////////////////////////////////////////////
@@ -76,11 +49,7 @@
 			{
 				personneData = new Object();
 				personneData.info = event.body;
-				query2 = new Query();
-				query2.connect("conn1", db);
-				query2.addEventListener(Query.QUERY_END, getTransportHebergement);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
 					" WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND i.id_hebergement_retenu = h.id_hebergement"+ 
 					" AND i.id_transport = t.id_transport"+ 
@@ -89,21 +58,17 @@
 					" AND pp.id_transport = i.id_transport"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getTransportHebergement, queryError);
 			}
 			
-			private function getTransportHebergement(event:Object):void
+			private function getTransportHebergement(event:SQLEvent):void
 			{
-				if(query2.getRecords().length>0)
-					personneData.transHeb = query2.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.transHeb = event.result.data[0];
 				else
 					personneData.transHeb = null;
 				
-				query3 = new Query();
-				query3.connect("conn1", db);
-				query3.addEventListener(Query.QUERY_END, getTransportRetour);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
-				query3.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
 					" WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND i.id_transport_retour = t.id_transport"+ 
 					" AND i.id_gare_retour = g.id_gare"+ 
@@ -111,98 +76,74 @@
 					" AND pp.id_transport = i.id_transport_retour"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getTransportRetour, queryError);
 				
 			}
 			
-			private function getTransportRetour(event:Object):void
+			private function getTransportRetour(event:SQLEvent):void
 			{
-				if(query3.getRecords().length>0)
-					personneData.transRetour = query3.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.transRetour = event.result.data[0];
 				else
 					personneData.transRetour = null;
 				
-				query4 = new Query();
-				query4.connect("conn1", db);
-				query4.addEventListener(Query.QUERY_END, getAffectations);
-				query4.addEventListener(Query.QUERY_ERROR,queryError);
-				query4.execute("SELECT a.Service  FROM obtenir o, affectation a" +
+				QueryHelper.execute("SELECT a.Service  FROM obtenir o, affectation a" +
 					" WHERE o.id_hospitalier ="+personneData.info.id_hospitalier +
-					" AND o.id_affectation = a.id_affectation");
+					" AND o.id_affectation = a.id_affectation", getAffectations, queryError);
 			}
 			
-			private function getAffectations(event:Object):void
+			private function getAffectations(event:SQLEvent):void
 			{
-				personneData.affectations = query4.getRecords();
+				personneData.affectations = new ArrayCollection(event.result.data);
 				
-				query5 = new Query();
-				query5.connect("conn1", db);
-				query5.addEventListener(Query.QUERY_END, getEquipes);
-				query5.addEventListener(Query.QUERY_ERROR,queryError);
-				query5.execute("SELECT e.libelle  FROM equipe e, faire_parti fp" +
+				QueryHelper.execute("SELECT e.libelle  FROM equipe e, faire_parti fp" +
 					" WHERE fp.id_hospitalier ="+personneData.info.id_hospitalier +
-					" AND e.id_equipe = fp.id_equipe");
+					" AND e.id_equipe = fp.id_equipe", getEquipes, queryError);
 				
 			}
 			
-			private function getEquipes(event:Object):void
+			private function getEquipes(event:SQLEvent):void
 			{
-				personneData.equipes = query5.getRecords();
+				personneData.equipes = new ArrayCollection(event.result.data);
 				
-				query10 = new Query();
-				query10.connect("conn1", db);
-				query10.addEventListener(Query.QUERY_END, getSoldes);
-				query10.addEventListener(Query.QUERY_ERROR,queryError);
-				query10.execute("SELECT p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
+				QueryHelper.execute("SELECT p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
 					" WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" AND i.id_prix = p.id_prix");
+					" AND i.id_prix = p.id_prix", getSoldes, queryError);
 			}
 			
-			private function getSoldes(event:Object):void
+			private function getSoldes(event:SQLEvent):void
 			{
-				if(query10.getRecords().length>0)
-					personneData.soldes = query10.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.soldes = event.result.data[0];
 				
-				query17 = new Query();
-				query17.connect("conn1", db);
-				query17.addEventListener(Query.QUERY_END, getRemise);
-				query17.addEventListener(Query.QUERY_ERROR,queryError);
-				query17.execute("SELECT r.libelle FROM remise r, paiement p, etre_paye ep," +
+				QueryHelper.execute("SELECT r.libelle FROM remise r, paiement p, etre_paye ep," +
 					" inscrire i WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND r.id_remise = p.id_remise AND p.id_paiement = ep.id_paiement AND ep.id_prix = i.id_prix " +
-					" AND i.id_pele ="+index.peleActuel.id_pele +"");
+					" AND i.id_pele ="+index.peleActuel.id_pele +"", getRemise, queryError);
 			}
 			
-			private function getRemise(event:Object):void
+			private function getRemise(event:SQLEvent):void
 			{
-				if(query17.getRecords().length>0)
-					personneData.remise = query17.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.remise = event.result.data[0];
 				
-				query12 = new Query();
-				query12.connect("conn1", db);
-				query12.addEventListener(Query.QUERY_END, getSalles);
-				query12.addEventListener(Query.QUERY_ERROR,queryError);
-				query12.execute("SELECT ch.libelle, m.libelle as module, p.Nom, p.Prenom FROM s_occuper so, chambre ch, module m, responsable_module rm, etre_hospitalier eh, personne p" +
+				QueryHelper.execute("SELECT ch.libelle, m.libelle as module, p.Nom, p.Prenom FROM s_occuper so, chambre ch, module m, responsable_module rm, etre_hospitalier eh, personne p" +
 					" WHERE so.id_hospitalier ="+personneData.info.id_hospitalier +
 					" AND m.id_module = ch.id_module " +
 					" AND rm.id_module = ch.id_module " +
 					" AND rm.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne " +
 					" AND so.numero = ch.numero" +
-					" AND eh.id_pele="+index.peleActuel.id_pele);
+					" AND eh.id_pele="+index.peleActuel.id_pele, getSalles, queryError);
 			}
 			
-			private function getSalles(event:Object):void
+			private function getSalles(event:SQLEvent):void
 			{
-				if(query12.getRecords().length>0)
-					personneData.salle = query12.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.salle = event.result.data[0];
 				
-				query14 = new Query();
-				query14.connect("conn1", db);
-				query14.addEventListener(Query.QUERY_END, getFonction);
-				query14.addEventListener(Query.QUERY_ERROR,queryError);
-				query14.execute("select  m.libelle as module, p.Nom, p.Prenom, u.fonction from " +
+				QueryHelper.execute("select  m.libelle as module, p.Nom, p.Prenom, u.fonction from " +
 					"( SELECT id_module, id_hospitalier, ('ide de module') 'fonction' from ide_module where id_hospitalier="+personneData.info.id_hospitalier +
 					" UNION SELECT id_module, id_hospitalier, ('brancardier de module') 'fonction' from brancardier_module where id_hospitalier="+personneData.info.id_hospitalier +
 					" UNION SELECT id_module, id_hospitalier, ('responsable de module') 'fonction' from responsable_module where id_hospitalier="+personneData.info.id_hospitalier +
@@ -210,14 +151,14 @@
 					" WHERE  m.id_module = u.id_module" +
 					" AND rm.id_module = u.id_module " +
 					" AND p.id_personne = eh.id_personne " +
-					" AND rm.id_hospitalier = eh.id_hospitalier " );
+					" AND rm.id_hospitalier = eh.id_hospitalier ", getFonction, queryError);
 					
 			}
 			
-			private function getFonction(event:Object):void
+			private function getFonction(event:SQLEvent):void
 			{
-				if(query14.getRecords().length>0)
-					personneData.fonction = query14.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.fonction = event.result.data[0];
 				
 				detailsPersonne.data = personneData;
 			}
@@ -238,9 +179,6 @@
 				
 			}
 			
-			
-			
-			
 			/////////////////////////////////////////////// export///////////////////////////////////////////////////////////////
 			protected function exportAll2(event:MouseEvent):void
 			{
@@ -250,11 +188,7 @@
 			private var transportHebergementList:ArrayCollection;
 			private function getTransportHebergementList(event:DocEvent):void
 			{
-				query6 = new Query();
-				query6.connect("conn1", db);
-				query6.addEventListener(Query.QUERY_END, getTransportRetourList);
-				query6.addEventListener(Query.QUERY_ERROR,queryError);
-				query6.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller, i.id_personne  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT h.Libelle, t.nom_transport, g.nom, pp.heure_aller, i.id_personne  FROM inscrire i, hebergement h, transport t, gare g, passer_par pp " +
 					" WHERE i.id_hebergement_retenu = h.id_hebergement"+ 
 					" AND i.id_transport = t.id_transport"+ 
 					" AND i.id_gare = g.id_gare"+ 
@@ -262,111 +196,82 @@
 					" AND pp.id_transport = i.id_transport"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getTransportRetourList, queryError);
 			}
 			private var transportRetourList:ArrayCollection;
-			private function getTransportRetourList(event:Object):void
+			private function getTransportRetourList(event:SQLEvent):void
 			{
-				if(query6.getRecords().length>0)
-					transportHebergementList= query6.getRecords();
+				if(event.result.data.length>0)
+					transportHebergementList= new ArrayCollection(event.result.data);
 				
-				query7 = new Query();
-				query7.connect("conn1", db);
-				query7.addEventListener(Query.QUERY_END, getAffectationsList);
-				query7.addEventListener(Query.QUERY_ERROR,queryError);
-				query7.execute("SELECT i.id_personne, t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT i.id_personne, t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
 					" WHERE  i.id_transport_retour = t.id_transport"+ 
 					" AND i.id_gare_retour = g.id_gare"+ 
 					" AND pp.id_gare = i.id_gare_retour"+
 					" AND pp.id_transport = i.id_transport_retour"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getAffectationsList, queryError);
 				
 			}
 			private var affectationsList:ArrayCollection;
-			private function getAffectationsList(event:Object):void
+			private function getAffectationsList(event:SQLEvent):void
 			{
-				if(query7.getRecords().length>0)
-					transportRetourList= query7.getRecords();
+				if(event.result.data.length>0)
+					transportRetourList= new ArrayCollection(event.result.data);
 			
-				
-				query8 = new Query();
-				query8.connect("conn1", db);
-				query8.addEventListener(Query.QUERY_END, getEquipesList);
-				query8.addEventListener(Query.QUERY_ERROR,queryError);
-				query8.execute("SELECT a.Service, o.id_hospitalier  FROM obtenir o, affectation a" +
-					" WHERE  o.id_affectation = a.id_affectation");
+				QueryHelper.execute("SELECT a.Service, o.id_hospitalier  FROM obtenir o, affectation a" +
+					" WHERE  o.id_affectation = a.id_affectation", getEquipesList, queryError);
 			}
 			private var equipesList:ArrayCollection;
-			private function getEquipesList(event:Object):void
+			private function getEquipesList(event:SQLEvent):void
 			{
-				affectationsList = query8.getRecords();
+				affectationsList = new ArrayCollection(event.result.data);
 				
-				query9 = new Query();
-				query9.connect("conn1", db);
-				query9.addEventListener(Query.QUERY_END, getPaiementList);
-				query9.addEventListener(Query.QUERY_ERROR,queryError);
-				query9.execute("SELECT e.libelle, fp.id_hospitalier  FROM equipe e, faire_parti fp" +
-					" WHERE  e.id_equipe = fp.id_equipe");
+				QueryHelper.execute("SELECT e.libelle, fp.id_hospitalier  FROM equipe e, faire_parti fp" +
+					" WHERE  e.id_equipe = fp.id_equipe", getPaiementList, queryError);
 				
 			}
 			private var paiementList:ArrayCollection;
-			private function getPaiementList(event:Object):void
+			private function getPaiementList(event:SQLEvent):void
 			{
-				equipesList = query9.getRecords();
+				equipesList = new ArrayCollection(event.result.data);
 				
-				query11 = new Query();
-				query11.connect("conn1", db);
-				query11.addEventListener(Query.QUERY_END, getRemiseList);
-				query11.addEventListener(Query.QUERY_ERROR,queryError);
-				query11.execute("SELECT i.id_personne, p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
+				QueryHelper.execute("SELECT i.id_personne, p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
 					" WHERE i.id_pele="+index.peleActuel.id_pele +
-					" AND i.id_prix = p.id_prix");
+					" AND i.id_prix = p.id_prix", getRemiseList, queryError);
 				
 			}
 			
 			private var remiseList:ArrayCollection;
-			private function getRemiseList(event:Object):void
+			private function getRemiseList(event:SQLEvent):void
 			{
-				paiementList= query11.getRecords();
+				paiementList= new ArrayCollection(event.result.data);
 				
-				query16 = new Query();
-				query16.connect("conn1", db);
-				query16.addEventListener(Query.QUERY_END, getSalleList);
-				query16.addEventListener(Query.QUERY_ERROR,queryError);
-				query16.execute("SELECT i.id_personne, r.libelle FROM remise r, paiement p, etre_paye ep," +
+				QueryHelper.execute("SELECT i.id_personne, r.libelle FROM remise r, paiement p, etre_paye ep," +
 					" inscrire i WHERE r.id_remise = p.id_remise AND p.id_paiement = ep.id_paiement AND ep.id_prix = i.id_prix " +
-					" AND i.id_pele ="+index.peleActuel.id_pele +"");
+					" AND i.id_pele ="+index.peleActuel.id_pele +"", getSalleList, queryError);
 			}
 			
 			private var salleList:ArrayCollection;
-			private function getSalleList(event:Object):void
+			private function getSalleList(event:SQLEvent):void
 			{
-				remiseList= query16.getRecords();
+				remiseList= new ArrayCollection(event.result.data);
 				
-				query13 = new Query();
-				query13.connect("conn1", db);
-				query13.addEventListener(Query.QUERY_END, getFonctionList);
-				query13.addEventListener(Query.QUERY_ERROR,queryError);
-				query13.execute("SELECT so.id_hospitalier,ch.libelle, m.libelle as module, p.Nom, p.Prenom FROM s_occuper so, chambre ch, module m, responsable_module rm, etre_hospitalier eh, personne p" +
+				QueryHelper.execute("SELECT so.id_hospitalier,ch.libelle, m.libelle as module, p.Nom, p.Prenom FROM s_occuper so, chambre ch, module m, responsable_module rm, etre_hospitalier eh, personne p" +
 					" WHERE  m.id_module = ch.id_module " +
 					" AND rm.id_module = ch.id_module " +
 					" AND rm.id_hospitalier = eh.id_hospitalier " +
 					" AND p.id_personne = eh.id_personne " +
-					" AND so.numero = ch.numero");
+					" AND so.numero = ch.numero", getFonctionList, queryError);
 			}
 			
 			private var fonctionList:ArrayCollection;
-			private function getFonctionList(event:Object):void
+			private function getFonctionList(event:SQLEvent):void
 			{
-				salleList= query13.getRecords();
+				salleList= new ArrayCollection(event.result.data);
 				
-				query15 = new Query();
-				query15.connect("conn1", db);
-				query15.addEventListener(Query.QUERY_END, buildExport);
-				query15.addEventListener(Query.QUERY_ERROR,queryError);
-				query15.execute("select u.id_hospitalier, m.libelle as module, p.Nom, p.Prenom, u.fonction from " +
+				QueryHelper.execute("select u.id_hospitalier, m.libelle as module, p.Nom, p.Prenom, u.fonction from " +
 					"( SELECT id_module, id_hospitalier, ('ide de module') 'fonction' from ide_module " +
 					" UNION SELECT id_module, id_hospitalier, ('brancardier de module') 'fonction' from brancardier_module " +
 					" UNION SELECT id_module, id_hospitalier, ('responsable de module') 'fonction' from responsable_module " +
@@ -374,16 +279,16 @@
 					" WHERE  m.id_module = u.id_module" +
 					" AND rm.id_module = u.id_module " +
 					" AND p.id_personne = eh.id_personne " +
-					" AND rm.id_hospitalier = eh.id_hospitalier " );
+					" AND rm.id_hospitalier = eh.id_hospitalier " , buildExport, queryError);
 				
 			}
 			
 			
 			
 			
-			private function buildExport(event:Object):void
+			private function buildExport(event:SQLEvent):void
 			{
-				fonctionList= query15.getRecords();
+				fonctionList= new ArrayCollection(event.result.data);
 				
 				exportData = new ArrayCollection();
 				popUpWindow = PopUpManager.createPopUp(this,ProgressPopUp,false);

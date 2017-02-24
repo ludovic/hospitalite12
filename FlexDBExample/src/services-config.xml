@@ -18,7 +18,7 @@
 			<endpoint uri="http://localhost/Amfphp/index.php" class="flex.messaging.endpoints.AMFEndpoint"/>
 			<endpoint uri="http://logiciel2.bouges.fr/amfphp/gateway.php" class="flex.messaging.endpoints.AMFEndpoint"/>
 			-->
-			<endpoint uri="http://logiciel2.bouges.fr/Amfphp/index.php" class="flex.messaging.endpoints.AMFEndpoint"/>
+			<endpoint uri="http://logiciel.bouges.fr/Amfphp/index.php" class="flex.messaging.endpoints.AMFEndpoint"/>
 		</channel-definition>
 	</channels>
 </services-config>

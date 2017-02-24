@@ -1,28 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="362" height="310" creationComplete="creationCompleteHandler(event)">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="362" height="310">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
-			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
 			
-			import proxy.AffectationProxy;
-			import proxy.ChambreProxy;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
-			private var query4    :IQuery;
 			private var prixID:int;
 			private var remiseID:Number;
 			private var equipeOld:Number;
@@ -31,23 +21,6 @@
 			[Bindable]
 			public var remiseProvider:ArrayCollection;
 			
-			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query2 = new Query();
-				query2.connect("conn1", db);
-				
-				query3 = new Query();
-				query3.connect("conn1", db);
-				query4 = new Query();
-				query4.connect("conn1", db);
-				
-				
-			}
-			
 			public function setFormulaire(item:Object,remiseID:Number=NaN):void
 			{
 				myLabel.text = "Ajouter un paiement pour "+item.Prenom + " "+item.Nom + " à :";
@@ -55,24 +28,20 @@
 				montantDejaPaye = item.TotalPaye
 				prixID = item.id_prix;
 				this.remiseID = remiseID;
-				query2.addEventListener(Query.QUERY_END, provideEquipe);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT * FROM remise where type='"+type+"'and id_pele =" + index.peleActuel.id_pele);
+				QueryHelper.execute("SELECT * FROM remise where type='"+type+"'and id_pele =" + index.peleActuel.id_pele, provideEquipe, queryError);
 			}
 			
-			private function provideEquipe(evt:Object):void
+			private function provideEquipe(evt:SQLEvent):void
 			{
-				remiseProvider = query2.getRecords();
+				remiseProvider = new ArrayCollection(evt.result.data);
 				remiseProvider.source.reverse();
 			}
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,modEtre_paye);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 			 	if(isNaN(remiseID))
 				{ 
-					query.execute("INSERT INTO paiement (`payeur`, `type_paiement`, `montant` ,`id_remise`) VALUES ('"+Tools.sanitize(this.payeur.text)+"','"+Tools.sanitize(this.typePaiement.selectedLabel)+"', "+this.montantPaiement.text+","+remiseList.selectedItem.id_remise+") ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO paiement (`payeur`, `type_paiement`, `montant` ,`id_remise`) VALUES ('"+Tools.sanitize(this.payeur.text)+"','"+Tools.sanitize(this.typePaiement.selectedLabel)+"', "+this.montantPaiement.text+","+remiseList.selectedItem.id_remise+") ", modEtre_paye, queryError);
 				}
 				/*else
 				{
@@ -81,27 +50,22 @@
 						" WHERE id_hospitalier = '"+hospitalierID+"' AND id_equipe = '"+equipeOld+"' AND id_pele = '"+index.peleActuel.id_pele+"'",Query.UPDATE);
 				} */ 
 			}
-			protected function modEtre_paye(event:Object):void
+			protected function modEtre_paye(event:SQLEvent):void
 			{
-				var paiementID:Number = query.getLastInsertID();
-				query3.addEventListener(Query.QUERY_END,modPrix);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				var paiementID:Number = event.result.lastInsertID;
 				if(isNaN(remiseID))
 				{ 
-					query3.execute("INSERT INTO etre_paye (`id_prix`, `id_paiement`) VALUES ('"+this.prixID+"','"+paiementID+"') ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO etre_paye (`id_prix`, `id_paiement`) VALUES ('"+this.prixID+"','"+paiementID+"') ", modPrix, queryError);
 				}
 			}
 			
 			protected function modPrix(event:Object):void
-			{
-				query4.addEventListener(Query.QUERY_END,end);
-				query4.addEventListener(Query.QUERY_ERROR,queryError);
-				
+			{	
 				var totalPaye:Number = montantDejaPaye + Number(this.montantPaiement.text);
-				query4.execute("UPDATE prix " +
+				QueryHelper.execute("UPDATE prix " +
 					"SET solde ='"+this.solde.text+"',"+
 					" TotalPaye ='"+totalPaye+"'"+
-					" WHERE id_prix = '"+prixID+"'",Query.UPDATE);
+					" WHERE id_prix = '"+prixID+"'", end, queryError);
 				
 			}
 			protected function close(event:Object):void
@@ -114,12 +78,11 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
-
 			protected function montantPaiement_changeHandler(event:Event):void
 			{
 				var soldeValue:Number = Number(montantDu.text) - Number(montantPaiement.text);

@@ -3,22 +3,17 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
 			
-			import proxy.ProfessionSanteProxy;
+			import phi.framework.sql.SQLErrorEvent;
+			
 			import proxy.SecteurProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var id_personne:int;
 			public static var RELOAD:String = "reload";
 			
@@ -50,19 +45,13 @@
 			}
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
+			{	
 				this.secteur.dataProvider = SecteurProxy.Secteur;
 			}
 			
 			protected function modifier(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END, updatePersonne);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("UPDATE personne " +
+				QueryHelper.execute("UPDATE personne " +
 					"SET Titre ='"+(titre.selectedItem as String)+"', " +
 					"Nom ='"+Tools.sanitize(nom.text)+"', " +
 					"Prenom = '"+Tools.sanitize(prenom.text)+"', "+
@@ -75,19 +64,19 @@
 					"Portable='"+portable.text+"', " +
 					"Courriel='"+email.text+"',  " +
 					"id_secteur='"+secteur.selectedItem.id_secteur+"' " +
-					" WHERE id_personne= '"+this.id_personne+"'",Query.UPDATE);
+					" WHERE id_personne= '"+this.id_personne+"'", updatePersonne, queryError);
 				
 			}
 			
-			private function updatePersonne(evt:Event):void
+			private function updatePersonne(evt:Object):void
 			{
 				this.dispatchEvent(new Event(RELOAD));
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

@@ -97,7 +97,7 @@
 					storeLogin();
 					viewstack1.selectedChild = main;
 					role = users[0].Role;
-					visuMode = Boolean(users[0].visuMode);
+					visuMode = Boolean(int(users[0].visuMode));
 					secteurUtilisateur =users[0].id_secteur;
 					if(secteurUtilisateur !=0)
 						secteurNomUtilisateur= users[0].section;

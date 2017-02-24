@@ -2,22 +2,17 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"  creationComplete="onCreateComplete()" xmlns:helper="common.helper.*">
 	<mx:Script>
 		<![CDATA[
-			import common.helper.DataGridDataExporter;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			/** */
+			import common.helper.DataGridDataExporter;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable] public var users   :ArrayCollection;
 			
@@ -27,28 +22,22 @@
 			 */
 			private function onCreateComplete():void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-			
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_personne " +
+				QueryHelper.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_personne " +
 					"FROM etre_malade m, personne p,secteur s WHERE m.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND p.valid<>'DET' " +
-					"GROUP BY p.id_personne");
+					"GROUP BY p.id_personne", queryEnd, queryError);
 				
 			}
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				users = query.getRecords();
+				users = new ArrayCollection(evt.result.data);
 				users.sort = SortUtil.nomPrenomSort();
 				users.refresh();
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			
@@ -100,9 +89,9 @@
 			
 			protected function reload(event:Object=null):void
 			{
-				query.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_personne " +
+				QueryHelper.execute("SELECT Titre, Nom,Prenom,Adresse1,Adresse2,CodePostal,Commune,DateNaissance,Tel,Portable,sexe,Courriel,section,p.id_personne " +
 					"FROM etre_malade m, personne p,secteur s WHERE m.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND p.valid<>'DET'  " +
-					"GROUP BY p.id_personne");
+					"GROUP BY p.id_personne", queryEnd, queryError);
 			}
 			
 			protected function exportDatagrid(event:MouseEvent):void

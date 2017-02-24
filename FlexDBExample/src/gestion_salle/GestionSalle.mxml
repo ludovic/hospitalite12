@@ -5,17 +5,11 @@
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
-			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable] public var chambres   :ArrayCollection;
 			[Bindable] public var chambresDispo   :ArrayCollection;
@@ -27,50 +21,34 @@
 			
 			
 			private function onCreateComplete():void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				query2 = new Query();
-				query2.connect("conn1", db);
-				query3 = new Query();
-				query3.connect("conn1", db);
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				query.execute("SELECT * FROM chambre c1 where c1.numero not in (Select c.numero from chambre c, etre_disponible ed where c.numero = ed.numero and ed.id_pele =" + index.peleActuel.id_pele+")");
+			{	
+				QueryHelper.execute("SELECT * FROM chambre c1 where c1.numero not in (Select c.numero from chambre c, etre_disponible ed where c.numero = ed.numero and ed.id_pele =" + index.peleActuel.id_pele+")", queryEnd, queryError);
 			}
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				chambres = query.getRecords();
+				chambres = new ArrayCollection(evt.result.data);
 				datagrid1_changeHandler();
 				
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function datagrid1_changeHandler(event:ListEvent=null):void
 			{
-				query2.addEventListener(Query.QUERY_END, provideChambresDispo);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("Select * from chambre c, etre_disponible ed where c.numero = ed.numero and ed.id_pele =" + index.peleActuel.id_pele )
+				QueryHelper.execute("Select * from chambre c, etre_disponible ed where c.numero = ed.numero and ed.id_pele =" + index.peleActuel.id_pele, provideChambresDispo, queryError)
 			}
 			
-			private function provideChambresDispo(evt:Object):void
+			private function provideChambresDispo(evt:SQLEvent):void
 			{
-				chambresDispo = query2.getRecords();
-				
+				chambresDispo = new ArrayCollection(evt.result.data);
 			}	
 			
 			protected function addChambre(event:MouseEvent):void
 			{
-				query3.addEventListener(Query.QUERY_END,end);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
 				if(chambreListe.selectedItems.length>0)
 				{
 					
@@ -81,7 +59,7 @@
 						}
 						
 						queryString = queryString.slice(0,queryString.length-1);
-						query3.execute(queryString, Query.INSERT );
+						QueryHelper.execute(queryString, end, queryError);
 					
 				}
 				

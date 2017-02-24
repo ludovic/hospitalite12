@@ -2,34 +2,21 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="184" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			import proxy.AffectationProxy;
-			import proxy.ChambreProxy;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import phi.framework.sql.SQLErrorEvent;
 			import proxy.ModuleProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var hospitalierID:int;
 			private var salleOld:Number;
 			
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
 				this.moduleList.dataProvider = ModuleProxy.ModuleDispo;
 			}
 			
@@ -42,21 +29,18 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
 				if(fonctionList.selectedLabel == "responsable")
 				{
-					query.execute("INSERT INTO responsable_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO responsable_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", end, queryError);
 
 				}
 				else if(fonctionList.selectedLabel == "ide")
 				{
-					query.execute("INSERT INTO ide_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO ide_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", end, queryError );
 				}
 				else
 				{
-					query.execute("INSERT INTO brancardier_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO brancardier_module (`id_hospitalier`, `id_module`) VALUES ("+hospitalierID+", "+moduleList.selectedItem.id_module+") ", end, queryError);
 				}
 			}
 			
@@ -70,9 +54,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

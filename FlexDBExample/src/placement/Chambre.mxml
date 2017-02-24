@@ -8,18 +8,14 @@
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
 			
-			import proxy.AffectationProxy;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
+			
 			import proxy.ChambreProxy;
 			import proxy.ModuleProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
 			
 			[Bindable]
 			private var moduleSalleList:ArrayCollection;
@@ -148,12 +144,7 @@
 			////Export////
 			protected function exportDatagrid(event:MouseEvent):void
 			{
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideExportDatagrid);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.reg_chambre, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur" +
+				QueryHelper.execute("SELECT p.nom, p.prenom, s.section, m.divers, m.reg_normal, m.reg_diab, m.reg_ss_sel, m.reg_mix, m.reg_pb_deglutition, m.reg_eau_gef, m.reg_chambre, m.autre_soin_oxygene, c.libelle, c.etage, c.lits, c.ascenseur" +
 					" FROM `personne` p, `malade` m, `etre_malade` em, `chambre` c, secteur s" +
 					" WHERE em.id_pele = " + index.peleActuel.id_pele+
 					" AND m.id_malade = em.id_malade" +
@@ -161,18 +152,18 @@
 					" AND p.id_secteur=s.id_secteur " +
 					" AND c.numero = m.numero " +
 					" AND m.annuler = 'non' " +
-					" ORDER BY p.nom");
+					" ORDER BY p.nom", provideExportDatagrid, queryError);
 			}
 			
-			private function provideExportDatagrid(evt:Object):void
+			private var arraySalle:ArrayCollection;
+			private function provideExportDatagrid(evt:SQLEvent):void
 			{
+				arraySalle = new ArrayCollection(evt.result.data);
 				Alert.show("Voulez-vous exporter les salles ?","",Alert.OK|Alert.CANCEL,this, alertClickHandler);
 			}
 			
 			private function alertClickHandler(event:CloseEvent):void
 			{
-				var arraySalle:ArrayCollection = query.getRecords();
-				
 				switch (event.detail){
 					case Alert.OK:
 						var csvText:String = exportCSVFromArrayCollection(arraySalle);
@@ -184,9 +175,9 @@
 				}
 				
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			public function exportCSVFromArrayCollection(ac:ArrayCollection,header:Boolean=true):String

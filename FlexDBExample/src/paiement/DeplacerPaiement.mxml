@@ -2,34 +2,23 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
 			
-			import proxy.AffectationProxy;
+			import phi.framework.sql.SQLErrorEvent;
+			
 			import proxy.RemiseProxy;
 
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var paiementID:int;
 			
 			public var type:String;
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
+			{	
 				if(type == 'hospitalier')
 					this.remiseList.dataProvider = RemiseProxy.RemiseHospitalier;
 				else
@@ -44,12 +33,9 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				query.execute("UPDATE paiement " +
+				QueryHelper.execute("UPDATE paiement " +
 					"SET  id_remise ='"+remiseList.selectedItem.id_remise+"'"+
-					" WHERE id_paiement= '"+paiementID+"'",Query.UPDATE);
+					" WHERE id_paiement= '"+paiementID+"'", end, queryError);
 				
 			}
 			
@@ -63,9 +49,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

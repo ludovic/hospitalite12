@@ -7,18 +7,12 @@ package proxy
 	
 	import phi.framework.sql.SQLErrorEvent;
 	import phi.framework.sql.SQLEvent;
-	import phi.interfaces.IQuery;
 	
 	public class RemiseProxy
 	{
-		import phi.interfaces.IDatabase;
-		import phi.interfaces.IQuery;
-		
-		private  static var db       :IDatabase;
 		private static var _remiseHospitalier:ArrayCollection = new ArrayCollection;
 		private static var _remiseMalade:ArrayCollection = new ArrayCollection;
 
-		private static var query   :IQuery;
 		
 		private static function queryError(evt:SQLErrorEvent):void
 		{

@@ -2,33 +2,21 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			import proxy.AffectationProxy;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import phi.framework.sql.SQLErrorEvent;
 			import proxy.ChambreProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var hospitalierID:int;
 			private var salleOld:Number;
 			
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
+			{	
 				this.salleList.dataProvider = ChambreProxy.ChambreDispo;
 			}
 			
@@ -41,17 +29,15 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(isNaN(salleOld))
 				{
-					query.execute("INSERT INTO s_occuper (`id_hospitalier`, `numero`) VALUES ("+hospitalierID+", "+salleList.selectedItem.numero+") ", Query.INSERT );
+					QueryHelper.execute("INSERT INTO s_occuper (`id_hospitalier`, `numero`) VALUES ("+hospitalierID+", "+salleList.selectedItem.numero+") ", end, queryError);
 				}
 				else
 				{
-					query.execute("UPDATE s_occuper " +
+					QueryHelper.execute("UPDATE s_occuper " +
 						"SET id_hospitalier ='"+hospitalierID+"', numero ='"+salleList.selectedItem.numero+"'"+
-						" WHERE id_hospitalier = '"+hospitalierID+"' AND numero = '"+salleOld+"'",Query.UPDATE);
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND numero = '"+salleOld+"'", end, queryError);
 				}
 			}
 			
@@ -65,9 +51,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

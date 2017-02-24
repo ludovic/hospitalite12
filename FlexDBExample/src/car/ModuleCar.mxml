@@ -2,6 +2,8 @@
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="570" height="200" label="{this.titleText}">
 	<mx:Script>
 		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
@@ -25,84 +27,66 @@
 			public function generateModuleProvider(carId:int):void
 			{
 				this.carId=carId;
-				QueryHelper.execute("(select s.nom, s.prenom, s.id_personne, s.id_gare, g.nom as gare, personne_type from gare g," +
-					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare," +
-					" ('hospitalier') 'personne_type'"+
-					"	FROM `personne` p, `etre_hospitalier` eh, `inscrire` i , `hospitalier` h"+
-					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
-					"	AND i.id_pele = eh.id_pele"+
-					"	AND p.id_personne = i.id_personne"+
-					"	AND eh.id_hospitalier = h.id_hospitalier"+
-					"	AND h.annuler='non'"+
-					"	AND i.id_transport = "+carId +
-					"	AND p.id_personne = eh.id_personne) s "+
-					" where g.id_gare = s.id_gare)" +
+				var requet:String = "select s.nom, s.prenom, s.id_personne, s.id_gare, g.nom as gare, personne_type from gare g," +
+					" v_hospitalier_gare s"+
+					" where g.id_gare = s.id_gare " +
+					" AND s.id_pele =" + index.peleActuel.id_pele+
+					" AND s.id_transport =" + carId +
 					" UNION " +
-					" (select s.nom, s.prenom, s.id_personne, s.id_gare, g.nom as gare, personne_type from gare g," +
-					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare," +
-					" ('malade') 'personne_type'"+
-					"	FROM `personne` p, `etre_malade` em, `inscrire` i,`malade` m "+
-					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
-					"	AND i.id_pele = em.id_pele"+
-					"	AND p.id_personne = i.id_personne"+
-					"	AND em.id_malade = m.id_malade"+
-					"	AND m.annuler='non'"+
-					"	AND i.id_transport = "+carId +
-					"	AND p.id_personne = em.id_personne) s "+
-					" where g.id_gare = s.id_gare)" +
+					" select s.nom, s.prenom, s.id_personne, s.id_gare, g.nom as gare, personne_type from gare g," +
+					" v_malade_gare s"+
+					" where g.id_gare = s.id_gare " +
+					" AND s.id_pele =" + index.peleActuel.id_pele+
+					" AND s.id_transport =" + carId +
 					" UNION " +
-					" (select s.nom, s.prenom, s.id_personne, s.id_gare, g.nom as gare, personne_type from gare g," +
-					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare," +
-					" ('pelerin') 'personne_type'"+
-					"	FROM `personne` p, `etre_pelerin` ep, `inscrire` i ,`pelerin` pe "+
-					"	WHERE i.id_pele =" + index.peleActuel.id_pele+
-					"	AND i.id_pele = ep.id_pele"+
-					"	AND p.id_personne = i.id_personne"+
-					"	AND ep.id_pelerin = pe.id_pelerin"+
-					"	AND pe.annuler='non'"+
-					"	AND i.id_transport = "+carId +
-					"	AND p.id_personne = ep.id_personne) s "+
-					" where g.id_gare = s.id_gare)", getRole, queryError);
+					" select s.nom, s.prenom, s.id_personne, s.id_gare, g.nom as gare, personne_type from gare g," +
+					" v_pelerin_gare s"+
+					" where g.id_gare = s.id_gare " +
+					" AND s.id_pele =" + index.peleActuel.id_pele+
+					" AND s.id_transport =" + carId ;
+				QueryHelper.execute(requet, getRole, queryError);
 			}
 			
 			private var liste:ArrayCollection;
 			private function getRole(evt:SQLEvent):void
 			{
 				liste = new ArrayCollection(evt.result.data);
-				QueryHelper.execute("(SELECT p.id_personne, ('responsable') 'personne_role'" +
+				var requet:String = "SELECT p.id_personne, ('responsable') 'personne_role'" +
 					" FROM `personne` p, `avoir_responsable` ar" +
 					" WHERE ar.id_pele ="+ index.peleActuel.id_pele+
 					" AND ar.id_transport = "+carId +
 					" AND p.id_personne = ar.id_personne " +
-					" AND ar.direction = 'aller')" +
+					" AND ar.direction = 'aller'" +
 					" UNION " +
-					"(SELECT p.id_personne, ('ide') 'personne_role'" +
+					"SELECT p.id_personne, ('ide') 'personne_role'" +
 					" FROM `personne` p, `ide` id" +
 					" WHERE id.id_pele ="+ index.peleActuel.id_pele+
 					" AND id.id_transport = "+carId +
 					" AND p.id_personne = id.id_personne " +
-					" AND id.direction = 'aller')" +
+					" AND id.direction = 'aller'" +
 					" UNION " +
-					"(SELECT p.id_personne, ('animation') 'personne_role'" +
+					"SELECT p.id_personne, ('animation') 'personne_role'" +
 					" FROM `personne` p, `animation` an" +
 					" WHERE an.id_pele ="+ index.peleActuel.id_pele+
 					" AND an.id_transport = "+carId +
 					" AND p.id_personne = an.id_personne " +
-					" AND an.direction = 'aller')"+
+					" AND an.direction = 'aller'"+
 					" UNION " +
-					"(SELECT p.id_personne, ('bagages') 'personne_role'" +
+					"SELECT p.id_personne, ('bagages') 'personne_role'" +
 					" FROM `personne` p, `bagages` bg" +
 					" WHERE bg.id_pele ="+ index.peleActuel.id_pele+
 					" AND bg.id_transport = "+carId +
 					" AND p.id_personne = bg.id_personne " +
-					" AND bg.direction = 'aller')" +
+					" AND bg.direction = 'aller'" +
 					" UNION " +
-					"(SELECT p.id_personne, ('intendance') 'personne_role'" +
+					"SELECT p.id_personne, ('intendance') 'personne_role'" +
 					" FROM `personne` p, `intendance` it" +
 					" WHERE it.id_pele ="+ index.peleActuel.id_pele+
 					" AND it.id_transport = "+carId +
 					" AND p.id_personne = it.id_personne " +
-					" AND it.direction = 'aller')", provideModule, queryError);
+					" AND it.direction = 'aller'";
+				QueryHelper.execute(requet, provideModule, queryError);
+				
 			}
 			
 			private function provideModule(evt:SQLEvent):void

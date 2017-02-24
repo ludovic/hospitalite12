@@ -2,21 +2,17 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
+			
 			
 			[Bindable]
 			public var titleText:String;
@@ -34,29 +30,24 @@
 			{
 				this.chambreId=chambreId;
 				this.moduleId=moduleId;
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT p.nom, p.prenom,eh.id_hospitalier" +
+				QueryHelper.execute("SELECT p.nom, p.prenom,eh.id_hospitalier" +
 					" FROM `personne` p, `etre_hospitalier` eh, `s_occuper` o, `chambre` c " +
 					"WHERE eh.id_pele ="+ index.peleActuel.id_pele+
 					" AND eh.id_hospitalier = o.id_hospitalier " +
 					" AND o.numero = "+chambreId +
 					" AND p.id_personne = eh.id_personne" +
-					" GROUP BY p.id_personne");
+					" GROUP BY p.id_personne", provideModule, queryError);
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data);
 				provider.sort = SortUtil.minNomPrenomSort();
 				provider.refresh();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			protected function affecterAussiA(event:Object=null):void
 			{
@@ -74,15 +65,11 @@
 			{
 				if(listHospi.selectedItem)
 				{
-				 	query2= new Query();
-					query2.connect("conn1", db);
-					query2.addEventListener(Query.QUERY_END,refresh);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					query2.execute("DELETE FROM s_occuper " +
-						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND numero = '"+chambreId+"'",Query.DELETE);
+					QueryHelper.execute("DELETE FROM s_occuper " +
+						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND numero = '"+chambreId+"'", refresh, queryError);
 				 }
 			}
-			private function refresh(evt:Event):void
+			private function refresh(evt:Object):void
 			{
 				this.dispatchEvent( new DocEvent(Salle.RELOAD_MODULE));
 			}

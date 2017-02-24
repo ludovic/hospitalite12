@@ -7,16 +7,10 @@ package proxy
 	
 	import phi.framework.sql.SQLErrorEvent;
 	import phi.framework.sql.SQLEvent;
-	import phi.interfaces.IQuery;
 	
 	public class GareProxy
 	{
-		import phi.interfaces.IDatabase;
-		import phi.interfaces.IQuery;
-		
-		private  static var db       :IDatabase;
 		private static var _gare:ArrayCollection = new ArrayCollection;
-		private static var query    :IQuery;
 		
 		public static function loadGare():void
 		{

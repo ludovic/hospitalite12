@@ -2,31 +2,21 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="320" height="186" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			
 			private var hospitalierID:int;
 			private var hospitalierIDList:Array;
 			private var nuitOld:Number;
 			
-			
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
 				this.nuitList.dataProvider = [{label:"Nuit 1", value: 1}, {label:"Nuit 2", value: 2}, {label:"Nuit 3", value: 3}];
 			}
 			
@@ -53,8 +43,6 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(isNaN(nuitOld))
 				{
 					if(hospitalierIDList.length>0)
@@ -66,16 +54,16 @@
 						}
 						
 						queryString = queryString.slice(0,queryString.length-1);
-						query.execute(queryString, Query.INSERT );
+						QueryHelper.execute(queryString, end, queryError);
 					}
 					else
-						query.execute("INSERT INTO obtenir_nuit (`id_hospitalier`, `nuit`) VALUES ("+hospitalierID+", "+nuitList.selectedItem.value+") ", Query.INSERT );
+						QueryHelper.execute("INSERT INTO obtenir_nuit (`id_hospitalier`, `nuit`) VALUES ("+hospitalierID+", "+nuitList.selectedItem.value+") ", end, queryError);
 				}
 				else
 				{
-					query.execute("UPDATE obtenir_nuit " +
+					QueryHelper.execute("UPDATE obtenir_nuit " +
 						"SET id_hospitalier ='"+hospitalierID+"', nuit ='"+nuitList.selectedItem.value+"'"+
-						" WHERE id_hospitalier = '"+hospitalierID+"' AND nuit = '"+ nuitOld +"'",Query.UPDATE);
+						" WHERE id_hospitalier = '"+hospitalierID+"' AND nuit = '"+ nuitOld +"'", end, queryError);
 				}
 			}
 			
@@ -89,9 +77,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 
 		]]>

@@ -3,19 +3,18 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.collections.Sort;
 			import mx.collections.SortField;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
+			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.AffectationProxy;
 			import proxy.GareProxy;
@@ -26,17 +25,6 @@
 			[Bindable]
 			[Embed(source='assets/warning.png')]
 			private var WARNING:Class;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query5    :IQuery;
-			private var query6    :IQuery;
-			private var query7    :IQuery;
-			private var query8    :IQuery;
-			private var query9    :IQuery;
-			private var query10    :IQuery;
-			private var query11    :IQuery;
 			
 			private var personneID:Number
 			[Bindable]
@@ -57,12 +45,6 @@
 			private function onCreateComplete():void
 			{
 				idPersonne = NaN;
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query2 = new Query();
-				query2.connect("conn1", db);
 				
 				affectationProvider = AffectationProxy.Affectation;
 				secteurProvider		= SecteurProxy.Secteur;
@@ -76,20 +58,7 @@
 				professionProvider.refresh();
 				hotelProvider 		= HotelProxy.HotelHospitalier;
 				gareProvider		= GareProxy.Gare;
-				query5= new Query();
-				query5.connect("conn1", db);
-				query5.addEventListener(Query.QUERY_END, provideTransport);
-				query5.addEventListener(Query.QUERY_ERROR,queryError);
-				query5.execute("Select * from transport" )
-				
-				query8 = new Query();
-				query8.connect("conn1", db);
-				query9 = new Query();
-				query9.connect("conn1", db);
-				query10 = new Query();
-				query10.connect("conn1", db);
-				query11 = new Query();
-				query11.connect("conn1", db);
+				QueryHelper.execute("Select * from transport", provideTransport, queryError)
 				
 				for(var i:int=0;i<affectationProvider.length;++i)
 				{
@@ -106,9 +75,9 @@
 				
 			}
 			
-			private function provideTransport(evt:Object):void
+			private function provideTransport(evt:SQLEvent):void
 			{
-				transportProvider = query5.getRecords();
+				transportProvider = new ArrayCollection(evt.result.data);
 			}
 			
 			private function queryEnd(evt:Object):void
@@ -122,26 +91,24 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function addPersonne(event:MouseEvent):void
 			{
 				if(isNaN(this.idPersonne))
 				{
-					query2.addEventListener(Query.QUERY_END, testPersonneInBase);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					query2.execute("Select *  from personne where Nom='"+Tools.sanitize(nom.text) +"' and Prenom='"+Tools.sanitize(prenom.text)+"' and DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'");
+					QueryHelper.execute("Select *  from personne where Nom='"+Tools.sanitize(nom.text) +"' and Prenom='"+Tools.sanitize(prenom.text)+"' and DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'", testPersonneInBase, queryError);
 				}
 				else
 					this.insertIntoHospitalier(null);
 			}
 			
-			private function testPersonneInBase(evt:Object):void
+			private function testPersonneInBase(evt:SQLEvent):void
 			{
-				var result:ArrayCollection = query2.getRecords();
+				var result:ArrayCollection = new ArrayCollection(evt.result.data);
 				if(result.length>0)
 					Alert.show("Une personne avec les mêmes nom, prénom et date de naissance existe déjà dans la base de données. Avez-vous pensez à utiliser le bouton de recherche ?" +
 						" Si oui, vérifier que cette personne n'est pas déjà inscrite.","",Alert.OK,this,null,WARNING);
@@ -151,18 +118,20 @@
 			
 			private function insertIntoPersonne():void
 			{
-				query.addEventListener(Query.QUERY_END, insertIntoHospitalier);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("INSERT INTO personne (" +
+				QueryHelper.execute("INSERT INTO personne (" +
 					" `Titre`, `Nom`, `Prenom`, `Adresse1`," +
 					" `Adresse2`, `Adresse3`, `CodePostal`, `Commune`, `DateNaissance`, `sexe`, `Tel`, `Portable`, `Courriel`, `etre_hospitalier`, `id_secteur`, `id_profession_sante`) " +
 					"	VALUES ('"+(titre.selectedItem as String)+"','"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(prenom.text)+"','"+Tools.sanitize(adresse.text)+"',NULL,NULL,'"+codePostal.text+"','"+Tools.sanitize(commune.text)+"','"+
 					Tools.dateToString(dateNaissance.selectedDate)+"','"+this.sexe.selectedLabel+"','"+telephone.text+"','"+portable.text+"','"+email.text+"',NULL,'"+
-					this.secteur.selectedItem.id_secteur+"','"+this.profession.selectedItem.id_profession_sante+"')", Query.INSERT);
+					this.secteur.selectedItem.id_secteur+"','"+this.profession.selectedItem.id_profession_sante+"')", insertIntoHospitalier, queryError);
 			}
 			
-			private function insertIntoHospitalier(evt:Object):void
+			private var lastInsertID:Number;
+			private function insertIntoHospitalier(evt:SQLEvent):void
 			{
+				if(evt != null)
+					lastInsertID = evt.result.lastInsertID;
+				
 				var dateDepartComplete:Date=dateDepart.selectedDate;
 				if(dateDepartComplete)
 					dateDepartComplete.setHours(this.heureDepart.value);
@@ -171,63 +140,51 @@
 				if(dateArriveeComplete)
 					dateArriveeComplete.setHours(this.heureArrivee.value);
 				
-				query8.addEventListener(Query.QUERY_END, insertIntoEtreHospitalier);
-				query8.addEventListener(Query.QUERY_ERROR,queryError);
-				query8.execute("INSERT INTO hospitalier ( `nouveau`,`capacite_restrainte`,`divers`,`desiderata`,`nuit1`,`nuit2`,`nuit3`,`complet`,`dateArrivee`,`dateDepart`,`id_affectation`,`couple`,`transport`,`chambreInd`,`forfaitJeune`,`nomHeb`,`id_gare`,`id_hebergement`,`paiementInsc`,`montantInsc`,`incomplet`,`conjoint`,`id_affectation_comp`)"+
+				QueryHelper.execute("INSERT INTO hospitalier ( `nouveau`,`capacite_restrainte`,`divers`,`desiderata`,`nuit1`,`nuit2`,`nuit3`,`complet`,`dateArrivee`,`dateDepart`,`id_affectation`,`couple`,`transport`,`chambreInd`,`forfaitJeune`,`nomHeb`,`id_gare`,`id_hebergement`,`paiementInsc`,`montantInsc`,`incomplet`,`conjoint`,`id_affectation_comp`)"+
 					"	VALUES ('"+ Tools.ouiNon(nouveau.selected) +"','"+Tools.sanitize(capaciteRest.text)+"','"+Tools.sanitize(divers.text)+"','"+Tools.sanitize(desiderata.text)+"','"+Tools.ouiNon(nuit1.selected)+"','"+Tools.ouiNon(nuit2.selected)+"','"+
-					Tools.ouiNon(nuit3.selected)+"','"+Tools.ouiNon(peleComplet.selected)+"','"+Tools.dateToString(dateArriveeComplete)+"','"+Tools.dateToString(dateDepartComplete)+"',"+this.affectationDem.selectedItem.id_affectation+",'"+Tools.ouiNon(this.couple.selected)+"','"+this.modeTransport.selectedValue+"','"+Tools.ouiNon(this.chambreInd.selected)+"','"+Tools.ouiNon(this.forfaitJeune.selected)+"','"+this.nomHeb.text+"','"+this.gare.selectedItem.id_gare+"','"+this.hotel.selectedItem.id_hebergement+"','"+Tools.ouiNon(this.paiementInsc.selected)+"','"+this.montantInsc.text+"','"+Tools.ouiNon(incomplet.selected)+"','"+Tools.sanitize(conjoint.text)+"','"+this.affectationComp.selectedItem.id_affectation+"')", Query.INSERT);
+					Tools.ouiNon(nuit3.selected)+"','"+Tools.ouiNon(peleComplet.selected)+"','"+Tools.dateToString(dateArriveeComplete)+"','"+Tools.dateToString(dateDepartComplete)+"',"+this.affectationDem.selectedItem.id_affectation+",'"+Tools.ouiNon(this.couple.selected)+"','"+this.modeTransport.selectedValue+"','"+Tools.ouiNon(this.chambreInd.selected)+"','"+Tools.ouiNon(this.forfaitJeune.selected)+"','"+this.nomHeb.text+"','"+this.gare.selectedItem.id_gare+"','"+this.hotel.selectedItem.id_hebergement+"','"+Tools.ouiNon(this.paiementInsc.selected)+"','"+this.montantInsc.text+"','"+Tools.ouiNon(incomplet.selected)+"','"+Tools.sanitize(conjoint.text)+"','"+this.affectationComp.selectedItem.id_affectation+"')", insertIntoEtreHospitalier, queryError);
 			}
 			
-			private function insertIntoEtreHospitalier(evt:Object):void
+			private function insertIntoEtreHospitalier(evt:SQLEvent):void
 			{
 				if(isNaN(idPersonne))
-					personneID = query.getLastInsertID();	
+					personneID = lastInsertID;	
 				else
 					personneID = idPersonne;
-				var hospitalierID:Number = query8.getLastInsertID();
-				query9.addEventListener(Query.QUERY_END, insertIntoPrix);
-				query9.addEventListener(Query.QUERY_ERROR,queryError);
-				query9.execute("INSERT INTO etre_hospitalier (`id_personne`,`id_hospitalier`,`id_pele`) VALUES ('"+personneID+"','"+hospitalierID+"','"+index.peleActuel.id_pele+"')", Query.INSERT);
+				var hospitalierID:Number = evt.result.lastInsertID;
+				QueryHelper.execute("INSERT INTO etre_hospitalier (`id_personne`,`id_hospitalier`,`id_pele`) VALUES ('"+personneID+"','"+hospitalierID+"','"+index.peleActuel.id_pele+"')", insertIntoPrix, queryError);
 				
 			}
 			
 			private function insertIntoPrix(evt:Object):void
 			{
-				query10.addEventListener(Query.QUERY_END, insertIntoInscrire);
-				query10.addEventListener(Query.QUERY_ERROR,queryError);
-				query10.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, "+calculPrix()+", '0', "+calculPrix()+") ", Query.INSERT );
+				QueryHelper.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, "+calculPrix()+", '0', "+calculPrix()+") ", insertIntoInscrire, queryError);
 			}
 			
-			private function insertIntoInscrire(evt:Object):void
+			private function insertIntoInscrire(evt:SQLEvent):void
 			{
-				var prixID:Number = query10.getLastInsertID();
-				query11.addEventListener(Query.QUERY_END, queryEnd);
-				query11.addEventListener(Query.QUERY_ERROR,queryError);
-				query11.execute("INSERT INTO inscrire (`id_pele`,`id_transport`,`id_personne`,`id_gare`,`id_hebergement`,`id_prix`) " +
-					"VALUES ('"+index.peleActuel.id_pele+"',0,'"+personneID+"',0,'"+this.hotel.selectedItem.id_hebergement+"','"+prixID+"')", Query.INSERT);
+				var prixID:Number = evt.result.lastInsertID;
+				QueryHelper.execute("INSERT INTO inscrire (`id_pele`,`id_transport`,`id_personne`,`id_gare`,`id_hebergement`,`id_prix`) " +
+					"VALUES ('"+index.peleActuel.id_pele+"',0,'"+personneID+"',0,'"+this.hotel.selectedItem.id_hebergement+"','"+prixID+"')", queryEnd, queryError);
 			}
 			
 			
 			protected function nameSearch(event:MouseEvent):void
 			{
-				query7= new Query();
-				query7.connect("conn1", db);
-				query7.addEventListener(Query.QUERY_END, provideNameGrid);
-				query7.addEventListener(Query.QUERY_ERROR,queryError);
-				query7.execute("Select * from personne where Nom LIKE '"+nom.text+"%'" +
+				QueryHelper.execute("Select * from personne where Nom LIKE '"+nom.text+"%'" +
 					"AND id_personne NOT IN (SELECT p.id_personne FROM etre_hospitalier h, personne p WHERE h.id_personne = p.id_personne " +
 						" AND h.id_pele="+index.peleActuel.id_pele +" )"+
 					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_pelerin pe, personne p WHERE pe.id_personne = p.id_personne " +
 						" AND pe.id_pele="+index.peleActuel.id_pele +" )"+
 					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_malade m, personne p WHERE m.id_personne = p.id_personne " +
 						" AND m.id_pele="+index.peleActuel.id_pele +" )"+
-					" AND valid='XXX' "	);
+					" AND valid='XXX' ", provideNameGrid, queryError);
 				
 			}
-			private function provideNameGrid(evt:Object):void
+			private function provideNameGrid(evt:SQLEvent):void
 			{
 				var listeNom:ListeNom = new ListeNom();
-				listeNom.listeNomProvider = query7.getRecords();
+				listeNom.listeNomProvider = new ArrayCollection(evt.result.data);
 				PopUpManager.addPopUp(listeNom,this.parentApplication as DisplayObject,true);
 				PopUpManager.centerPopUp(listeNom);
 				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);

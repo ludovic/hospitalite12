@@ -2,42 +2,28 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="816" height="526" horizontalScrollPolicy="off" >
 	<mx:Script>
 		<![CDATA[
-			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			public function setFormulaire(idHosp:int):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				query.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho WHERE h.id_personne = p.id_personne " +
-						" AND h.id_hospitalier = ho.id_hospitalier AND h.id_pele="+index.peleActuel.id_pele+" AND ho.id_hospitalier ="+ idHosp );
+				QueryHelper.execute("SELECT * FROM etre_hospitalier h, personne p, hospitalier ho WHERE h.id_personne = p.id_personne " +
+						" AND h.id_hospitalier = ho.id_hospitalier AND h.id_pele="+index.peleActuel.id_pele+" AND ho.id_hospitalier ="+ idHosp, queryEnd, queryError);
 			}
 			private function Close(evt:Object):void
 			{
 				PopUpManager.removePopUp(this);
 			}
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
-			public function queryEnd(evt:Object):void
+			public function queryEnd(evt:SQLEvent):void
 			{
-				var item:Object = query.getRecords()[0];
+				var item:Object = evt.result.data[0];
 				var myObject:Object = item;
 				nouveau.selected = (item.nouveau == "oui")?true:false;
 				peleComplet.selected = (item.complet == "oui")?true:false;

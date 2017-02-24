@@ -9,19 +9,11 @@
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
 			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			import proxy.AffectationProxy;
-			import proxy.ChambreProxy;
-			/** */
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
 			
 			public static var RELOAD_MODULE:String = "reloadModule";
 			public static var RELOAD_MODULE_HARD:String = "reloadModuleHard";
@@ -47,20 +39,13 @@
 
 			protected function affectationCB_changeHandler(event:Object):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT * FROM equipe where id_affectation="+affectationCB.selectedItem.id_affectation);
-
+				QueryHelper.execute("SELECT * FROM equipe where id_affectation="+affectationCB.selectedItem.id_affectation, queryEnd, queryError);
 			}
 			
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				var equipeArray:ArrayCollection = query.getRecords();
+				var equipeArray:ArrayCollection = new ArrayCollection(evt.result.data);
 				var moduleSans:ModuleSansEquipe = new ModuleSansEquipe();
 				
 				moduleList.push({module:moduleSans,equipe:{id_affectation:affectationCB.selectedItem.id_affectation}});
@@ -83,9 +68,9 @@
 				provideModules(); 
 			}
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function addEquipe(event:MouseEvent):void
@@ -102,40 +87,35 @@
 			
 			protected function exportDatagrid(event:MouseEvent):void
 			{
-				db = Database.getInstance();
-				query2= new Query();
-				query2.connect("conn1", db);
-				query2.addEventListener(Query.QUERY_END, getPersonnes);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT * " +
+				QueryHelper.execute("SELECT * " +
 					" FROM `affectation` af, `equipe` e" +
 					" WHERE af.id_affectation = e.id_affectation" +
-					" ORDER BY af.id_affectation");
+					" ORDER BY af.id_affectation", getPersonnes, queryError);
 			}
 			
-			private function getPersonnes(evt:Object):void
+			private var arrayAffectation:ArrayCollection;
+			private function getPersonnes(evt:SQLEvent):void
 			{
-				query3= new Query();
-				query3.connect("conn1", db);
-				query3.addEventListener(Query.QUERY_END, provideExportDatagrid);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
-				query3.execute("Select p.nom,p.prenom,fp.id_equipe" +
+				arrayAffectation = new ArrayCollection(evt.result.data);
+				QueryHelper.execute("Select p.nom,p.prenom,fp.id_equipe" +
 					" FROM `faire_parti` fp,`personne` p, `etre_hospitalier` eh " +
 					" WHERE fp.id_pele = " + index.peleActuel.id_pele+
 					" AND fp.id_hospitalier = eh.id_hospitalier" +
 					" AND eh.id_personne = p.id_personne" +
-					" order by fp.id_equipe");
+					" order by fp.id_equipe", provideExportDatagrid, queryError);
 			}
 			
-			private function provideExportDatagrid(evt:Object):void
+			private var arrayEquipe:ArrayCollection;
+			private function provideExportDatagrid(evt:SQLEvent):void
 			{
+				arrayEquipe = new ArrayCollection(evt.result.data);
 				Alert.show("Voulez-vous exporter la liste des équipes ?","",Alert.OK|Alert.CANCEL,this, alertClickHandler);
 			}
 			
+			
 			private function alertClickHandler(event:CloseEvent):void
 			{
-				var arrayAffectation:ArrayCollection = query2.getRecords();
-				var arrayEquipe:ArrayCollection = query3.getRecords();
+				
 				var csvProvider:ArrayCollection = new ArrayCollection();
 				var lastAffectationID:int = 0;
 				var lastEquipeID:int = 0;

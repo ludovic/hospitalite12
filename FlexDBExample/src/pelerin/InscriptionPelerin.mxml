@@ -2,9 +2,6 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:helper="common.helper.*"  creationComplete="onCreateComplete()">
 	<mx:Script>
 		<![CDATA[
-			import common.helper.DataGridDataExporter;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;
@@ -12,41 +9,33 @@
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.DataGridDataExporter;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable] public var pelerinList   :ArrayCollection;
 			
 			private function onCreateComplete():void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, section, " +
+			{	
+				QueryHelper.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, section, " +
 					" DateNaissance, desiderata, divers, id_gare, pl.id_hebergement, he.Libelle, id_pele, pl.id_pelerin, p.id_personne, id_profession_sante, s.id_secteur, incomplet, modeHebergement, " +
 					"montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " +
-					" FROM etre_pelerin ep, personne p, secteur s, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND pl.id_pelerin = ep.id_pelerin AND s.id_secteur=p.id_secteur AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+					" FROM etre_pelerin ep, personne p, secteur s, pelerin pl, hebergement he WHERE ep.id_personne = p.id_personne AND annuler='non' AND pl.id_pelerin = ep.id_pelerin AND s.id_secteur=p.id_secteur AND he.id_hebergement = pl.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele, queryEnd, queryError);
 			}
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				pelerinList = query.getRecords();
+				pelerinList = new ArrayCollection(evt.result.data);
 				pelerinList.sort = SortUtil.nomPrenomSort();
 				pelerinList.refresh();
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function button1_clickHandler(event:MouseEvent):void
@@ -115,10 +104,10 @@
 			
 			protected function reload(event:Object=null):void
 			{
-				query.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, section, " +
+				QueryHelper.execute("SELECT Adresse1, Adresse2, Adresse3, CodePostal, Commune, conjoint, couple, Courriel, section, " +
 					" DateNaissance, desiderata, divers, id_gare, pel.id_hebergement, he.Libelle, id_pele, pel.id_pelerin, p.id_personne, id_profession_sante, s.id_secteur, incomplet, modeHebergement, " +
 					" montantInsc, Nom, nouveau, paiementInsc, Portable, Prenom, sexe, styleChambre, Tel, Titre " + 
-					" FROM etre_pelerin ep, personne p, secteur s, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND annuler='non' AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele);
+					" FROM etre_pelerin ep, personne p, secteur s, pelerin pel, hebergement he WHERE ep.id_personne = p.id_personne AND s.id_secteur=p.id_secteur AND annuler='non' AND ep.id_pelerin = pel.id_pelerin AND he.id_hebergement = pel.id_hebergement AND ep.id_pele="+index.peleActuel.id_pele, queryEnd, queryError);
 			}
 			
 			private var pelerinAnnuler:Number
@@ -133,12 +122,8 @@
 			{
 				switch (event.detail){
 					case Alert.OK:
-						query2 = new Query();
-						query2.connect("conn1", db);
-						query2.addEventListener(Query.QUERY_END, queryEnd);
-						query2.addEventListener(Query.QUERY_ERROR,queryError); 
-						query2.execute("UPDATE pelerin " +
-							"SET annuler ='oui'  WHERE id_pelerin= '"+pelerinAnnuler+"'",Query.UPDATE); 
+						QueryHelper.execute("UPDATE pelerin " +
+							"SET annuler ='oui'  WHERE id_pelerin= '"+pelerinAnnuler+"'", reload, queryError); 
 						break;
 					case Alert.CANCEL:
 						break;

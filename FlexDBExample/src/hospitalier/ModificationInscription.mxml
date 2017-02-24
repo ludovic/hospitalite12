@@ -3,30 +3,21 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
+			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.AffectationProxy;
 			import proxy.GareProxy;
 			import proxy.HotelProxy;
 			import proxy.ProfessionSanteProxy;
 			import proxy.SecteurProxy;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2   :IQuery;
-			private var query3    :IQuery;
-			private var query4 :IQuery;
-			private var query5    :IQuery;
 			
 			private var hospitalierID:Number
 			private var personneID:Number
@@ -46,27 +37,13 @@
 			public static var RELOAD:String = "reload";
 			
 			private function onCreateComplete():void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				query2 = new Query();
-				query2.connect("conn1", db);
-				query3 = new Query();
-				query3.connect("conn1", db);
-				query4 = new Query();
-				query4.connect("conn1", db);
-				
+			{	
 				affectationProvider = AffectationProxy.Affectation;
 				secteurProvider		= SecteurProxy.Secteur;
 				professionProvider	= ProfessionSanteProxy.Profession;
 				hotelProvider 		= HotelProxy.HotelHospitalier;
 				gareProvider		= GareProxy.Gare;
-				query5= new Query();
-				query5.connect("conn1", db);
-				query5.addEventListener(Query.QUERY_END, provideTransport);
-				query5.addEventListener(Query.QUERY_ERROR,queryError);
-				query5.execute("Select * from transport" )
+				QueryHelper.execute("Select * from transport", provideTransport, queryError)
 				
 				
 			}
@@ -123,9 +100,9 @@
 				incomplet.selected = (item.incomplet== "oui")?true:false;
 			}
 			
-			private function provideTransport(evt:Object):void
+			private function provideTransport(evt:SQLEvent):void
 			{
-				transportProvider = query5.getRecords();
+				transportProvider = new ArrayCollection(evt.result.data);
 			}
 			
 			private function queryEnd(evt:Object):void
@@ -139,9 +116,9 @@
 				PopUpManager.removePopUp(this);
 			}	
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function modifHospitalier(event:MouseEvent):void
@@ -154,44 +131,33 @@
 				if(dateArriveeComplete)
 					dateArriveeComplete.setHours(this.heureArrivee.value);
 				
-				query.addEventListener(Query.QUERY_END, getInscription);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				
-				query.execute("UPDATE hospitalier " +
+				QueryHelper.execute("UPDATE hospitalier " +
 					"SET nouveau ='"+ Tools.ouiNon(nouveau.selected) +"', capacite_restrainte ='"+Tools.sanitize(capaciteRest.text)+"', divers = '"+Tools.sanitize(divers.text)+"', " +
 					"desiderata ='"+Tools.sanitize(desiderata.text)+"', nuit1='"+Tools.ouiNon(nuit1.selected)+"', nuit2='"+Tools.ouiNon(nuit2.selected)+"', nuit3='"+Tools.ouiNon(nuit3.selected)+"'," +
 					" complet ='"+Tools.ouiNon(peleComplet.selected)+"', dateArrivee='"+Tools.dateToString(dateArriveeComplete)+"', dateDepart='"+Tools.dateToString(dateDepartComplete)+"', id_affectation='"+this.affectationDem.selectedItem.id_affectation+"',  couple='"+Tools.ouiNon(this.couple.selected)+"', " +
 					"transport='"+this.modeTransport.selectedValue+"', chambreInd='"+Tools.ouiNon(this.chambreInd.selected)+"', forfaitJeune='"+Tools.ouiNon(this.forfaitJeune.selected)+"', nomHeb='"+this.nomHeb.text+"', id_gare='"+this.gare.selectedItem.id_gare+
 					"', id_hebergement='"+this.hotel.selectedItem.id_hebergement+"', paiementInsc='"+Tools.ouiNon(this.paiementInsc.selected)+"', montantInsc='"+this.montantInsc.text+"',incomplet='"+Tools.ouiNon(incomplet.selected)+"',conjoint='"+Tools.sanitize(conjoint.text)+"', id_affectation_comp='"+this.affectationComp.selectedItem.id_affectation+"'" +
-					"WHERE id_hospitalier= '"+this.hospitalierID+"'",Query.UPDATE);
+					"WHERE id_hospitalier= '"+this.hospitalierID+"'", getInscription, queryError);
 			}
 			
 			private function getInscription(evt:Object):void
 			{
-				query2.addEventListener(Query.QUERY_END, modPrix);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("Select * from inscrire i, prix p where i.id_pele="+index.peleActuel.id_pele +" and i.id_personne="+personneID+" and p.id_prix=i.id_prix" );
+				QueryHelper.execute("Select * from inscrire i, prix p where i.id_pele="+index.peleActuel.id_pele +" and i.id_personne="+personneID+" and p.id_prix=i.id_prix", modPrix, queryError);
 			}
 			
-			private function modPrix(evt:Object):void
+			private var insPrix:Object;
+			private function modPrix(evt:SQLEvent):void
 			{
-				var prix:Object = query2.getRecords()[0];
-				var newSolde:Number = prix.solde - (prix.Total - calculPrix());
-				query3.addEventListener(Query.QUERY_END, modIns);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
-				query3.execute("UPDATE prix " +
-					"SET Total="+calculPrix()+", solde="+newSolde +" WHERE id_prix="+prix.id_prix,Query.UPDATE);
+				insPrix = evt.result.data[0];
+				var newSolde:Number = insPrix.solde - (insPrix.Total - calculPrix());
+				QueryHelper.execute("UPDATE prix " +
+					"SET Total="+calculPrix()+", solde="+newSolde +" WHERE id_prix="+insPrix.id_prix, modIns, queryError);
 			}
 			
 			private function modIns(evt:Object):void
-			{
-				var ins:Object = query2.getRecords()[0];
-				
-				query4.addEventListener(Query.QUERY_END, queryEnd);
-				query4.addEventListener(Query.QUERY_ERROR,queryError);
-				query4.execute("UPDATE inscrire " +
-					"SET  id_hebergement="+this.hotel.selectedItem.id_hebergement+" WHERE id_pele="+index.peleActuel.id_pele +" and id_personne="+personneID+" and id_hebergement="+ins.id_hebergement,Query.UPDATE);
+			{	
+				QueryHelper.execute("UPDATE inscrire " +
+					"SET  id_hebergement="+this.hotel.selectedItem.id_hebergement+" WHERE id_pele="+index.peleActuel.id_pele +" and id_personne="+personneID+" and id_hebergement="+insPrix.id_hebergement, queryEnd, queryError);
 			}
 			
 			private function calculPrix():Number

@@ -3,28 +3,21 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.QueryHelper;
+			import common.helper.Tools;
+			
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.AffectationProxy;
 			import proxy.GareProxy;
 			import proxy.HotelProxy;
 			import proxy.ProfessionSanteProxy;
 			import proxy.SecteurProxy;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query5    :IQuery;
 			
 			private var pelerinID:Number
 			private var personneID:Number
@@ -44,24 +37,14 @@
 			public static var RELOAD:String = "reload";
 			
 			private function onCreateComplete():void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query2 = new Query();
-				query2.connect("conn1", db);
-				
+			{	
 				affectationProvider = AffectationProxy.Affectation;
 				secteurProvider		= SecteurProxy.Secteur;
 				professionProvider	= ProfessionSanteProxy.Profession;
 				hotelProvider 		= HotelProxy.HotelPelerin;
 				gareProvider		= GareProxy.Gare;
-				query5= new Query();
-				query5.connect("conn1", db);
-				query5.addEventListener(Query.QUERY_END, provideTransport);
-				query5.addEventListener(Query.QUERY_ERROR,queryError);
-				query5.execute("Select * from transport" )
+				
+				QueryHelper.execute("Select * from transport" , provideTransport, queryError)
 				
 				
 			}
@@ -106,9 +89,9 @@
 				incomplet.selected = (item.incomplet== "oui")?true:false;
 			}
 			
-			private function provideTransport(evt:Object):void
+			private function provideTransport(evt:SQLEvent):void
 			{
-				transportProvider = query5.getRecords();
+				transportProvider = new ArrayCollection(evt.result.data);
 			}
 			
 			private function queryEnd(evt:Object):void
@@ -117,17 +100,14 @@
 				PopUpManager.removePopUp(this);
 			}	
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function modifHospitalier(event:MouseEvent):void
 			{			
-				query.addEventListener(Query.QUERY_END, modIns);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				query.execute("UPDATE pelerin " +
+				QueryHelper.execute("UPDATE pelerin " +
 					"SET nouveau ='"+ Tools.ouiNon(nouveau.selected) +"', desiderata ='"+Tools.sanitize(desiderata.text)+"', divers = '"+Tools.sanitize(divers.text)+
 					"',  couple='"+Tools.ouiNon(this.couple.selected)+
 					"', conjoint='"+Tools.sanitize(conjoint.text)+
@@ -138,15 +118,13 @@
 					"', modeHebergement='"+this.modeHebergement.selectedLabel+
 					"', styleChambre='"+this.styleChambre.selectedLabel+
 					"', incomplet='"+Tools.ouiNon(this.incomplet.selected)+"'" +
-					"WHERE id_pelerin= '"+this.pelerinID+"'",Query.UPDATE);
+					"WHERE id_pelerin= '"+this.pelerinID+"'", modIns, queryError);
 			}
 			
 			private function modIns(evt:Object):void
 			{
-				query2.addEventListener(Query.QUERY_END, queryEnd);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("UPDATE inscrire " +
-					"SET  id_hebergement="+this.hotel.selectedItem.id_hebergement+" WHERE id_pele="+index.peleActuel.id_pele +" and id_personne="+personneID ,Query.UPDATE);
+				QueryHelper.execute("UPDATE inscrire " +
+					"SET  id_hebergement="+this.hotel.selectedItem.id_hebergement+" WHERE id_pele="+index.peleActuel.id_pele +" and id_personne="+personneID , queryEnd, queryError);
 			}
 			
 		]]>

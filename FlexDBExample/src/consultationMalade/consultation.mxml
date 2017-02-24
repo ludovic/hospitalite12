@@ -2,12 +2,6 @@
 <mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" xmlns:consultation="consultationMalade.*" creationComplete="canvas1_creationCompleteHandler(event)" >
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.DataGridDataExporter;
-			import common.helper.ProgressPopUp;
-			
-			import flash.utils.flash_proxy;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.IFlexDisplayObject;
@@ -15,40 +9,19 @@
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.DataGridDataExporter;
+			import common.helper.ProgressPopUp;
+			import common.helper.QueryHelper;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
-			private var query4    :IQuery;
-			private var query5    :IQuery;
-			private var query6    :IQuery;
-			private var query7    :IQuery;
-			private var query8    :IQuery;
-			private var query9    :IQuery;
-			private var query10   :IQuery;
-			private var query11   :IQuery;
-			private var query12   :IQuery;
-			private var query13   :IQuery;
-			private var query14   :IQuery;
-			private var query15   :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;	
 			
 			private var personneData:Object;
 			
 			protected function canvas1_creationCompleteHandler(event:Object):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideNameGrid);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				//p.id_personne, Titre, Nom, Prenom, Adresse1, CodePostal, Commune, s.section, ch.libelle, ch.etage, ch.ascenseur, ch.lits
-				//deficit_fugue,
-				query.execute("SELECT actif, Adresse1, annuler,ascenseur, autre_soin_oxygene, autre_soin_oxygene_debit, autre_soin_prise_med, autre_soin_spec, CodePostal, codification," +
+				QueryHelper.execute("SELECT actif, Adresse1, annuler,ascenseur, autre_soin_oxygene, autre_soin_oxygene_debit, autre_soin_prise_med, autre_soin_spec, CodePostal, codification," +
 					" Commune, coucher_aide, coucher_barriere_lit, coucher_potence, Courriel, DateNaissance, deficit_audition, deficit_desorientation," +
 					"deficit_parole, deficit_vision,	deplace_aide, deplace_brancard,	deplace_canne, deplace_deambulateur, " +
 					"deplace_escalier, deplace_fauteuil, deplace_seul, divers,	etage, " +
@@ -60,19 +33,19 @@
 				 "souleve_malade,	taille,	Tel, Titre, toilette_aide_lit, toilette_aide_partiel_avec, toilette_aide_partiel_sans, toilette_aide_total, valid, "+
 				 "medecin_traitant, tel_medecin, tel_retour, pos_voy_electrique, coussin_esc, reg_hache, parenterale, ppc, dialyse, lit_medicalise, verticalisateur, reg_aide_repas, cas_particulier "+
 			 "FROM etre_malade em, personne p, malade m, chambre ch, secteur s WHERE em.id_personne = p.id_personne " +
-					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND s.id_secteur = p.id_secteur AND m.annuler='non' AND em.id_pele="+index.peleActuel.id_pele);
+					" AND em.id_malade = m.id_malade AND ch.numero = m.numero AND s.id_secteur = p.id_secteur AND m.annuler='non' AND em.id_pele="+index.peleActuel.id_pele, provideNameGrid, queryError);
 			}
 			
-			private function provideNameGrid(evt:Object):void
+			private function provideNameGrid(evt:SQLEvent):void
 			{
-				listeNom.listeNomProvider = query.getRecords();
+				listeNom.listeNomProvider = new ArrayCollection(evt.result.data);
 				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
 				listeNom.addEventListener(ListeNom.REFRESH,canvas1_creationCompleteHandler);
 			}
 
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			//////////////////////////////////////////////consultation////////////////////////////////////////////////////////////////
@@ -80,11 +53,7 @@
 			{
 				personneData = new Object();
 				personneData.info = event.body;
-				query2 = new Query();
-				query2.connect("conn1", db);
-				query2.addEventListener(Query.QUERY_END, getTransportHebergement);
-				query2.addEventListener(Query.QUERY_ERROR,queryError);
-				query2.execute("SELECT  t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT  t.nom_transport, g.nom, pp.heure_aller  FROM inscrire i, transport t, gare g, passer_par pp " +
 					" WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND i.id_transport = t.id_transport"+ 
 					" AND i.id_gare = g.id_gare"+ 
@@ -92,21 +61,17 @@
 					" AND pp.id_transport = i.id_transport"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getTransportHebergement, queryError);
 			}
 			
-			private function getTransportHebergement(event:Object):void
+			private function getTransportHebergement(event:SQLEvent):void
 			{
-				if(query2.getRecords().length>0)
-					personneData.transHeb = query2.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.transHeb = event.result.data[0];
 				else
 					personneData.transHeb = null;
 				
-				query3 = new Query();
-				query3.connect("conn1", db);
-				query3.addEventListener(Query.QUERY_END, getTransportRetour);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
-				query3.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
 					" WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND i.id_transport_retour = t.id_transport"+ 
 					" AND i.id_gare_retour = g.id_gare"+ 
@@ -114,31 +79,27 @@
 					" AND pp.id_transport = i.id_transport_retour"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getTransportRetour, queryError);
 				
 			}
 			
-			private function getTransportRetour(event:Object):void
+			private function getTransportRetour(event:SQLEvent):void
 			{
-				if(query3.getRecords().length>0)
-					personneData.transRetour = query3.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.transRetour = event.result.data[0];
 				else
 					personneData.transRetour = null;
 				
-				query10 = new Query();
-				query10.connect("conn1", db);
-				query10.addEventListener(Query.QUERY_END, getSoldes);
-				query10.addEventListener(Query.QUERY_ERROR,queryError);
-				query10.execute("SELECT p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
+				QueryHelper.execute("SELECT p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
 					" WHERE i.id_personne ="+personneData.info.id_personne +
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" AND i.id_prix = p.id_prix");
+					" AND i.id_prix = p.id_prix", getSoldes, queryError);
 			}
 			
-			private function getSoldes(event:Object):void
+			private function getSoldes(event:SQLEvent):void
 			{
-				if(query10.getRecords().length>0)
-					personneData.soldes = query10.getRecords()[0];
+				if(event.result.data.length>0)
+					personneData.soldes = event.result.data[0];
 				
 				detailsPersonne.data = personneData;
 			}
@@ -171,59 +132,47 @@
 			private var transportHebergementList:ArrayCollection;
 			private function getTransportHebergementList(event:DocEvent):void
 			{
-				query6 = new Query();
-				query6.connect("conn1", db);
-				query6.addEventListener(Query.QUERY_END, getTransportRetourList);
-				query6.addEventListener(Query.QUERY_ERROR,queryError);
-				query6.execute("SELECT t.nom_transport, g.nom, pp.heure_aller, i.id_personne  FROM inscrire i, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT t.nom_transport, g.nom, pp.heure_aller, i.id_personne  FROM inscrire i, transport t, gare g, passer_par pp " +
 					" WHERE  i.id_transport = t.id_transport"+ 
 					" AND i.id_gare = g.id_gare"+ 
 					" AND pp.id_gare = i.id_gare"+
 					" AND pp.id_transport = i.id_transport"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getTransportRetourList, queryError);
 			}
 			private var transportRetourList:ArrayCollection;
-			private function getTransportRetourList(event:Object):void
+			private function getTransportRetourList(event:SQLEvent):void
 			{
-				if(query6.getRecords().length>0)
-					transportHebergementList= query6.getRecords();
+				if(event.result.data.length>0)
+					transportHebergementList= new ArrayCollection(event.result.data);
 				
-				query7 = new Query();
-				query7.connect("conn1", db);
-				query7.addEventListener(Query.QUERY_END, getPaiementList);
-				query7.addEventListener(Query.QUERY_ERROR,queryError);
-				query7.execute("SELECT i.id_personne, t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
+				QueryHelper.execute("SELECT i.id_personne, t.nom_transport, g.nom, pp.heure_retour  FROM inscrire i, transport t, gare g, passer_par pp " +
 					" WHERE  i.id_transport_retour = t.id_transport"+ 
 					" AND i.id_gare_retour = g.id_gare"+ 
 					" AND pp.id_gare = i.id_gare_retour"+
 					" AND pp.id_transport = i.id_transport_retour"+
 					" AND pp.id_pele = i.id_pele"+
 					" AND i.id_pele="+index.peleActuel.id_pele +
-					" GROUP BY i.id_personne");
+					" GROUP BY i.id_personne", getPaiementList, queryError);
 				
 			}
 			
 			private var paiementList:ArrayCollection;
-			private function getPaiementList(event:Object):void
+			private function getPaiementList(event:SQLEvent):void
 			{
-				if(query7.getRecords().length>0)
-					transportRetourList= query7.getRecords();
+				if(event.result.data.length>0)
+					transportRetourList= new ArrayCollection(event.result.data);
 				
-				query11 = new Query();
-				query11.connect("conn1", db);
-				query11.addEventListener(Query.QUERY_END, buildExport);
-				query11.addEventListener(Query.QUERY_ERROR,queryError);
-				query11.execute("SELECT i.id_personne, p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
+				QueryHelper.execute("SELECT i.id_personne, p.Total, p.TotalPaye,p.solde  FROM inscrire i, prix p" +
 					" WHERE i.id_pele="+index.peleActuel.id_pele +
-					" AND i.id_prix = p.id_prix");
+					" AND i.id_prix = p.id_prix", buildExport, queryError);
 				
 			}
 			
-			private function buildExport(event:Object):void
+			private function buildExport(event:SQLEvent):void
 			{
-				paiementList= query11.getRecords();
+				paiementList= new ArrayCollection(event.result.data);
 				
 				exportData = new ArrayCollection();
 				popUpWindow = PopUpManager.createPopUp(this,ProgressPopUp,false);
@@ -307,6 +256,4 @@
 		<consultation:Details id="detailsPersonne" width="100%" height="100%">
 		</consultation:Details>
 	</mx:VBox>
-	
-	
 </mx:HBox>

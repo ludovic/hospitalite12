@@ -2,37 +2,26 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.SortUtil;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
+			import common.helper.Tools;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable]
 			public var titleText:String;
 			[Bindable]
 			public var provider:ArrayCollection;
 			
-			
-			
 			public function generateModuleProvider(affectationId:int):void
 			{
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("select nom, prenom, DateNaissance, nuit1, nuit2, nuit3, chambreInd, aff.service,aff2.service as service2, id_hospitalier,af.Profession" +
+				QueryHelper.execute("select nom, prenom, DateNaissance, nuit1, nuit2, nuit3, chambreInd, aff.service,aff2.service as service2, id_hospitalier,af.Profession" +
 					" from `affectation` aff, `affectation` aff2, " +
 					"(SELECT p.nom, p.prenom,p.DateNaissance, h.nuit1, h.nuit2, h.nuit3, h.chambreInd, h.id_affectation, h.id_affectation_comp, h.id_hospitalier, ps.Profession" +
 					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh,  `affectation` a, `profession_sante` ps" +
@@ -45,12 +34,12 @@
 					" AND h.annuler='non' " +
 					" GROUP BY p.id_personne) af " +
 					"where aff.id_affectation=af.id_affectation " +
-					"and aff2.id_affectation=af.id_affectation_comp");
+					"and aff2.id_affectation=af.id_affectation_comp", provideModule, queryError);
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data)
 				for(var i:int=0;i<provider.length;++i)
 				{
 					var myObject:Object = provider[i]
@@ -59,9 +48,9 @@
 				provider.sort = SortUtil.minNomPrenomSort();
 				provider.refresh();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function affecterA(event:MouseEvent):void

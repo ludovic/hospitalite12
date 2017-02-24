@@ -2,28 +2,17 @@
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="210" label="{this.titleText}">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.DataGridDataExporter;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
-			import mx.controls.Text;
-			import mx.events.FlexEvent;
-			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.DataGridDataExporter;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query3    :IQuery;
-			private var query4    :IQuery;
-			private var query5    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable]
 			public var titleText:String;
@@ -38,78 +27,57 @@
 			public function generateModuleProvider(remiseId:int):void
 			{
 				this.remiseId=remiseId;
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("select * from paiement pa," +
+				QueryHelper.execute("select * from paiement pa," +
 					" personne p, inscrire i, prix pr, etre_paye ep " +
 					" where pa.id_remise="+remiseId +
 					" and pa.id_paiement = ep.id_paiement"+
 					" and ep.id_prix = pr.id_prix" +
 					" and i.id_prix = pr.id_prix" +
-					" and p.id_personne=i.id_personne");
+					" and p.id_personne=i.id_personne", provideModule, queryError);
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data)
 				provider.sort = SortUtil.nomPrenomSort();
 				provider.refresh();
 				recalculTotal();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function enlever(event:Object=null):void
 			{
 				if(listMalade.selectedItem)
 				{
-					query2= new Query();
-					query2.connect("conn1", db);
-					query2.addEventListener(Query.QUERY_END,enleverFromPaiement);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					query2.execute("DELETE FROM etre_paye WHERE id_paiement="+listMalade.selectedItem.id_paiement,Query.DELETE);
+					QueryHelper.execute("DELETE FROM etre_paye WHERE id_paiement="+listMalade.selectedItem.id_paiement,enleverFromPaiement, queryError);
 					
 				}
 			}
 			
 			private function enleverFromPaiement(event:Object=null):void
 			{
-				query4= new Query();
-				query4.connect("conn1", db);
-				query4.addEventListener(Query.QUERY_END,getPrix);
-				query4.addEventListener(Query.QUERY_ERROR,queryError);
-				query4.execute("DELETE FROM paiement WHERE id_paiement="+listMalade.selectedItem.id_paiement,Query.DELETE);
+				QueryHelper.execute("DELETE FROM paiement WHERE id_paiement="+listMalade.selectedItem.id_paiement, getPrix, queryError);
 			}
 			private function getPrix(event:Object=null):void
 			{
 				var objectDeleted:Object = listMalade.selectedItem;
-				query5= new Query();
-				query5.connect("conn1", db);
-				query5.addEventListener(Query.QUERY_END,modiferPrix);
-				query5.addEventListener(Query.QUERY_ERROR,queryError);
-				query5.execute("SELECT * FROM prix WHERE  id_prix = '"+objectDeleted.id_prix+"'",Query.SELECT);
+				QueryHelper.execute("SELECT * FROM prix WHERE  id_prix = '"+objectDeleted.id_prix+"'", modiferPrix, queryError);
 			}
-			private function modiferPrix(event:Object=null):void
+			private function modiferPrix(event:SQLEvent=null):void
 			{
 				var objectDeleted:Object = listMalade.selectedItem;
 				var paiementDeleted:Object = listMalade.selectedItem;
-				var prix:Object = query5.getRecords()[0];
-				query3= new Query();
-				query3.connect("conn1", db);
-				query3.addEventListener(Query.QUERY_END,refresh);
-				query3.addEventListener(Query.QUERY_ERROR,queryError);
+				var prix:Object = event.result.data[0];
 				var newSolde:Number = Number(prix.solde)+ Number(paiementDeleted.montant);
 				var newTotalPaye:Number = Number(prix.TotalPaye)- Number(paiementDeleted.montant);
-				query3.execute("UPDATE prix " +
+				QueryHelper.execute("UPDATE prix " +
 					"SET TotalPaye ='"+newTotalPaye+"', solde ='"+newSolde+"'"+
-					" WHERE id_prix = '"+objectDeleted.id_prix+"'",Query.UPDATE);
+					" WHERE id_prix = '"+objectDeleted.id_prix+"'",refresh, queryError);
 			}
-			private function refresh(evt:Event):void
+			private function refresh(evt:Object):void
 			{
 				this.dispatchEvent( new DocEvent(Paiement.RELOAD_MODULE));
 			}

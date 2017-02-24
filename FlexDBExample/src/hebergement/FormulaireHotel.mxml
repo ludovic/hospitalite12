@@ -2,23 +2,15 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="255" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			import proxy.AffectationProxy;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import phi.framework.sql.SQLErrorEvent;
 			import proxy.HotelProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var personneID:int;
 			private var personneIDList:Array;
 			private var sallenOld:Number;
@@ -27,9 +19,6 @@
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
 				if((index.categorieUtilisateur == "hospitalier")||((index.categorieUtilisateur == "admin")&&(ModuleSansHotel.role=="Hospitalier")))
 				{
 					this.hotelList.dataProvider = HotelProxy.HotelHospitalier;
@@ -68,10 +57,7 @@
 			}
 			
 			protected function valider(event:MouseEvent):void
-			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
+			{	
 				if(personneIDList.length>0)
 				{
 					var queryString:String = "UPDATE inscrire " +
@@ -85,13 +71,13 @@
 					
 					queryString = queryString.slice(0,queryString.length-1);
 					queryString += ")"
-					query.execute(queryString, Query.UPDATE );
+					QueryHelper.execute(queryString, end, queryError);
 				}
 				else
 				{
-					query.execute("UPDATE inscrire " +
+					QueryHelper.execute("UPDATE inscrire " +
 						"SET id_hebergement_retenu ='"+hotelList.selectedItem.id_hebergement+"' "+
-						" WHERE id_personne = "+personneID +" and id_pele = "+ index.peleActuel.id_pele ,Query.UPDATE);
+						" WHERE id_personne = "+personneID +" and id_pele = "+ index.peleActuel.id_pele ,end, queryError);
 				}
 			}
 			
@@ -116,9 +102,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

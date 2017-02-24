@@ -7,14 +7,10 @@ package proxy
 	
 	import phi.framework.sql.SQLErrorEvent;
 	import phi.framework.sql.SQLEvent;
-	import phi.interfaces.IDatabase;
-	import phi.interfaces.IQuery;
 	
 	public class ProfessionSanteProxy
 	{
-		private  static var db       :IDatabase;
 		private static var _profession:ArrayCollection = new ArrayCollection;
-		private static var query    :IQuery;
 		
 		public static function load():void
 		{

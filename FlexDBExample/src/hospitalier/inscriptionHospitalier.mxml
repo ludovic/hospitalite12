@@ -2,66 +2,50 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="onCreateComplete()" xmlns:helper="common.helper.*">
 	<mx:Script>
 		<![CDATA[		
-			import common.helper.DataGridDataExporter;
-			import common.helper.SortUtil;
-			import common.helper.Tools;
-			
 			import flash.net.FileReference;
 			
 			import mx.collections.ArrayCollection;
-			import mx.collections.Sort;
-			import mx.collections.SortField;
 			import mx.controls.Alert;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;
 			import mx.events.CloseEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.helper.DataGridDataExporter;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
+			import common.helper.Tools;
 			
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			public static var INSCRTIPION_CREATED:String = "inscriptionCreated";
 			
 			[Bindable] public var users   :ArrayCollection;
 			
 			private function onCreateComplete():void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
+			{	
 				if((index.categorieUtilisateur == "inscription")&&(index.secteurUtilisateur >0))
-					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+					QueryHelper.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
 						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, af.Service, af2.Service as Service2, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville, ps.Profession " +
 						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, affectation af2, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
-						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante AND af2.id_affectation=ho.id_affectation_comp  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ " AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
+						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante AND af2.id_affectation=ho.id_affectation_comp  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ " AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur, queryEnd, queryError);
 				else
-					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+					QueryHelper.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
 						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, af.Service, af2.Service as Service2, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville, ps.Profession " +
 						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, affectation af2, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
-					" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af2.id_affectation=ho.id_affectation_comp AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+					" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af2.id_affectation=ho.id_affectation_comp AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele, queryEnd, queryError);
 			}
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				users = query.getRecords();
+				users = new ArrayCollection(evt.result.data);
 				for(var i:int=0;i<users.length;++i)
 				{
 					var myObject:Object = users[i]
@@ -76,9 +60,9 @@
 					users.refresh();
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function button1_clickHandler(event:MouseEvent):void
@@ -94,21 +78,21 @@
 			protected function reload(event:Object=null):void
 			{
 				if((index.categorieUtilisateur == "inscription")&&(index.secteurUtilisateur >0))
-					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+					QueryHelper.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
 						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville " +
 						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
-						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ "  AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur);
+						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante  AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement AND h.id_pele="+index.peleActuel.id_pele+ "  AND p.id_secteur=s.id_secteur AND p.id_secteur="+index.secteurUtilisateur, queryEnd, queryError);
 				else
-					query.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
+					QueryHelper.execute("SELECT Adresse1, Adresse2, Adresse3, capacite_restrainte, chambreInd, CodePostal, Commune, complet, conjoint, couple, Courriel, " +
 						"CP, dateArrivee, datedepart, DateNaissance, desiderata, divers, Email, etre_hospitalier, Fax, forfaitJeune, af.id_affectation, id_affectation_comp, " +
 						"id_gare, he.id_hebergement, h.id_hospitalier, id_pele, p.id_personne, id_personne_etre_resposable, p.id_profession_sante, s.id_secteur, incomplet, Libelle, " +
 						"montantInsc, Nom, nomHeb, nouveau, nuit1, nuit2, nuit3, paiementInsc, Portable, Prenom, Prix, Rue, section, Service, sexe, SiteWeb, Tel, Telephone, Titre, " +
 						"transport, type , valid, Ville " +
 						" FROM etre_hospitalier h, personne p, hospitalier ho, affectation af, hebergement he, secteur s, profession_sante ps WHERE h.id_personne = p.id_personne AND annuler='non' " +
-						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement  AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele);
+						" AND h.id_hospitalier = ho.id_hospitalier AND ps.id_profession_sante=p.id_profession_sante AND af.id_affectation=ho.id_affectation AND he.id_hebergement=ho.id_hebergement  AND p.id_secteur=s.id_secteur AND h.id_pele="+index.peleActuel.id_pele, queryEnd, queryError);
 				
 				this.dispatchEvent(new Event(INSCRTIPION_CREATED));
 			}
@@ -183,12 +167,8 @@
 			{
 				switch (event.detail){
 					case Alert.OK:
-						query2 = new Query();
-						query2.connect("conn1", db);
-						query2.addEventListener(Query.QUERY_END, queryEnd);
-						query2.addEventListener(Query.QUERY_ERROR,queryError); 
-						query2.execute("UPDATE hospitalier " +
-							"SET annuler ='oui'  WHERE id_hospitalier= '"+hospitalierAnnuler+"'",Query.UPDATE); 
+						QueryHelper.execute("UPDATE hospitalier " +
+							"SET annuler ='oui'  WHERE id_hospitalier= '"+hospitalierAnnuler+"'", reload, queryError); 
 						break;
 					case Alert.CANCEL:
 						break;

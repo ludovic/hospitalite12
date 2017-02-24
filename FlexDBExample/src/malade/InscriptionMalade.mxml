@@ -13,41 +13,30 @@
 			import mx.managers.PopUpManager;
 			
 			import common.helper.DataGridDataExporter;
+			import common.helper.QueryHelper;
 			import common.helper.SortUtil;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable] public var users   :ArrayCollection;
 			
 			private function onCreateComplete():void
-			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query.addEventListener(Query.QUERY_END, queryEnd);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne " +
-					" AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND ma.annuler='non' AND m.id_pele="+index.peleActuel.id_pele);
+			{	
+				QueryHelper.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne " +
+					" AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND ma.annuler='non' AND m.id_pele="+index.peleActuel.id_pele, queryEnd, queryError);
 			}
 			
-			private function queryEnd(evt:Object):void
+			private function queryEnd(evt:SQLEvent):void
 			{
-				users = query.getRecords();
+				users = new ArrayCollection(evt.result.data);
 				users.sort = SortUtil.nomPrenomSort();
 				users.refresh();
 			}	
 			
-			private function queryError(evt:Object):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 
@@ -63,7 +52,7 @@
 			
 			protected function reload(event:Object=null):void
 			{
-				query.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne AND ma.annuler='non' AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND m.id_pele="+index.peleActuel.id_pele);
+				QueryHelper.execute("SELECT * FROM etre_malade m, personne p, malade ma, secteur s WHERE m.id_personne = p.id_personne AND ma.annuler='non' AND m.id_malade = ma.id_malade AND p.id_secteur=s.id_secteur AND m.id_pele="+index.peleActuel.id_pele, queryEnd, queryError);
 			}
 			
 			
@@ -136,12 +125,8 @@
 			{
 				switch (event.detail){
 					case Alert.OK:
-						query2 = new Query();
-						query2.connect("conn1", db);
-						query2.addEventListener(Query.QUERY_END, queryEnd);
-						query2.addEventListener(Query.QUERY_ERROR,queryError); 
-						query2.execute("UPDATE malade " +
-							"SET annuler ='oui'  WHERE id_malade= '"+maladeAnnuler+"'",Query.UPDATE); 
+						QueryHelper.execute("UPDATE malade " +
+							"SET annuler ='oui'  WHERE id_malade= '"+maladeAnnuler+"'", reload, queryError); 
 						break;
 					case Alert.CANCEL:
 						break;

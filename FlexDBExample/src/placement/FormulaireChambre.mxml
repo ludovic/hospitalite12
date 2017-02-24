@@ -2,33 +2,22 @@
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="302" height="132" creationComplete="creationCompleteHandler(event)">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.Tools;
-			
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
 			
-			import proxy.AffectationProxy;
+			import phi.framework.sql.SQLErrorEvent;
 			import proxy.ChambreProxy;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
 			private var maladeID:int;
 			private var salleOld:Number;
 			
 			
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
 				this.salleList.dataProvider = ChambreProxy.ChambreDispo;
 			}
 			
@@ -41,13 +30,9 @@
 			
 			protected function valider(event:MouseEvent):void
 			{
-				query.addEventListener(Query.QUERY_END,end);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				
-				query.execute("UPDATE malade " +
+				QueryHelper.execute("UPDATE malade " +
 						"SET  numero ='"+salleList.selectedItem.numero+"'"+
-						" WHERE id_malade= '"+maladeID+"'",Query.UPDATE);
-				
+						" WHERE id_malade= '"+maladeID+"'", end, queryError);
 			}
 			
 			protected function close(event:Object):void
@@ -60,9 +45,9 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 		]]>

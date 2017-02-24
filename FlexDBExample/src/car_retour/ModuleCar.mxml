@@ -27,7 +27,7 @@
 			public function generateModuleProvider(carId:int):void
 			{
 				this.carId=carId;
-				QueryHelper.execute("(select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+				QueryHelper.execute("select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('hospitalier') 'personne_type'"+
 					"	FROM `personne` p, `etre_hospitalier` eh, `inscrire` i, `hospitalier` h "+
@@ -38,9 +38,9 @@
 					"	AND h.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = eh.id_personne) s "+
-					" where g.id_gare = s.id_gare_retour) " +
+					" where g.id_gare = s.id_gare_retour " +
 					" UNION " +
-					" (select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+					" select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('malade') 'personne_type'"+
 					"	FROM `personne` p, `etre_malade` em, `inscrire` i, `malade` m "+
@@ -51,9 +51,9 @@
 					"	AND m.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = em.id_personne) s "+
-					" where g.id_gare = s.id_gare_retour)" +
+					" where g.id_gare = s.id_gare_retour" +
 					" UNION " +
-					" (select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
+					" select s.nom, s.prenom, s.id_personne, s.id_gare_retour, g.nom as gare, personne_type from gare g," +
 					" (SELECT p.nom, p.prenom, p.id_personne,i.id_gare_retour," +
 					" ('pelerin') 'personne_type'"+
 					"	FROM `personne` p, `etre_pelerin` ep, `inscrire` i, `pelerin` pe "+
@@ -64,46 +64,46 @@
 					"	AND pe.annuler='non'"+
 					"	AND i.id_transport_retour = "+carId +
 					"	AND p.id_personne = ep.id_personne) s "+
-					" where g.id_gare = s.id_gare_retour)", getRole, queryError);
+					" where g.id_gare = s.id_gare_retour", getRole, queryError);
 			}
 			
 			private function getRole(evt:SQLEvent):void
 			{
 				liste = new ArrayCollection(evt.result.data);
-				QueryHelper.execute("(SELECT p.id_personne, ('responsable') 'personne_role'" +
+				QueryHelper.execute("SELECT p.id_personne, ('responsable') 'personne_role'" +
 					" FROM `personne` p, `avoir_responsable` ar" +
 					" WHERE ar.id_pele ="+ index.peleActuel.id_pele+
 					" AND ar.id_transport = "+carId +
 					" AND p.id_personne = ar.id_personne " +
-					" AND ar.direction = 'retour')" +
+					" AND ar.direction = 'retour'" +
 					" UNION " +
-					"(SELECT p.id_personne, ('ide') 'personne_role'" +
+					" SELECT p.id_personne, ('ide') 'personne_role'" +
 					" FROM `personne` p, `ide` id" +
 					" WHERE id.id_pele ="+ index.peleActuel.id_pele+
 					" AND id.id_transport = "+carId +
 					" AND p.id_personne = id.id_personne " +
-					" AND id.direction = 'retour')" +
+					" AND id.direction = 'retour'" +
 					" UNION " +
-					"(SELECT p.id_personne, ('animation') 'personne_role'" +
+					" SELECT p.id_personne, ('animation') 'personne_role'" +
 					" FROM `personne` p, `animation` an" +
 					" WHERE an.id_pele ="+ index.peleActuel.id_pele+
 					" AND an.id_transport = "+carId +
 					" AND p.id_personne = an.id_personne " +
-					" AND an.direction = 'retour')"+
+					" AND an.direction = 'retour'"+
 					" UNION " +
-					"(SELECT p.id_personne, ('bagages') 'personne_role'" +
+					" SELECT p.id_personne, ('bagages') 'personne_role'" +
 					" FROM `personne` p, `bagages` bg" +
 					" WHERE bg.id_pele ="+ index.peleActuel.id_pele+
 					" AND bg.id_transport = "+carId +
 					" AND p.id_personne = bg.id_personne " +
-					" AND bg.direction = 'retour')" +
+					" AND bg.direction = 'retour'" +
 					" UNION " +
-					"(SELECT p.id_personne, ('intendance') 'personne_role'" +
+					" SELECT p.id_personne, ('intendance') 'personne_role'" +
 					" FROM `personne` p, `intendance` it" +
 					" WHERE it.id_pele ="+ index.peleActuel.id_pele+
 					" AND it.id_transport = "+carId +
 					" AND p.id_personne = it.id_personne " +
-					" AND it.direction = 'retour')", provideModule, queryError);
+					" AND it.direction = 'retour'", provideModule, queryError);
 			}
 			private function provideModule(evt:SQLEvent):void
 			{

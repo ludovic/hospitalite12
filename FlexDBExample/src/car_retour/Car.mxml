@@ -3,15 +3,10 @@
 	<mx:Script>
 		<![CDATA[
 			import common.helper.DataGridDataExporter;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.CloseEvent;
 			import mx.events.FlexEvent;
-			
-			import phi.db.Query;
-			
-			import proxy.AffectationProxy;
 			import proxy.CarProxy;
 			
 			public static var RELOAD_MODULE:String = "reloadModule";

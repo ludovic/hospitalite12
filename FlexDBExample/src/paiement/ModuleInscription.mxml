@@ -2,23 +2,17 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="50%" height="100%"  xmlns:extension="paiement.extension.*">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.SortUtil;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.DataGrid;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
 			
-			import proxy.RemiseProxy;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable]
 			public var titleText:String;
@@ -28,11 +22,6 @@
 			
 			public function generateModuleProvider(chambreId:int=0):void
 			{
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 				if(type == "hospitalier")
 					/*query.execute("select * from inscrire i," +
 						" personne p, etre_hospitalier eh, prix pr, hospitalier h" +
@@ -43,7 +32,7 @@
 						" and i.id_personne = p.id_personne" +
 						" and p.id_personne=eh.id_personne");*/
 				
-					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, h.annuler, i.id_prix" +
+					QueryHelper.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, h.annuler, i.id_prix" +
 						" FROM inscrire i, personne p, etre_hospitalier eh, prix pr, hospitalier h, etre_paye e_p, paiement pa, remise r" +
 						" WHERE i.id_pele =" + index.peleActuel.id_pele+
 						" AND i.id_prix = pr.id_prix" +
@@ -63,7 +52,7 @@
 						" AND eh.id_hospitalier = h.id_hospitalier" +
 						" AND i.id_personne = p.id_personne" +
 						" AND p.id_personne = eh.id_personne" +
-						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" );
+						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" , provideModule, queryError);
 				
 				else
 					/*query.execute("select * from inscrire i," +
@@ -74,7 +63,7 @@
 						" and em.id_malade = m.id_malade" +
 						" and i.id_personne = p.id_personne" +
 						" and p.id_personne=em.id_personne");*/
-					query.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, m.annuler, i.id_prix" +
+					QueryHelper.execute("SELECT p.Nom, p.Prenom, pr.Total, pr.TotalPaye, pr.solde, r.libelle, m.annuler, i.id_prix" +
 						" FROM inscrire i, personne p, etre_malade em, prix pr, malade m, etre_paye e_p, paiement pa, remise r" +
 						" WHERE i.id_pele =" + index.peleActuel.id_pele+
 						" AND i.id_prix = pr.id_prix" +
@@ -94,18 +83,18 @@
 						" AND em.id_malade = m.id_malade" +
 						" AND i.id_personne = p.id_personne" +
 						" AND p.id_personne = em.id_personne" +
-						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" );
+						" and pr.id_prix NOT IN (select id_prix FROM etre_paye)" , provideModule, queryError);
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data);
 				provider.sort = SortUtil.nomPrenomSort();
 				provider.refresh();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show(query.getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function affecterA(event:MouseEvent):void

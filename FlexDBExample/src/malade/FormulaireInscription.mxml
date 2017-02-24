@@ -3,22 +3,18 @@
 
 	<mx:Script>
 		<![CDATA[
-			import flash.net.navigateToURL;
-			
-			import mx.charts.renderers.DiamondItemRenderer;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
 			import common.events.DocEvent;
+			import common.helper.QueryHelper;
 			import common.helper.Tools;
 			
 			import hospitalier.ListeNom;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			import proxy.GareProxy;
 			import proxy.SecteurProxy;
@@ -26,15 +22,6 @@
 			[Bindable]
 			[Embed(source='assets/warning.png')]
 			private var WARNING:Class;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
-			private var query7    :IQuery;
-			private var query8    :IQuery;
-			private var query9    :IQuery;
-			private var query10    :IQuery;
-			private var query11    :IQuery;
 			
 			private var personneID:Number
 			[Bindable]
@@ -49,46 +36,27 @@
 			{
 				secteurProvider		= SecteurProxy.Secteur;
 				gareProvider		= GareProxy.Gare;
-				db = Database.getInstance();
-				query = new Query();
-				query.connect("conn1", db);
-				
-				query2 = new Query();
-				query2.connect("conn1", db);
-				
-				query8 = new Query();
-				query8.connect("conn1", db);
-				query9 = new Query();
-				query9.connect("conn1", db);
-				query10 = new Query();
-				query10.connect("conn1", db);
-				query11 = new Query();
-				query11.connect("conn1", db);
 			}
 			
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			
 			protected function nameSearch(event:MouseEvent):void
 			{
-				query7= new Query();
-				query7.connect("conn1", db);
-				query7.addEventListener(Query.QUERY_END, provideNameGrid);
-				query7.addEventListener(Query.QUERY_ERROR,queryError);
-				query7.execute("Select * from personne where Nom LIKE '"+nom.text+"%'" +
+				QueryHelper.execute("Select * from personne where Nom LIKE '"+nom.text+"%'" +
 					"AND id_personne NOT IN (SELECT p.id_personne FROM etre_hospitalier h, personne p WHERE h.id_personne = p.id_personne " +
 					" AND h.id_pele="+index.peleActuel.id_pele +" )"+
 					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_pelerin pe, personne p WHERE pe.id_personne = p.id_personne " +
 					" AND pe.id_pele="+index.peleActuel.id_pele +" )"+
 					" AND id_personne NOT IN (SELECT p.id_personne FROM etre_malade m, personne p WHERE m.id_personne = p.id_personne " +
-					" AND m.id_pele="+index.peleActuel.id_pele +" )");
+					" AND m.id_pele="+index.peleActuel.id_pele +" )", provideNameGrid, queryError);
 			}
-			private function provideNameGrid(evt:Object):void
+			private function provideNameGrid(evt:SQLEvent):void
 			{
 				var listeNom:ListeNom = new ListeNom();
-				listeNom.listeNomProvider = query7.getRecords();
+				listeNom.listeNomProvider = new ArrayCollection(evt.result.data);
 				PopUpManager.addPopUp(listeNom,this.parentApplication as DisplayObject,true);
 				PopUpManager.centerPopUp(listeNom);
 				listeNom.addEventListener(ListeNom.PERSONNE_SELECTED,setPersonneFields);
@@ -174,17 +142,15 @@
 				
 				if(isNaN(this.idPersonne))
 				{
-					query2.addEventListener(Query.QUERY_END, testPersonneInBase);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					query2.execute("Select *  from personne where Nom='"+Tools.sanitize(nom.text) +"' and Prenom='"+Tools.sanitize(prenom.text)+"' and DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'");
+					QueryHelper.execute("Select *  from personne where Nom='"+Tools.sanitize(nom.text) +"' and Prenom='"+Tools.sanitize(prenom.text)+"' and DateNaissance='"+Tools.dateToString(dateNaissance.selectedDate)+"'", testPersonneInBase, queryError);
 				}
 				else
 					this.insertIntoMalade(null);
 			}
 			
-			private function testPersonneInBase(evt:Object):void
+			private function testPersonneInBase(evt:SQLEvent):void
 			{
-				var result:ArrayCollection = query2.getRecords();
+				var result:ArrayCollection = new ArrayCollection(evt.result.data);
 				if(result.length>0)
 					Alert.show("Une personne avec les mêmes nom, prénom et date de naissance existe déjà dans la base de données. Avez-vous pensez à utiliser le bouton de recherche ?" +
 						" Si oui, vérifier que cette personne n'est pas déjà inscrite.","",Alert.OK,this,null,WARNING);
@@ -194,22 +160,19 @@
 			
 			private function insertIntoPersonne():void
 			{
-				query.addEventListener(Query.QUERY_END, insertIntoMalade);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("INSERT INTO personne (" +
+				QueryHelper.execute("INSERT INTO personne (" +
 					" `Titre`, `Nom`, `Prenom`, `Adresse1`," +
 					" `Adresse2`, `Adresse3`, `CodePostal`, `Commune`, `DateNaissance`, `sexe`, `Tel`, `Portable`, `Courriel`, `etre_hospitalier`, `id_secteur`) " +
 					"	VALUES ('"+(titre.selectedItem as String)+"','"+Tools.sanitize(nom.text)+"','"+Tools.sanitize(prenom.text)+"','"+Tools.sanitize(adresse.text)+"',NULL,NULL,'"+codePostal.text+"','"+Tools.sanitize(commune.text)+"','"+
 					Tools.dateToString(dateNaissance.selectedDate)+"','"+this.sexe.selectedLabel+"','"+telephone.text+"','"+portable.text+"','"+email.text+"',NULL,'"+
-					this.secteur.selectedItem.id_secteur+"')", Query.INSERT);
+					this.secteur.selectedItem.id_secteur+"')", insertIntoMalade, queryError);
 			}
 			
-			private function insertIntoMalade(evt:Object):void
+			private var lastPersonneID:Number;
+			private function insertIntoMalade(evt:SQLEvent):void
 			{
-				
-				query8.addEventListener(Query.QUERY_END, insertIntoEtreMalade);
-				query8.addEventListener(Query.QUERY_ERROR,queryError);
-				query8.execute("INSERT INTO malade (`taille`, `poids`, `pers_prev_hosp`, `pers_prev_fam`, `pers_prev_tut`, `pers_prev_pers_conf`, `pers_prev_nom`, `pers_prev_tel`, " +
+				lastPersonneID = evt.result.lastInsertID;
+				QueryHelper.execute("INSERT INTO malade (`taille`, `poids`, `pers_prev_hosp`, `pers_prev_fam`, `pers_prev_tut`, `pers_prev_pers_conf`, `pers_prev_nom`, `pers_prev_tel`, " +
 					"`pos_voy_assis`, `pos_voy_couche`, `pos_voy_assis_ft`, `monte_marches_car`, `deplace_seul`, `deplace_aide`, `deplace_canne`, `deplace_deambulateur`," +
 					" `deplace_fauteuil`, `deplace_brancard`, `deplace_escalier`, `protheses`, `deficit_vision`, `deficit_audition`, `deficit_parole`, `deficit_desorientation`," +
 					" `deficit_fugue`, `reg_normal`, `reg_diab`, `reg_ss_sel`, `reg_mix`, `reg_pb_deglutition`, `reg_eau_gef`, `reg_chambre`, `soin_inf_inj`, `soin_inf_inj_type`, " +
@@ -229,38 +192,32 @@
 					" '"+Tools.sanitize(typeStomie.text)+"','"+Tools.ouiNon(incomplet.selected)+"', '"+Tools.sanitize(codification.text)+"'," +
 					" '"+Tools.ouiNon(this.paiementInsc.selected)+"','"+this.montantInsc.text+"','"+Tools.sanitize(divers.text)+"'," +
 					" '"+Tools.sanitize(medecin_traitant.text)+"', '"+Tools.sanitize(tel_medecin.text)+"', '"+ Tools.sanitize(tel_retour.text)+"',"+
-					" '"+Number(voyageElectriqueCB.selected)+"', '"+Number(escarreCB.selected)+"', '" + Number(hacheCB.selected)+ "', '" + Number(parenteraleCB.selected)+ "', '" + Number(ppcCB.selected)+ "', '" + Number(dialyseCB.selected)+ "', '"+ Number(litMedicaliseCB.selected)+"', '"+ Number(verticalisateurCB.selected)+"', '"+ Number(aideRepasCB.selected) +"', '"+Number(casParticulierCB.selected)+"','"+this.gare.selectedItem.id_gare+"')", Query.INSERT);
+					" '"+Number(voyageElectriqueCB.selected)+"', '"+Number(escarreCB.selected)+"', '" + Number(hacheCB.selected)+ "', '" + Number(parenteraleCB.selected)+ "', '" + Number(ppcCB.selected)+ "', '" + Number(dialyseCB.selected)+ "', '"+ Number(litMedicaliseCB.selected)+"', '"+ Number(verticalisateurCB.selected)+"', '"+ Number(aideRepasCB.selected) +"', '"+Number(casParticulierCB.selected)+"','"+this.gare.selectedItem.id_gare+"')", insertIntoEtreMalade, queryError);
 					
 					
 			}
 			
-			private function insertIntoEtreMalade(evt:Object):void
+			private function insertIntoEtreMalade(evt:SQLEvent):void
 			{
 				if(isNaN(idPersonne))
-					personneID = query.getLastInsertID();	
+					personneID = lastPersonneID;	
 				else
 					personneID = idPersonne;
-				var maladeID:Number = query8.getLastInsertID();
-				query9.addEventListener(Query.QUERY_END, insertIntoPrix);
-				query9.addEventListener(Query.QUERY_ERROR,queryError);
-				query9.execute("INSERT INTO etre_malade (`id_personne`,`id_malade`,`id_pele`) VALUES ('"+personneID+"','"+maladeID+"','"+index.peleActuel.id_pele+"')", Query.INSERT);
+				var maladeID:Number = evt.result.lastInsertID;
+				QueryHelper.execute("INSERT INTO etre_malade (`id_personne`,`id_malade`,`id_pele`) VALUES ('"+personneID+"','"+maladeID+"','"+index.peleActuel.id_pele+"')", insertIntoPrix, queryError);
 				
 			}
 			
 			private function insertIntoPrix(evt:Object):void
 			{
-				query10.addEventListener(Query.QUERY_END, insertIntoInscrire);
-				query10.addEventListener(Query.QUERY_ERROR,queryError);
-				query10.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, '195', '0', '195') ", Query.INSERT );
+				QueryHelper.execute("INSERT INTO prix (`id_prix`, `Total`, `TotalPaye`, `solde`) VALUES (NULL, '195', '0', '195') ", insertIntoInscrire, queryError);
 			}
 			
-			private function insertIntoInscrire(evt:Object):void
+			private function insertIntoInscrire(evt:SQLEvent):void
 			{
-				var prixID:Number = query10.getLastInsertID();
-				query11.addEventListener(Query.QUERY_END, queryEnd);
-				query11.addEventListener(Query.QUERY_ERROR,queryError);
-				query11.execute("INSERT INTO inscrire (`id_pele`,`id_transport`,`id_personne`,`id_gare`,`id_hebergement`,`id_prix`) " +
-					"VALUES ('"+index.peleActuel.id_pele+"',0,'"+personneID+"',0,0,'"+prixID+"')", Query.INSERT);
+				var prixID:Number = evt.result.lastInsertID;
+				QueryHelper.execute("INSERT INTO inscrire (`id_pele`,`id_transport`,`id_personne`,`id_gare`,`id_hebergement`,`id_prix`) " +
+					"VALUES ('"+index.peleActuel.id_pele+"',0,'"+personneID+"',0,0,'"+prixID+"')", queryEnd, queryError);
 			}
 			
 			private function queryEnd(evt:Object):void

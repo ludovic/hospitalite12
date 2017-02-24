@@ -2,20 +2,13 @@
 <mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
-			import mx.managers.PopUpManager;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
-			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable]
 			public var provider:ArrayCollection;
@@ -24,73 +17,44 @@
 			public function generateModuleProvider(moduleId:int,moduleId2:int=0):void
 			{
 				this.moduleId=moduleId;
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
 				
-				query.execute("(SELECT p.nom, p.prenom, eh.id_hospitalier, ('responsable') 'role'" +
-					" FROM `personne` p, `etre_hospitalier` eh, `responsable_module` rm" +
-					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = rm.id_hospitalier" +
-					" AND rm.id_module ="+moduleId +
-					" AND p.id_personne = eh.id_personne )" +
-					" UNION " +
-					"(SELECT p.nom, p.prenom, eh.id_hospitalier, ('ide') 'role'" +
-					" FROM `personne` p, `etre_hospitalier` eh, `ide_module` im1" +
-					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = im1.id_hospitalier" +
-					" AND im1.id_module ="+moduleId +
-					" AND p.id_personne = eh.id_personne )" +
-					" UNION " +
-					"(SELECT p.nom, p.prenom, eh.id_hospitalier, ('brancardier') 'role'" +
-					" FROM `personne` p, `etre_hospitalier` eh, `brancardier_module` bm2" +
-					" WHERE eh.id_pele ="+ index.peleActuel.id_pele+
-					" AND eh.id_hospitalier = bm2.id_hospitalier" +
-					" AND bm2.id_module ="+moduleId +
-					" AND p.id_personne = eh.id_personne )");
+				QueryHelper.execute("SELECT `nom`, `prenom`, `id_hospitalier`, `role` FROM v_role_module "+
+					"WHERE id_pele ="+ index.peleActuel.id_pele +
+					 " AND id_module ="+moduleId, provideModule, queryError);
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data);
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			protected function enlever(event:Object=null):void
 			{
 				if(listHospi.selectedItem)
-				{
-					query2= new Query();
-					query2.connect("conn1", db);
-					query2.addEventListener(Query.QUERY_END,refresh);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					
+				{	
 					if(listHospi.selectedItem.role == "responsable")
 					{
-						query2.execute("DELETE FROM responsable_module " +
-							" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_module = '"+moduleId+"'",Query.DELETE);
+						QueryHelper.execute("DELETE FROM responsable_module " +
+							" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_module = '"+moduleId+"'", refresh, queryError);
 						
 					}
 					else if(listHospi.selectedItem.role == "ide")
 					{
-						query2.execute("DELETE FROM ide_module " +
-							" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_module = '"+moduleId+"'",Query.DELETE);
+						QueryHelper.execute("DELETE FROM ide_module " +
+							" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_module = '"+moduleId+"'", refresh, queryError);
 					}
 					else
 					{
-						query2.execute("DELETE FROM brancardier_module " +
-							" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_module = '"+moduleId+"'",Query.DELETE);
+						QueryHelper.execute("DELETE FROM brancardier_module " +
+							" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND id_module = '"+moduleId+"'", refresh, queryError);
 					}
-					
-					
 				}
 			}
 				
-			private function refresh(evt:Event):void
+			private function refresh(evt:Object):void
 			{
 				this.dispatchEvent( new DocEvent(Salle.RELOAD_MODULE));
 			}

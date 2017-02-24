@@ -2,22 +2,17 @@
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" label="{this.titleText}">
 	<mx:Script>
 		<![CDATA[
-			import common.events.DocEvent;
-			import common.helper.SortUtil;
-			import common.helper.Tools;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.managers.PopUpManager;
 			
-			import phi.db.Database;
-			import phi.db.Query;
-			import phi.interfaces.IDatabase;
-			import phi.interfaces.IQuery;
+			import common.events.DocEvent;
+			import common.helper.QueryHelper;
+			import common.helper.SortUtil;
+			import common.helper.Tools;
 			
-			private var db       :IDatabase;
-			private var query    :IQuery;
-			private var query2    :IQuery;
+			import phi.framework.sql.SQLErrorEvent;
+			import phi.framework.sql.SQLEvent;
 			
 			[Bindable]
 			public var titleText:String;
@@ -25,17 +20,10 @@
 			public var provider:ArrayCollection;
 			private var nuit:Number;
 			
-			
-			
 			public function generateModuleProvider(nuit:int):void
 			{
 				this.nuit=nuit;
-				db = Database.getInstance();
-				query= new Query();
-				query.connect("conn1", db);
-				query.addEventListener(Query.QUERY_END, provideModule);
-				query.addEventListener(Query.QUERY_ERROR,queryError);
-				query.execute("select nom, prenom,DateNaissance, nuit1, nuit2, nuit3, chambreInd, aff.service, aff2.service as service2, id_hospitalier,af.Profession " +
+				QueryHelper.execute("select nom, prenom,DateNaissance, nuit1, nuit2, nuit3, chambreInd, aff.service, aff2.service as service2, id_hospitalier,af.Profession " +
 					"from `affectation` aff, `affectation` aff2, " +
 					"(SELECT p.nom, p.prenom,p.DateNaissance, h.nuit1, h.nuit2, h.nuit3, h.chambreInd, h.id_affectation, h.id_affectation_comp, h.id_hospitalier, ps.Profession" +
 					" FROM `personne` p, `hospitalier` h, `etre_hospitalier` eh, `obtenir_nuit` o, `affectation` a, `profession_sante` ps " +
@@ -48,12 +36,12 @@
 					" AND h.annuler='non' " +
 					" GROUP BY p.id_personne) af " +
 					"where aff.id_affectation=af.id_affectation "+
-					"and aff2.id_affectation=af.id_affectation_comp");
+					"and aff2.id_affectation=af.id_affectation_comp", provideModule, queryError);
 			}
 			
-			private function provideModule(evt:Object):void
+			private function provideModule(evt:SQLEvent):void
 			{
-				provider = query.getRecords();
+				provider = new ArrayCollection(evt.result.data);
 				for(var i:int=0;i<provider.length;++i)
 				{
 					var myObject:Object = provider[i]
@@ -62,9 +50,9 @@
 				provider.sort = SortUtil.minNomPrenomSort();
 				provider.refresh();
 			}
-			private function queryError(evt:Event):void
+			private function queryError(evt:SQLErrorEvent):void
 			{
-				Alert.show((evt.target as Query).getError());
+				Alert.show(evt.error);
 			}
 			protected function affecterAussiA(event:Object=null):void
 			{
@@ -82,15 +70,11 @@
 			{
 				if(listHospi.selectedItem)
 				{
-					query2= new Query();
-					query2.connect("conn1", db);
-					query2.addEventListener(Query.QUERY_END,refresh);
-					query2.addEventListener(Query.QUERY_ERROR,queryError);
-					query2.execute("DELETE FROM obtenir_nuit " +
-						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND nuit = '"+nuit+"'",Query.DELETE);
+					QueryHelper.execute("DELETE FROM obtenir_nuit " +
+						" WHERE id_hospitalier = '"+listHospi.selectedItem.id_hospitalier+"' AND nuit = '"+nuit+"'", refresh, queryError);
 				}
 			}
-			private function refresh(evt:Event):void
+			private function refresh(evt:Object):void
 			{
 				this.dispatchEvent( new DocEvent(Nuit.RELOAD_MODULE));
 			}
